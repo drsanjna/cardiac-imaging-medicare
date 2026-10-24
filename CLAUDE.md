@@ -24,6 +24,8 @@
 - Every run writes `~/Downloads/cms_runs/<timestamp>_<commit>[-dirty][_label]/` (repo link: `runs/`):
   `figures/` (PNG, `tiff/`), `tables/*.csv`, `console.log`, `manifest.json`, `gallery.html`, `all_figures.pdf`.
   `runs/index.html` lists all runs; `runs/latest` points to the newest. Compare runs via their `tables/` CSVs.
+- Each run tags its exact code as `run-<run id>` (snapshot commit, branch untouched) and uploads itself as a GitHub
+  Release on that tag. To investigate an old result: `git checkout run-<run id>`; `python scripts/runs.py fetch <run id>`.
 - New figures: add an entry to `figures/catalog.py` so the gallery and PDF label them.
 
 ## Rules

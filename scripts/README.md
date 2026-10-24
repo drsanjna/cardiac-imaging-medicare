@@ -13,6 +13,7 @@ flowchart LR
   subgraph here["scripts/"]
     n_build_database_py["build_database.py"]
     n_convert_cms_to_parquet_py["convert_cms_to_parquet.py"]
+    n_runs_py["runs.py"]
     n_update_readmes_py["update_readmes.py"]
     n_install_hooks_sh["install_hooks.sh"]
   end
@@ -20,8 +21,13 @@ flowchart LR
   n__github_workflows_[".github/workflows/"]
   n_config_py["config.py"]
   n_db_["db/"]
+  n_gitinfo_py["gitinfo.py"]
+  n_reporting_["reporting/"]
   n_config_py --> n_build_database_py
+  n_config_py --> n_runs_py
   n_db_ --> n_build_database_py
+  n_gitinfo_py --> n_runs_py
+  n_reporting_ --> n_runs_py
   n__githooks_ -. runs .-> n_update_readmes_py
   n__github_workflows_ -. runs .-> n_update_readmes_py
 ```
@@ -33,6 +39,7 @@ flowchart LR
 | [`build_database.py`](build_database.py) | Create cms.duckdb: a claims view over the Parquet files, plus the enrollment and GV reference tables. |
 | [`convert_cms_to_parquet.py`](convert_cms_to_parquet.py) | Convert CMS "Medicare Physician & Other Practitioners - by Provider and Service" |
 | [`install_hooks.sh`](install_hooks.sh) | Point git at .githooks/ so READMEs regenerate on every local commit. Run once per clone. |
+| [`runs.py`](runs.py) | Manage run history: list local + GitHub runs, publish runs as GitHub Releases, download runs back, rebuild the index. |
 | [`update_readmes.py`](update_readmes.py) | Regenerate every README.md (root + one per code directory) from the code itself: docstrings, functions, imports. |
 
 ## Functions
@@ -43,6 +50,10 @@ flowchart LR
 **`convert_cms_to_parquet.py`**
 - `header(csv_path)`
 - `read_csv_sql(csv_path)`
+- `main()`
+
+**`runs.py`**
+- `backfill_code(run_dir, sha, note)` — Give a run made before code snapshots existed a best-known code commit (marked approximate).
 - `main()`
 
 **`update_readmes.py`**

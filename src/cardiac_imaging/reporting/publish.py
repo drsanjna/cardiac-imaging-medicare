@@ -1,0 +1,153 @@
+"""Upload a run to GitHub as a Release on its code-snapshot tag (outputs zipped as assets), and download runs back."""
+import base64
+import json
+import shutil
+import subprocess
+import tempfile
+import zipfile
+from pathlib import Path
+
+from .. import config, gitinfo
+from .run_store import read_manifest, write_manifest
+
+MARKER = 'cardiac-run-summary:'   # release notes carry <!-- cardiac-run-summary:<base64 JSON> --> for index.html
+
+
+def _gh(*args, capture=False):
+    gh = shutil.which('gh')
+    if not gh:
+        raise RuntimeError("GitHub CLI `gh` not found (brew install gh && gh auth login).")
+    cmd = [gh, *args, '--repo', gitinfo.repo_slug()]
+    if capture:
+        return subprocess.check_output(cmd, text=True, cwd=config.REPO_ROOT)
+    subprocess.run(cmd, check=True, cwd=config.REPO_ROOT, stdout=subprocess.DEVNULL)
+
+
+def summary(m):
+    """The subset of a manifest shown in index.html (also embedded in the release notes)."""
+    keep = ('run_id', 'label', 'status', 'started', 'finished', 'seconds', 'code', 'database', 'data', 'versions',
+            'headline', 'error', 'save_tiff', 'bytes', 'published')
+    s = {k: m.get(k) for k in keep}
+    s['figures'] = len(m.get('figures', []))
+    s['steps_ok'] = sum(1 for x in m.get('steps', []) if x['status'] == 'ok')
+    s['steps_total'] = len(m.get('steps', []))
+    return s
+
+
+def release_notes(m):
+    c, d = m['code'], m.get('data', {})
+    repo = f"https://github.com/{c.get('repo')}"
+    rows = [
+        ('Status', f"**{m['status']}**" + (f" — failed in `{m['error']['step']}`: {m['error']['type']}" if m.get('error') else '')),
+        ('Started → finished', f"{m['started']} → {m.get('finished', '')} ({m.get('seconds', 0):.0f} s)"),
+        ('Code snapshot', f"[`{c['tag']}`]({repo}/tree/{c['tag']}) → `{(c.get('snapshot') or '')[:12]}`"
+                          + (' (exact working tree, incl. uncommitted changes)' if c.get('dirty') and c.get('exact') else '')
+                          + ('' if c.get('exact') else ' — **approximate** (see note)')),
+        ('Based on commit', f"[`{c['head'][:7]}`]({repo}/commit/{c['head']}) on `{c.get('branch')}` — {c.get('subject', '')} ({c.get('date', '')})"),
+        ('Data', f"`{m.get('database')}` · Parquet fingerprint `{d.get('fingerprint')}` · "
+                 f"{d.get('claims_rows_total', 0):,} claims rows"),
+        ('Versions', ', '.join(f'{k} {v}' for k, v in m.get('versions', {}).items())),
+        ('Figures', f"{len(m.get('figures', []))}" + ('' if m.get('save_tiff') else ' (no TIFFs)')),
+    ]
+    lines = [f"Pipeline run **{m['run_id']}**", '', '| | |', '|---|---|'] + [f'| {k} | {v} |' for k, v in rows]
+    if m.get('headline'):
+        lines += ['', '| Headline | IRR | 95% CI |', '|---|---|---|']
+        lines += [f"| {k} | {h['irr']:.3f} | {h['lo']:.3f}–{h['hi']:.3f} |" for k, h in m['headline'].items()]
+    if not c.get('exact'):
+        lines += ['', f"> **Note:** {c.get('note', 'The exact code for this run was not captured.')}"]
+    lines += ['', '**Restore this code:**', '```bash', f"git fetch origin tag {c['tag']} && git checkout {c['tag']}", '```',
+              '**Open the outputs:** download `run_*.zip`, unzip into `~/Downloads/cms_runs/`, open `gallery.html` '
+              f"(or `python scripts/runs.py fetch {m['run_id']}`).",
+              '', f"<!-- {MARKER}{base64.b64encode(json.dumps(summary(m), default=str).encode()).decode()} -->"]
+    return '\n'.join(lines)
+
+
+def _zip(run_dir, out, include_tiff):
+    """Zip run_dir as <run_id>/... ; TIFFs go only in the TIFF zip."""
+    with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
+        for p in sorted(run_dir.rglob('*')):
+            rel = p.relative_to(run_dir)
+            is_tiff = rel.parts[:2] == ('figures', 'tiff')
+            if p.is_file() and is_tiff == include_tiff:
+                z.write(p, Path(run_dir.name) / rel)
+
+
+def publish_run(run_dir, force=False):
+    """Push the run's tag and create its GitHub Release with the outputs attached; records `published` in the manifest."""
+    from . import gallery
+    run_dir = Path(run_dir)
+    m = read_manifest(run_dir)
+    if m.get('published') and not force:
+        print(f"  Already on GitHub: {m['published']['release_url']}")
+        return m['published']
+    c = m['code']
+    if not c.get('snapshot'):
+        raise RuntimeError(f"Run {m['run_id']} has no code snapshot; backfill it first (scripts/runs.py publish --assume-commit).")
+    gitinfo.ensure_tag(c['tag'], c['snapshot'], f"Code used for run {m['run_id']}")
+    subprocess.run(['git', 'push', '-q', 'origin', f"refs/tags/{c['tag']}"], check=True, cwd=config.REPO_ROOT)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        assets = [tmp / f"run_{m['run_id']}.zip"]
+        _zip(run_dir, assets[0], include_tiff=False)
+        if any((run_dir / 'figures' / 'tiff').glob('*.tiff')):
+            assets.append(tmp / f"tiff_{m['run_id']}.zip")
+            _zip(run_dir, assets[1], include_tiff=True)
+        for name in ('all_figures.pdf', 'manifest.json'):
+            if (run_dir / name).exists():
+                shutil.copy(run_dir / name, tmp / name)
+                assets.append(tmp / name)
+        notes = tmp / 'notes.md'
+        notes.write_text(release_notes(m))
+        title = f"Run {m['started'][:16].replace('T', ' ')} · {m['status']} · {c['head'][:7]}" + (f" · {m['label']}" if m.get('label') else '')
+        print(f"  Uploading run to GitHub release {c['tag']} ({sum(a.stat().st_size for a in assets) / 1e6:.0f} MB) ...")
+        _gh('release', 'create', c['tag'], '--verify-tag', '--latest=false', '--title', title,
+            '--notes-file', str(notes), *map(str, assets))
+
+    info = json.loads(_gh('release', 'view', c['tag'], '--json', 'url,publishedAt,assets', capture=True))
+    m['published'] = dict(at=info['publishedAt'], release_url=info['url'], tag=c['tag'],
+                          assets={a['name']: a['url'] for a in info['assets']})
+    write_manifest(run_dir, m)
+    gallery.build(run_dir)
+    print(f"  Published: {info['url']} at {info['publishedAt']}")
+    return m['published']
+
+
+def remote_runs():
+    """Run summaries decoded from the GitHub releases' notes (newest first), each with its release URL and time."""
+    out = []
+    for r in _gh_api_releases():
+        body = r.get('body') or ''
+        if MARKER not in body:
+            continue
+        s = json.loads(base64.b64decode(body.split(MARKER, 1)[1].split('-->', 1)[0].strip()))
+        s['published'] = dict(at=r['published_at'], release_url=r['html_url'], tag=r['tag_name'],
+                              assets={a['name']: a['browser_download_url'] for a in r.get('assets', [])})
+        out.append(s)
+    return out
+
+
+def _gh_api_releases():
+    gh = shutil.which('gh')
+    if not gh:
+        raise RuntimeError("GitHub CLI `gh` not found.")
+    out = subprocess.check_output([gh, 'api', '--paginate', '--slurp', f'repos/{gitinfo.repo_slug()}/releases?per_page=100'],
+                                  text=True, cwd=config.REPO_ROOT)
+    return [r for page in json.loads(out) for r in page]
+
+
+def fetch_run(run_id, runs_dir=None):
+    """Download a published run's outputs (run_*.zip) from GitHub and unpack them into runs_dir."""
+    runs_dir = Path(runs_dir or config.RUNS_DIR)
+    if (runs_dir / run_id / 'manifest.json').exists():
+        print(f"  {run_id} is already local.")
+        return runs_dir / run_id
+    with tempfile.TemporaryDirectory() as tmp:
+        _gh('release', 'download', f'run-{run_id}', '--pattern', f'run_{run_id}.zip', '--dir', tmp)
+        with zipfile.ZipFile(Path(tmp) / f'run_{run_id}.zip') as z:
+            bad = [n for n in z.namelist() if not n.startswith(f'{run_id}/') or '..' in Path(n).parts]
+            if bad:
+                raise RuntimeError(f"Unexpected paths in archive: {bad[:3]}")
+            z.extractall(runs_dir)
+    print(f"  Downloaded {run_id} → {runs_dir / run_id}")
+    return runs_dir / run_id

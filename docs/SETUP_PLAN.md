@@ -75,7 +75,20 @@ Every filter prints a `[filter]` line with counts before and after, so no rows d
 | `tables/*.csv` | Table 1, NB model IRRs, state rates, market share, change summary, filter log |
 | `console.log`, `manifest.json` | Full printed output; commit, timings, status, error |
 
-`runs/index.html` lists every run (newest first) with status, commit and headline IRRs; `runs/latest` points to the newest.
+`runs/index.html` lists every run (newest first) — local runs plus every run on GitHub — with start/finish/pushed
+timestamps, code snapshot, data fingerprint, versions and headline IRRs; `runs/latest` points to the newest.
+
+**Run history on GitHub and code checkpoints:** every run freezes the exact code it used (including uncommitted edits)
+as a git tag `run-<run id>`, without touching your branch. When the run finishes it is uploaded as a GitHub Release
+on that tag (outputs zipped; TIFFs in a separate zip). To go back to the code behind any run:
+
+```bash
+git fetch origin tag run-<run id> && git checkout run-<run id>
+```
+
+`python scripts/runs.py list | publish --pending | fetch <run id> | index` manages the history (fetch downloads a run's
+outputs from GitHub so its gallery works locally). Set `CARDIAC_PUBLISH_RUNS=0` to keep a run local.
+**The repo is public, so uploaded runs are publicly visible.**
 
 ### 4 · Connect GitHub ⇄ Claude
 - **Local loop (main path):** in Claude Code, say *"run the notebook and fix any errors"*. It follows `CLAUDE.md`:

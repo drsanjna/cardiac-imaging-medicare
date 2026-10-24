@@ -54,6 +54,10 @@ def step_connect(ctx):
     if ctx.get('con') is None:
         ctx['con'] = get_connection(ctx['database'], read_only=True)
     require_tables(ctx['con'])
+    by_year = dict(ctx['con'].execute(
+        f"SELECT year, COUNT(*) FROM {config.CLAIMS_TABLE} GROUP BY year ORDER BY year").fetchall())
+    ctx['data'] = dict(claims_rows_by_year={str(y): n for y, n in by_year.items()},
+                       claims_rows_total=sum(by_year.values()))
 
 
 def step_load_claims(ctx):

@@ -20,6 +20,7 @@ flowchart LR
     n_db_["db/"]
     n_errors_py["errors.py"]
     n_figures_["figures/"]
+    n_gitinfo_py["gitinfo.py"]
     n_loaders_["loaders/"]
     n_pipeline_py["pipeline.py"]
     n_reporting_["reporting/"]
@@ -37,10 +38,14 @@ flowchart LR
   n_errors_py --> n_pipeline_py
   n_figures_ --> n_pipeline_py
   n_figures_ --> n_reporting_
+  n_gitinfo_py --> n_errors_py
+  n_gitinfo_py --> n_reporting_
+  n_gitinfo_py --> n_scripts_
   n_loaders_ --> n_db_
   n_loaders_ --> n_pipeline_py
   n_pipeline_py --> n_notebooks_
   n_reporting_ --> n_pipeline_py
+  n_reporting_ --> n_scripts_
   n__githooks_ -. runs .-> n_scripts_
   n__github_workflows_ -. runs .-> n_scripts_
   csv -- "convert_cms_to_parquet.py" --> pq
