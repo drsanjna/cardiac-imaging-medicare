@@ -2,33 +2,14 @@
 import json
 import os
 import platform
-import subprocess
 import traceback
 import urllib.request
 from datetime import datetime, timezone
 
 from . import config
+from .gitinfo import git as _git, repo_slug as _repo_slug
 
 ISSUE_LABEL = 'notebook-error'
-
-
-def _git(*args):
-    try:
-        return subprocess.check_output(['git', *args], cwd=config.REPO_ROOT, text=True,
-                                       stderr=subprocess.DEVNULL).strip()
-    except Exception:
-        return ''
-
-
-def _repo_slug():
-    """owner/name from GITHUB_REPOSITORY or the origin remote URL."""
-    slug = os.environ.get('GITHUB_REPOSITORY')
-    if slug:
-        return slug
-    url = _git('remote', 'get-url', 'origin')
-    if 'github.com' not in url:
-        return None
-    return url.split('github.com')[-1].lstrip(':/').removesuffix('.git')
 
 
 def format_report(exc, step):
