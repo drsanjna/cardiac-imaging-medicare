@@ -146,9 +146,42 @@ def list_conversations(run_id=None, stem=None):
         except ValueError:
             continue
         if (run_id is None or c['run_id'] == run_id) and (stem is None or c['stem'] == stem):
-            out.append({k: c[k] for k in ('id', 'run_id', 'stem', 'label', 'title', 'started', 'updated',
-                                          'outcome', 'outcome_note', 'messages', 'backend')})
+            out.append({k: c.get(k) for k in ('id', 'run_id', 'stem', 'label', 'title', 'started', 'updated',
+                                              'outcome', 'outcome_note', 'messages', 'backend', 'session_id',
+                                              'handed_off', 'app_session')})
     return out
+
+
+def with_html(conv):
+    """Copy of a conversation for the browser: every message gains rendered Markdown (`html`); API history dropped."""
+    from .markdown import render
+    out = {k: v for k, v in conv.items() if k != 'api_messages'}
+    out['messages'] = [dict(m, html=render(m.get('text', ''))) for m in conv.get('messages', [])]
+    return out
+
+
+def open_in_claude_app(conv_id):
+    """Hand a Claude Code discussion to the Claude desktop app (`claude --desktop --resume <session>`), where it stays in
+    the session sidebar. Later messages typed in the panel continue on a fork, so the two never interleave."""
+    conv = load(conv_id)
+    if conv.get('backend') != 'claude-code' or not conv.get('session_id'):
+        raise ValueError('Only discussions answered by Claude Code can be opened in the Claude app.')
+    binary = claude_binary()
+    if not binary:
+        raise RuntimeError('Claude Code was not found on this Mac.')
+    out = _open_desktop([binary, '--desktop', '--resume', conv['session_id']])
+    text = (out.stdout or '') + (out.stderr or '')
+    if 'Opening session' not in text:
+        raise RuntimeError(f"The Claude app didn't accept the session: {text.strip()[:300] or 'no output'}")
+    conv['handed_off'], conv['app_session'] = True, f"local_{conv['session_id']}"
+    save(conv)
+    return conv
+
+
+def _open_desktop(cmd):
+    """Run a `claude --desktop …` command under a pseudo-terminal (it refuses redirected output) with no stdin."""
+    return subprocess.run(['script', '-q', '/dev/null', *cmd], capture_output=True, text=True, timeout=60,
+                          stdin=subprocess.DEVNULL, cwd=config.REPO_ROOT)
 
 
 def set_outcome(conv_id, outcome, note=''):
@@ -162,9 +195,48 @@ def set_outcome(conv_id, outcome, note=''):
 
 
 # ── backends ───────────────────────────────────────────────────────────────
+BUNDLED_CLI_GLOB = 'Library/Application Support/Claude/claude-code/*/*/claude.app/Contents/MacOS/claude'
+_LOGIN_CACHE = {}   # binary -> (checked_at, logged_in); re-checked every 20 s so a fresh login is picked up live
+
+
+def _version_key(path):
+    """Sort key from the version folder of a bundled CLI path (…/claude-code/2.1.308/…)."""
+    part = Path(path).parents[4].name
+    return tuple(int(x) if x.isdigit() else 0 for x in part.split('.'))
+
+
+def claude_binary():
+    """Claude Code CLI to use: CARDIAC_CLAUDE_BIN or `claude` on PATH, else the newest copy bundled with the Claude desktop app."""
+    found = shutil.which(config.CLAUDE_BIN)
+    if found:
+        return found
+    bundled = sorted(Path.home().glob(BUNDLED_CLI_GLOB), key=_version_key)
+    return str(bundled[-1]) if bundled else None
+
+
+def claude_logged_in(binary):
+    """Whether `binary auth status` reports a login usable outside the desktop app (cached for 20 s)."""
+    import time
+    now = time.time()
+    cached = _LOGIN_CACHE.get(binary)
+    if cached and now - cached[0] < 20:
+        return cached[1]
+    try:
+        # stdin=DEVNULL: otherwise the CLI waits for input inherited from the server process and times out.
+        out = subprocess.run([binary, 'auth', 'status'], capture_output=True, text=True, timeout=20,
+                             stdin=subprocess.DEVNULL)
+        ok = bool(json.loads(out.stdout or '{}').get('loggedIn'))
+    except (OSError, ValueError, subprocess.SubprocessError):
+        ok = False
+    _LOGIN_CACHE[binary] = (now, ok)
+    return ok
+
+
 def _run_cli(cmd):
     """Run the Claude Code CLI from the repo root (separate function so tests can replace it)."""
-    return subprocess.run(cmd, cwd=config.REPO_ROOT, capture_output=True, text=True, timeout=900)
+    # stdin=DEVNULL: `claude -p` reads piped stdin as extra input and would block on the server's inherited stdin.
+    return subprocess.run(cmd, cwd=config.REPO_ROOT, capture_output=True, text=True, timeout=900,
+                          stdin=subprocess.DEVNULL)
 
 
 class ClaudeCodeBackend:
@@ -174,16 +246,19 @@ class ClaudeCodeBackend:
 
     @staticmethod
     def available():
-        """True when the Claude Code CLI is installed."""
-        return shutil.which(config.CLAUDE_BIN) is not None
+        """True when a Claude Code CLI is found and logged in."""
+        binary = claude_binary()
+        return bool(binary) and claude_logged_in(binary)
 
     def reply(self, conv, message, ctx):
         """Send `message` and return Claude's answer; stores the session id on `conv`."""
-        cmd = [shutil.which(config.CLAUDE_BIN), '-p', message, '--output-format', 'json',
+        cmd = [claude_binary(), '-p', message, '--output-format', 'json',
                '--tools', 'Read,Grep,Glob', '--permission-mode', 'dontAsk',
                '--add-dir', str(Path(ctx['image']).parent), '--model', config.CHAT_MODEL]
         if conv.get('session_id'):
             cmd += ['--resume', conv['session_id']]
+            if conv.get('handed_off'):   # the original now lives in the Claude app: continue on a copy, never interleave
+                cmd += ['--fork-session']
         else:
             cmd += ['--append-system-prompt', context_text(ctx)]
         out = _run_cli(cmd)
@@ -194,6 +269,7 @@ class ClaudeCodeBackend:
         if data.get('is_error'):
             raise RuntimeError(f"Claude Code error: {data.get('result') or data.get('subtype')}")
         conv['session_id'] = data.get('session_id') or conv.get('session_id')
+        conv['handed_off'] = False
         return data.get('result', '')
 
 
@@ -256,11 +332,22 @@ class HandoffBackend:
         return True
 
     def reply(self, conv, message, ctx):
-        """Explain how to enable live chat and return the full prompt to copy."""
-        return ("Live chat isn't set up on this Mac yet, so here's a ready-made prompt — copy it into Claude Code "
-                "(it already includes the chart's code, tables and data model). To chat right here instead, install "
-                "Claude Code (`brew install --cask claude-code`, then run `claude` once to log in) and restart the app.\n\n"
-                f"---\n{context_text(ctx)}\n\n# My hypothesis\n{message}")
+        """Explain the one step that enables live chat here, and return the full prompt to copy meanwhile."""
+        return f"{setup_hint()}\n\n---\n{context_text(ctx)}\n\n# My hypothesis\n{message}"
+
+
+def setup_hint():
+    """Plain-English instruction for turning on live chat on this Mac (depends on what is installed)."""
+    binary = claude_binary()
+    if binary:
+        return ("Live chat is one step away: Claude Code is already on this Mac (it comes with the Claude app) but isn't "
+                "logged in for use outside the app. Run this once in Terminal, approve the login in your browser, then "
+                f"click Send again — no restart needed:\n\n    \"{binary}\" auth login\n\n"
+                "Meanwhile, here's a ready-made prompt you can paste into Claude Code (it includes the chart's code, "
+                "tables and data model).")
+    return ("Live chat isn't set up on this Mac yet. Install Claude Code (`brew install --cask claude-code`, then run "
+            "`claude auth login` once) and click Send again. Meanwhile, here's a ready-made prompt you can paste into "
+            "Claude Code (it includes the chart's code, tables and data model).")
 
 
 BACKENDS = {'claude-code': ClaudeCodeBackend, 'api': AnthropicBackend, 'handoff': HandoffBackend}

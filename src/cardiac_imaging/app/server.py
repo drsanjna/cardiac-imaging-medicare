@@ -71,7 +71,7 @@ class Handler(SimpleHTTPRequestHandler):
                                   | {'code': [dict(ref=r, path=p, src=s) for r, p, s in ctx['code']],
                                      'tables': [n for n, _ in ctx['tables']]})
             if url.path == '/api/conversations':
-                return self._json(200, chat.list_conversations(q.get('run'), q.get('stem')))
+                return self._json(200, [chat.with_html(c) for c in chat.list_conversations(q.get('run'), q.get('stem'))])
             return self._json(404, {'error': 'unknown endpoint'})
         except (KeyError, FileNotFoundError, ValueError) as e:
             return self._json(400, {'error': str(e)})
@@ -97,11 +97,13 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(200, {'message': 'Downloaded.'})
             if path == '/api/chat':
                 conv = chat.send(b['run'], b['stem'], b['message'].strip(), b.get('conversation'))
-                return self._json(200, conv | {'api_messages': None})
+                return self._json(200, chat.with_html(conv))
+            if path == '/api/open-in-app':
+                return self._json(200, chat.with_html(chat.open_in_claude_app(b['conversation'])))
             if path == '/api/outcome':
-                return self._json(200, chat.set_outcome(b['conversation'], b['outcome'], b.get('note', '')) | {'api_messages': None})
+                return self._json(200, chat.with_html(chat.set_outcome(b['conversation'], b['outcome'], b.get('note', ''))))
             return self._json(404, {'error': 'unknown endpoint'})
-        except restore.RestoreError as e:
+        except (restore.RestoreError, RuntimeError) as e:
             return self._json(409, {'error': str(e)})
         except (KeyError, ValueError, FileNotFoundError) as e:
             return self._json(400, {'error': f'bad request: {e}'})

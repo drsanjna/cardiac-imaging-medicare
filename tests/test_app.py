@@ -83,12 +83,59 @@ def test_backend_errors_are_shown_not_raised(run_copy):
     assert conv['messages'][-1]['text'] == '⚠️ no network'
 
 
-def test_handoff_backend_gives_full_prompt(run_copy):
-    """Without a model, the reply is a ready-made prompt containing the code and the hypothesis."""
+def test_handoff_backend_gives_full_prompt(run_copy, monkeypatch):
+    """Without a model, the reply is a ready-made prompt containing the code and the hypothesis, plus setup steps."""
+    monkeypatch.setattr(chat, 'claude_binary', lambda: None)
     conv = chat.send(run_copy, 'figure9_density_irr_forest', 'Cardiologist IRR is confounded by urbanicity',
                      engine=chat.HandoffBackend())
     text = conv['messages'][-1]['text']
     assert 'def plot_forest' in text and 'confounded by urbanicity' in text and 'brew install' in text
+
+
+def test_setup_hint_when_bundled_cli_not_logged_in(monkeypatch):
+    """If Claude Code is present but logged out, the hint gives the exact one-time login command for that binary."""
+    monkeypatch.setattr(chat, 'claude_binary', lambda: '/Apps/Claude/claude')
+    hint = chat.setup_hint()
+    assert '"/Apps/Claude/claude" auth login' in hint and 'no restart needed' in hint and 'brew' not in hint
+
+
+def test_claude_binary_prefers_path_then_newest_bundled(tmp_path, monkeypatch):
+    """`claude` on PATH wins; otherwise the newest version bundled with the desktop app is used."""
+    for v in ('2.1.255', '2.1.308', '2.1.99'):
+        b = tmp_path / 'Library/Application Support/Claude/claude-code' / v / 'abc/claude.app/Contents/MacOS/claude'
+        b.parent.mkdir(parents=True)
+        b.write_text('')
+    monkeypatch.setattr(chat.Path, 'home', staticmethod(lambda: tmp_path))
+    monkeypatch.setattr(chat.shutil, 'which', lambda _: None)
+    assert '/2.1.308/' in chat.claude_binary()
+    monkeypatch.setattr(chat.shutil, 'which', lambda _: '/usr/local/bin/claude')
+    assert chat.claude_binary() == '/usr/local/bin/claude'
+    monkeypatch.setattr(chat.shutil, 'which', lambda _: None)
+    monkeypatch.setattr(chat.Path, 'home', staticmethod(lambda: tmp_path / 'empty'))
+    assert chat.claude_binary() is None
+
+
+def test_claude_logged_in_reads_auth_status(tmp_path, monkeypatch):
+    """Login state comes from `auth status` JSON; errors count as logged out; results are cached briefly."""
+    fake = tmp_path / 'claude'
+    fake.write_text('#!/bin/sh\necho \'{"loggedIn": true, "authMethod": "claude.ai"}\'\n')
+    fake.chmod(0o755)
+    monkeypatch.setattr(chat, '_LOGIN_CACHE', {})
+    assert chat.claude_logged_in(str(fake)) is True
+    fake.write_text('#!/bin/sh\necho \'{"loggedIn": false}\'\n')
+    assert chat.claude_logged_in(str(fake)) is True          # cached
+    monkeypatch.setattr(chat, '_LOGIN_CACHE', {})
+    assert chat.claude_logged_in(str(fake)) is False
+    assert chat.claude_logged_in(str(tmp_path / 'missing')) is False
+
+
+def test_claude_code_backend_unavailable_when_logged_out(monkeypatch):
+    """A logged-out CLI doesn't count as an available backend (so auto falls back instead of erroring)."""
+    monkeypatch.setattr(chat, 'claude_binary', lambda: '/x/claude')
+    monkeypatch.setattr(chat, 'claude_logged_in', lambda b: False)
+    assert chat.ClaudeCodeBackend.available() is False
+    monkeypatch.setattr(chat, 'claude_logged_in', lambda b: True)
+    assert chat.ClaudeCodeBackend.available() is True
 
 
 def test_backend_selection(monkeypatch):
@@ -166,7 +213,8 @@ def test_server_session_context_and_chat(app):
     assert status == 200 and ctx['code'][0]['ref'] == 'figures.decomposition:plot_figure1'
     assert _req(f'{base}/api/chat', {'run': run, 'stem': 'figure1_decomposition', 'message': 'x'})[0] == 403
     status, conv = _req(f'{base}/api/chat', {'run': run, 'stem': 'figure1_decomposition', 'message': 'x'}, token=s['token'])
-    assert status == 200 and conv['api_messages'] is None and len(conv['messages']) == 2
+    assert status == 200 and 'api_messages' not in conv and len(conv['messages']) == 2
+    assert all('html' in m for m in conv['messages'])          # both sides arrive rendered as Markdown
     status, conv = _req(f'{base}/api/outcome', {'conversation': conv['id'], 'outcome': 'inconclusive'}, token=s['token'])
     assert status == 200 and conv['outcome'] == 'inconclusive'
     assert _req(f'{base}/api/conversations?run={run}')[1][0]['outcome'] == 'inconclusive'
@@ -192,3 +240,81 @@ def test_server_restore_endpoint(app):
     assert out['changed'] and (config.REPO_ROOT / 'src' / 'app.py').read_text() == 'VERSION = 1\n'
     status, out = _req(f'{base}/api/undo', {'backup_tag': out['backup_tag']}, token=token)
     assert status == 200 and (config.REPO_ROOT / 'src' / 'app.py').read_text() == 'VERSION = 77\n'
+
+
+def test_cli_calls_never_inherit_stdin(monkeypatch):
+    """Both CLI calls pass stdin=DEVNULL (an inherited open stdin made `claude` hang until the timeout)."""
+    seen = []
+
+    class Done:
+        """Fake CompletedProcess."""
+        stdout, stderr = '{"loggedIn": true}', ''
+
+    monkeypatch.setattr(chat.subprocess, 'run', lambda cmd, **kw: seen.append(kw) or Done())
+    monkeypatch.setattr(chat, '_LOGIN_CACHE', {})
+    chat.claude_logged_in('/x/claude')
+    chat._run_cli(['/x/claude', '-p', 'hi'])
+    assert [kw.get('stdin') for kw in seen] == [chat.subprocess.DEVNULL, chat.subprocess.DEVNULL]
+
+
+def _claude_code_conv(run_copy, monkeypatch):
+    """A saved conversation answered by a (fake) Claude Code backend, with a session id."""
+    class Done:
+        """Fake CompletedProcess for `claude -p`."""
+        stdout = json.dumps({'result': 'ok', 'session_id': 'sess-A', 'is_error': False})
+        stderr = ''
+    calls = []
+    monkeypatch.setattr(chat, 'claude_binary', lambda: '/x/claude')
+    monkeypatch.setattr(chat, '_run_cli', lambda cmd: calls.append(cmd) or Done())
+    conv = chat.send(run_copy, 'figure1_decomposition', 'q1', engine=chat.ClaudeCodeBackend())
+    return conv, calls
+
+
+def test_open_in_claude_app_hands_off_and_follow_ups_fork(run_copy, monkeypatch):
+    """`--desktop --resume <session>` runs under a pseudo-terminal; later panel messages fork instead of interleaving."""
+    conv, calls = _claude_code_conv(run_copy, monkeypatch)
+    desktop = []
+
+    class Opened:
+        """Fake output of `claude --desktop`."""
+        stdout, stderr = 'Opening session sess-A in Claude Desktop', ''
+    monkeypatch.setattr(chat, '_open_desktop', lambda cmd: desktop.append(cmd) or Opened())
+    conv = chat.open_in_claude_app(conv['id'])
+    assert desktop == [['/x/claude', '--desktop', '--resume', 'sess-A']]
+    assert conv['handed_off'] is True and conv['app_session'] == 'local_sess-A'
+    chat.send(run_copy, 'figure1_decomposition', 'q2', conv['id'], engine=chat.ClaudeCodeBackend())
+    assert '--fork-session' in calls[-1] and calls[-1][calls[-1].index('--resume') + 1] == 'sess-A'
+    assert chat.load(conv['id'])['handed_off'] is False             # the fork is now the panel's own session
+
+
+def test_open_in_claude_app_errors(run_copy, monkeypatch):
+    """Copy-paste conversations can't be handed off; a refusal from the app is reported in plain words."""
+    plain = chat.send(run_copy, 'figure1_decomposition', 'x', engine=chat.HandoffBackend())
+    with pytest.raises(ValueError, match='Only discussions answered by Claude Code'):
+        chat.open_in_claude_app(plain['id'])
+    conv, _ = _claude_code_conv(run_copy, monkeypatch)
+
+    class Refused:
+        """Fake failing output."""
+        stdout, stderr = '', '--desktop requires a Claude subscription login'
+    monkeypatch.setattr(chat, '_open_desktop', lambda cmd: Refused())
+    with pytest.raises(RuntimeError, match="didn't accept"):
+        chat.open_in_claude_app(conv['id'])
+
+
+def test_open_desktop_uses_pty_and_no_stdin(monkeypatch):
+    """The desktop hand-off runs through `script` (a pseudo-terminal) with stdin closed."""
+    seen = []
+    monkeypatch.setattr(chat.subprocess, 'run', lambda cmd, **kw: seen.append((cmd, kw)))
+    chat._open_desktop(['/x/claude', '--desktop', '--resume', 's'])
+    cmd, kw = seen[0]
+    assert cmd[:3] == ['script', '-q', '/dev/null'] and kw['stdin'] == chat.subprocess.DEVNULL
+
+
+def test_server_open_in_app_endpoint(app, monkeypatch):
+    """POST /api/open-in-app returns 409 with a readable message when the conversation can't be handed off."""
+    base, run = app
+    token = _req(f'{base}/api/session')[1]['token']
+    conv = _req(f'{base}/api/chat', {'run': run, 'stem': 'figure1_decomposition', 'message': 'x'}, token=token)[1]
+    status, out = _req(f'{base}/api/open-in-app', {'conversation': conv['id']}, token=token)
+    assert status == 400 and 'Only discussions answered by Claude Code' in out['error']

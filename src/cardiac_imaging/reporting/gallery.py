@@ -74,7 +74,19 @@ th:first-child, td:first-child { text-align:left; } thead th { position:sticky; 
 #d-head button { background:var(--chip); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:4px 10px; cursor:pointer; }
 #d-body { flex:1; overflow:auto; padding:12px 16px; }
 #d-body details { margin-bottom:10px; } #d-body pre { margin:0; padding:10px; overflow:auto; font-size:12px; max-height:320px; }
-.msg { margin:10px 0; padding:10px 12px; border-radius:10px; white-space:pre-wrap; font-size:14px; line-height:1.5; }
+.msg { margin:10px 0; padding:10px 12px; border-radius:10px; white-space:pre-wrap; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+.msg .md { white-space:normal; }
+.md > :first-child { margin-top:0; } .md > :last-child { margin-bottom:0; }
+.md p { margin:0 0 8px; } .md ul, .md ol { margin:0 0 8px; padding-left:22px; } .md li { margin:2px 0; }
+.md h3, .md h4, .md h5, .md h6 { margin:12px 0 6px; line-height:1.3; } .md h3 { font-size:16px; } .md h4 { font-size:15px; } .md h5, .md h6 { font-size:14px; }
+.md code { font-family:ui-monospace, Menlo, monospace; font-size:12.5px; background:var(--chip); padding:1px 5px; border-radius:5px; }
+.md pre { background:var(--chip); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow:auto; margin:0 0 8px; max-height:420px; }
+.md pre code { background:none; padding:0; font-size:12px; white-space:pre; }
+.md blockquote { margin:0 0 8px; padding:2px 12px; border-left:3px solid var(--accent); color:var(--muted); }
+.md hr { border:0; border-top:1px solid var(--line); margin:10px 0; }
+.md a { color:var(--accent); }
+.md .md-table { overflow:auto; margin:0 0 8px; } .md table { border-collapse:collapse; font-size:13px; width:auto; }
+.md th, .md td { border:1px solid var(--line); padding:4px 8px; text-align:left; white-space:normal; } .md thead th { position:static; background:var(--chip); }
 .msg.user { background:var(--chip); } .msg.assistant { background:var(--bg); border:1px solid var(--line); }
 .msg .who { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
 #d-foot { border-top:1px solid var(--line); padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
@@ -137,10 +149,15 @@ async function api(path, body) {
   const data = await res.json().catch(() => ({error: `HTTP ${res.status}`}));
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`); return data;
 }
-const BACKEND = {'claude-code': 'Claude Code (reads the repo, read-only)', 'api': 'Claude via the Anthropic API', 'handoff': 'copy-paste mode (Claude Code not installed)'};
+const BACKEND = {'claude-code': 'Claude Code (reads the repo, read-only)', 'api': 'Claude via the Anthropic API', 'handoff': 'copy-paste mode — live chat needs a one-time login (send a message to see how)'};
 function thread() { $('#d-thread').innerHTML = (conv ? conv.messages : []).map(m =>
-  `<div class="msg ${m.role}"><div class="who">${m.role === 'user' ? 'You' : 'Claude'}</div>${esc(m.text)}</div>`).join('');
-  $('#d-outcome').value = conv ? conv.outcome : 'open'; $('#d-outcome-row').hidden = !conv; $('#d-body').scrollTop = 1e9; }
+  `<div class="msg ${m.role}"><div class="who">${m.role === 'user' ? 'You' : 'Claude'}</div>${m.html ? `<div class="md">${m.html}</div>` : esc(m.text)}</div>`).join('');
+  $('#d-outcome').value = conv ? conv.outcome : 'open'; $('#d-outcome-row').hidden = !conv;
+  const canOpen = !!(conv && conv.id && conv.backend === 'claude-code' && conv.session_id);
+  $('#d-open-app').hidden = !canOpen;
+  $('#d-app-note').textContent = conv && conv.app_session ? (conv.handed_off ? 'Opened in the Claude app — find it in the sidebar.'
+    : 'Continued here on a copy; the original is in the Claude app.') : '';
+  $('#d-body').scrollTop = 1e9; }
 async function openDiscuss(stem) {
   dStem = stem; conv = null; const f = figs.find(x => x.stem === stem);
   $('#d-title').textContent = `${f.label} — ${f.title}`; $('#discuss').hidden = false; thread();
@@ -170,6 +187,11 @@ $('#d-msg').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaK
 $('#d-outcome').onchange = async () => { if (!conv || !conv.id) return;
   conv = await api('/api/outcome', {conversation: conv.id, outcome: $('#d-outcome').value}); thread(); };
 $('#d-new').onclick = () => { conv = null; thread(); };
+$('#d-open-app').onclick = async () => { if (!conv || !conv.id) return;
+  $('#d-open-app').disabled = true; $('#d-open-app').textContent = 'Opening…';
+  try { conv = await api('/api/open-in-app', {conversation: conv.id}); }
+  catch (e) { $('#d-app-note').textContent = '⚠️ ' + e.message; }
+  $('#d-open-app').disabled = false; $('#d-open-app').textContent = 'Continue in Claude app'; thread(); };
 $('#d-close').onclick = () => { $('#discuss').hidden = true; };
 document.querySelectorAll('[data-discuss]').forEach(b => b.addEventListener('click', () => openDiscuss(b.dataset.discuss)));
 """
@@ -395,7 +417,9 @@ def build(run_dir):
   <div id="d-foot"><textarea id="d-msg" placeholder="Describe a hypothesis about this chart — e.g. “The CTA growth is concentrated in states that expanded office-based imaging.” (⌘↵ to send)"></textarea>
     <div class="row"><button class="primary" id="d-send">Send</button>
       <span id="d-outcome-row" hidden>Outcome: <select id="d-outcome"><option value="open">open</option><option value="supported">supported</option>
-      <option value="not_supported">not supported</option><option value="inconclusive">inconclusive</option></select></span></div></div>
+      <option value="not_supported">not supported</option><option value="inconclusive">inconclusive</option></select></span>
+      <button id="d-open-app" hidden title="Opens this discussion in the Claude desktop app, where it stays in your session list">Continue in Claude app</button>
+      <span class="note" id="d-app-note"></span></div></div>
 </aside>
 <script type="application/json" id="figdata">{figdata}</script>
 <script>{JS}</script>
