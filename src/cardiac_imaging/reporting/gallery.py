@@ -56,36 +56,137 @@ summary { cursor:pointer; padding:10px 14px; font-weight:600; } summary a { font
 table { border-collapse:collapse; font-size:13px; width:100%; font-variant-numeric:tabular-nums; }
 th, td { padding:5px 10px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
 th:first-child, td:first-child { text-align:left; } thead th { position:sticky; top:0; background:var(--panel); }
-#lightbox { position:fixed; inset:0; background:rgba(10,10,10,.92); z-index:20; display:flex; flex-direction:column; }
+#lightbox { position:fixed; inset:0; background:rgba(10,10,10,.94); z-index:20; display:flex; flex-direction:column; }
 #lightbox[hidden] { display:none; }
-#lb-stage { flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; }
-#lb-img { max-width:96vw; max-height:84vh; background:#fff; cursor:zoom-in; }
-#lb-stage.zoom { align-items:flex-start; justify-content:flex-start; } #lb-stage.zoom #lb-img { max-width:none; max-height:none; cursor:zoom-out; }
-#lb-bar { color:#eee; display:flex; gap:10px; align-items:center; padding:10px 16px; font-size:14px; }
-#lb-bar button { background:#333; color:#fff; border:0; border-radius:8px; padding:6px 12px; font-size:14px; cursor:pointer; }
-#lb-cap { flex:1; }
+#lb-stage { flex:1; overflow:hidden; position:relative; cursor:grab; touch-action:none; }
+#lb-stage.dragging { cursor:grabbing; }
+#lb-img { position:absolute; left:0; top:0; transform-origin:0 0; background:#fff; user-select:none; -webkit-user-drag:none; max-width:none; }
+#lb-bar { color:#eee; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 16px; font-size:14px; }
+#lb-bar button, #lb-bar a { background:#333; color:#fff; border:0; border-radius:8px; padding:6px 12px; font-size:14px; cursor:pointer; text-decoration:none; }
+#lb-cap { flex:1; min-width:160px; } #lb-zoom { min-width:52px; text-align:center; font-variant-numeric:tabular-nums; }
+.card-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.card-actions button { background:var(--chip); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:4px 10px; font:inherit; font-size:13px; cursor:pointer; }
+#discuss { position:fixed; top:0; right:0; bottom:0; width:min(560px, 100vw); background:var(--panel); border-left:1px solid var(--line);
+  z-index:25; display:flex; flex-direction:column; box-shadow:-8px 0 30px rgba(0,0,0,.2); }
+#discuss[hidden] { display:none; }
+#d-head { padding:14px 16px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:flex-start; }
+#d-head h3 { margin:0; font-size:16px; flex:1; } #d-head .note { margin:2px 0 0; }
+#d-head button { background:var(--chip); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:4px 10px; cursor:pointer; }
+#d-body { flex:1; overflow:auto; padding:12px 16px; }
+#d-body details { margin-bottom:10px; } #d-body pre { margin:0; padding:10px; overflow:auto; font-size:12px; max-height:320px; }
+.msg { margin:10px 0; padding:10px 12px; border-radius:10px; white-space:pre-wrap; font-size:14px; line-height:1.5; }
+.msg.user { background:var(--chip); } .msg.assistant { background:var(--bg); border:1px solid var(--line); }
+.msg .who { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+#d-foot { border-top:1px solid var(--line); padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
+#d-foot textarea { width:100%; min-height:72px; resize:vertical; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:10px; padding:8px 10px; font:inherit; }
+#d-foot .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+#d-foot button, #d-foot select { background:var(--chip); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 12px; font:inherit; font-size:14px; cursor:pointer; }
+#d-foot button.primary { background:var(--accent); color:#fff; border-color:transparent; }
+.prev { font-size:13px; margin:6px 0; } .prev a { cursor:pointer; }
 footer { color:var(--muted); font-size:12px; padding:30px 0 40px; }
 """
 
 JS = """
 const figs = JSON.parse(document.getElementById('figdata').textContent);
-const lb = document.getElementById('lightbox'), img = document.getElementById('lb-img'),
-      cap = document.getElementById('lb-cap'), stage = document.getElementById('lb-stage');
-let cur = 0;
+const RUN = document.body.dataset.run;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ── zoomable viewer: wheel / pinch / +− buttons to zoom, drag to pan, double-click to toggle, 0 = fit ──
+const lb = $('#lightbox'), stage = $('#lb-stage'), img = $('#lb-img');
+let cur = 0, scale = 1, fitScale = 1, tx = 0, ty = 0;
+function apply() { img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; $('#lb-zoom').textContent = Math.round(scale / fitScale * 100) + '%'; }
+function fit() { const r = stage.getBoundingClientRect(); if (!img.naturalWidth) return;
+  fitScale = Math.min(r.width / img.naturalWidth, r.height / img.naturalHeight); scale = fitScale;
+  tx = (r.width - img.naturalWidth * scale) / 2; ty = (r.height - img.naturalHeight * scale) / 2; apply(); }
+function zoomAt(factor, cx, cy) { const r = stage.getBoundingClientRect();
+  cx = cx ?? r.width / 2; cy = cy ?? r.height / 2;
+  const ns = Math.min(Math.max(scale * factor, fitScale * 0.5), fitScale * 12);
+  tx = cx - (cx - tx) * ns / scale; ty = cy - (cy - ty) * ns / scale; scale = ns; apply(); }
 function show(i) { cur = (i + figs.length) % figs.length; const f = figs[cur];
-  img.src = f.src; img.alt = f.label + ' ' + f.title; cap.textContent = `${f.label} — ${f.title}  (${cur + 1}/${figs.length})`;
-  stage.classList.remove('zoom'); lb.hidden = false; }
+  img.onload = fit; img.src = f.src; img.alt = f.label + ' ' + f.title;
+  $('#lb-cap').textContent = `${f.label} — ${f.title}  (${cur + 1}/${figs.length})`;
+  $('#lb-interactive').hidden = !f.interactive; if (f.interactive) $('#lb-interactive').href = f.interactive;
+  lb.hidden = false; }
+stage.addEventListener('wheel', e => { e.preventDefault(); const r = stage.getBoundingClientRect();
+  zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+const ptrs = new Map(); let pinch0 = null;
+stage.addEventListener('pointerdown', e => { stage.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY}); stage.classList.add('dragging'); });
+stage.addEventListener('pointermove', e => { if (!ptrs.has(e.pointerId)) return; const p = ptrs.get(e.pointerId);
+  if (ptrs.size === 1) { tx += e.clientX - p.x; ty += e.clientY - p.y; apply(); }
+  ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = stage.getBoundingClientRect();
+    if (pinch0) zoomAt(d / pinch0, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); pinch0 = d; } });
+['pointerup', 'pointercancel'].forEach(t => stage.addEventListener(t, e => { ptrs.delete(e.pointerId); pinch0 = null; if (!ptrs.size) stage.classList.remove('dragging'); }));
+stage.addEventListener('dblclick', e => { const r = stage.getBoundingClientRect();
+  if (scale > fitScale * 1.05) fit(); else zoomAt(2.5, e.clientX - r.left, e.clientY - r.top); });
+window.addEventListener('resize', () => { if (!lb.hidden) fit(); });
 document.querySelectorAll('[data-fig]').forEach(b => b.addEventListener('click', () => show(+b.dataset.fig)));
-document.getElementById('lb-prev').onclick = () => show(cur - 1);
-document.getElementById('lb-next').onclick = () => show(cur + 1);
-document.getElementById('lb-close').onclick = () => { lb.hidden = true; };
-img.onclick = () => stage.classList.toggle('zoom');
-document.addEventListener('keydown', e => { if (lb.hidden) return;
-  if (e.key === 'ArrowRight') show(cur + 1); else if (e.key === 'ArrowLeft') show(cur - 1); else if (e.key === 'Escape') lb.hidden = true; });
+$('#lb-prev').onclick = () => show(cur - 1); $('#lb-next').onclick = () => show(cur + 1);
+$('#lb-in').onclick = () => zoomAt(1.4); $('#lb-out').onclick = () => zoomAt(1 / 1.4); $('#lb-fit').onclick = fit;
+$('#lb-close').onclick = () => { lb.hidden = true; };
+$('#lb-discuss').onclick = () => openDiscuss(figs[cur].stem);
+document.addEventListener('keydown', e => { if (lb.hidden || !$('#discuss').hidden) return;
+  if (e.key === 'ArrowRight') show(cur + 1); else if (e.key === 'ArrowLeft') show(cur - 1); else if (e.key === 'Escape') lb.hidden = true;
+  else if (e.key === '+' || e.key === '=') zoomAt(1.4); else if (e.key === '-') zoomAt(1 / 1.4); else if (e.key === '0') fit(); });
+
+// ── discuss a chart with Claude (needs the local app: python -m cardiac_imaging.app) ──
+let APP = null, conv = null, dStem = null;
+async function api(path, body) {
+  const res = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json', 'X-App-Token': APP.token}, body: JSON.stringify(body)});
+  const data = await res.json().catch(() => ({error: `HTTP ${res.status}`}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`); return data;
+}
+const BACKEND = {'claude-code': 'Claude Code (reads the repo, read-only)', 'api': 'Claude via the Anthropic API', 'handoff': 'copy-paste mode (Claude Code not installed)'};
+function thread() { $('#d-thread').innerHTML = (conv ? conv.messages : []).map(m =>
+  `<div class="msg ${m.role}"><div class="who">${m.role === 'user' ? 'You' : 'Claude'}</div>${esc(m.text)}</div>`).join('');
+  $('#d-outcome').value = conv ? conv.outcome : 'open'; $('#d-outcome-row').hidden = !conv; $('#d-body').scrollTop = 1e9; }
+async function openDiscuss(stem) {
+  dStem = stem; conv = null; const f = figs.find(x => x.stem === stem);
+  $('#d-title').textContent = `${f.label} — ${f.title}`; $('#discuss').hidden = false; thread();
+  if (!APP) { try { APP = await api('/api/session'); } catch (e) { APP = null; } }
+  if (!APP) { $('#d-code').innerHTML = '<p class="note">Discussions need the local app. Start it with <code>python -m cardiac_imaging.app</code> and open this page from there.</p>';
+    $('#d-send').disabled = true; return; }
+  $('#d-send').disabled = false; $('#d-backend').textContent = 'Answering with: ' + (BACKEND[APP.chat_backend] || APP.chat_backend);
+  try {
+    const ctx = await api(`/api/context?run=${encodeURIComponent(RUN)}&stem=${encodeURIComponent(stem)}`);
+    $('#d-code').innerHTML = `<details><summary>Code that generated this chart (snapshot ${esc((ctx.snapshot || '').slice(0, 7))})</summary>` +
+      ctx.code.map(c => `<p class="note mono">${esc(c.ref)} — ${esc(c.path)}</p><pre class="mono">${esc(c.src)}</pre>`).join('') + '</details>';
+    const prev = await api(`/api/conversations?run=${encodeURIComponent(RUN)}&stem=${encodeURIComponent(stem)}`);
+    $('#d-prev').innerHTML = prev.length ? '<p class="note">Earlier discussions:</p>' + prev.map(p =>
+      `<div class="prev"><a data-conv="${esc(p.id)}">${esc((p.messages[0] || {}).text || '(empty)').slice(0, 90)}</a> · ${esc(p.outcome.replace('_', ' '))}</div>`).join('') : '';
+  } catch (e) { $('#d-code').innerHTML = `<p class="note">Couldn't load the chart's code: ${esc(e.message)}</p>`; }
+}
+$('#d-prev').addEventListener('click', async e => { const a = e.target.closest('[data-conv]'); if (!a) return;
+  const list = await api(`/api/conversations?run=${encodeURIComponent(RUN)}&stem=${encodeURIComponent(dStem)}`);
+  conv = list.find(c => c.id === a.dataset.conv); thread(); });
+$('#d-send').onclick = async () => { const msg = $('#d-msg').value.trim(); if (!msg) return;
+  $('#d-send').disabled = true; $('#d-send').textContent = 'Thinking…';
+  (conv = conv || {messages: []}).messages.push({role: 'user', text: msg}); thread(); $('#d-msg').value = '';
+  try { conv = await api('/api/chat', {run: RUN, stem: dStem, message: msg, conversation: conv.id}); }
+  catch (e) { conv.messages.push({role: 'assistant', text: '⚠️ ' + e.message}); }
+  thread(); $('#d-send').disabled = false; $('#d-send').textContent = 'Send'; };
+$('#d-msg').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('#d-send').click(); });
+$('#d-outcome').onchange = async () => { if (!conv || !conv.id) return;
+  conv = await api('/api/outcome', {conversation: conv.id, outcome: $('#d-outcome').value}); thread(); };
+$('#d-new').onclick = () => { conv = null; thread(); };
+$('#d-close').onclick = () => { $('#discuss').hidden = true; };
+document.querySelectorAll('[data-discuss]').forEach(b => b.addEventListener('click', () => openDiscuss(b.dataset.discuss)));
 """
 
 
+def _when(iso):
+    """'Thu Oct 23, 2026, 10:44 PM' from an ISO timestamp (empty string if missing)."""
+    from datetime import datetime
+    try:
+        d = datetime.fromisoformat(str(iso).replace('Z', '+00:00')).astimezone()
+    except ValueError:
+        return str(iso or '')
+    return d.strftime('%a %b %-d, %Y, %-I:%M %p')
+
+
 def esc(x):
+    """HTML-escape any value."""
     return html.escape(str(x))
 
 
@@ -105,6 +206,7 @@ def fmt_num(v):
 
 
 def table_html(csv_path):
+    """Render a results CSV as an HTML table with compact number formatting."""
     df = pd.read_csv(csv_path, index_col=0)
     head = ''.join(f'<th>{esc(c)}</th>' for c in [df.index.name or ''] + list(df.columns))
     rows = ''.join('<tr>' + f'<td>{esc(i)}</td>' + ''.join(f'<td>{fmt_num(v)}</td>' for v in r) + '</tr>'
@@ -136,6 +238,7 @@ def make_thumbs(run_dir, figs, width=1400):
 
 
 def headline_cards(m):
+    """HTML stat cards for headline IRRs, steps completed and figure count."""
     cards = []
     for name, h in m.get('headline', {}).items():
         pstr = 'p&lt;0.001' if h['p'] < 0.001 else f"p={h['p']:.3f}"
@@ -226,12 +329,16 @@ def build(run_dir):
                 links = f'<a href="figures/{esc(f["stem"])}.png">PNG</a>'
                 if (tiff_dir / f'{f["stem"]}.tiff').exists():
                     links += f'<a href="figures/tiff/{esc(f["stem"])}.tiff">TIFF</a>'
+                if (run_dir / 'figures' / 'interactive' / f'{f["stem"]}.html').exists():
+                    links += f'<a href="figures/interactive/{esc(f["stem"])}.html">Interactive</a>'
                 media = (f'<button data-fig="{i}" aria-label="Open {esc(f["label"])} full screen">'
                          f'<img loading="lazy" src="figures/thumbs/{esc(f["stem"])}.png" alt="{esc(f["label"])}: {esc(f["title"])}"></button>')
+                acts = (f'<div class="card-actions"><button data-fig="{i}">🔍 Zoom</button>'
+                        f'<button data-discuss="{esc(f["stem"])}">💬 Discuss a hypothesis</button></div>')
             else:
-                links, media = '', '<div class="missing">Not produced in this run</div>'
+                links, media, acts = '', '<div class="missing">Not produced in this run</div>', ''
             cards.append(f'<figure class="card">{media}<figcaption><span class="label">{esc(f["label"])}</span>'
-                         f'<strong>{esc(f["title"])}</strong><p>{esc(f["caption"])}</p><div class="links">{links}</div>'
+                         f'<strong>{esc(f["title"])}</strong><p>{esc(f["caption"])}</p>{acts}<div class="links">{links}</div>'
                          '</figcaption></figure>')
         body.append(f'<section id="{sec.lower().replace(" ", "-")}"><h2>{esc(sec)}</h2><div class="grid">{"".join(cards)}</div></section>')
 
@@ -259,26 +366,37 @@ def build(run_dir):
              '<a href="figures/">figures/</a>', '<a href="tables/">tables/</a>']
     body.append('<section id="files"><h2>Files</h2><ul>' + ''.join(f'<li>{x}</li>' for x in files) + '</ul></section>')
 
-    figdata = json.dumps([dict(src=f'figures/{f["stem"]}.png', label=f['label'], title=f['title']) for f in present])
+    figdata = json.dumps([dict(src=f'figures/{f["stem"]}.png', label=f['label'], title=f['title'], stem=f['stem'],
+                               interactive=(f'figures/interactive/{f["stem"]}.html'
+                                            if (run_dir / 'figures' / 'interactive' / f'{f["stem"]}.html').exists() else None))
+                          for f in present]).replace('</', '<\\/')
     page = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Run {esc(m['run_id'])}</title><style>{CSS}</style></head>
-<body>
+<body data-run="{esc(m['run_id'])}">
 <header class="top"><div class="wrap">
   <a href="../index.html">← All runs</a>
-  <h1>Cardiac imaging run <span class="mono">{esc(m['run_id'])}</span></h1>
-  <div class="meta"><span class="badge {esc(m['status'])}">{esc(m['status'])}</span>
-    <span>started {esc(m['started'].replace('T', ' '))}</span><span>{m.get('seconds', 0):.0f} s</span>
-    <span>commit {commit}{' + uncommitted changes' if c.get('dirty') else ''}</span><span>branch {esc(c.get('branch', ''))}</span>
-    <span>{('pushed ' + esc(m['published']['at'])) if m.get('published') else 'not on GitHub yet'}</span>
-    <span class="mono">{esc(m.get('database', ''))}</span></div>
+  <h1>Results from {esc(_when(m['started']))}</h1>
+  <div class="meta"><span class="badge {esc(m['status'])}">{'completed' if m['status'] == 'ok' else esc(m['status'])}</span>
+    <span>{m.get('seconds', 0):.0f} s</span><span>{('saved to GitHub ' + esc(_when(m['published']['at']))) if m.get('published') else 'not yet saved to GitHub'}</span></div>
   <nav>{nav}</nav>
 </div></header>
 <main class="wrap">{''.join(body)}</main>
-<footer class="wrap">Generated by cardiac_imaging.reporting.gallery · click a chart for full screen (← → to browse, click image to zoom, Esc to close)</footer>
-<div id="lightbox" hidden><div id="lb-stage"><img id="lb-img" alt=""></div>
-  <div id="lb-bar"><button id="lb-prev" aria-label="Previous">←</button><span id="lb-cap"></span>
-  <button id="lb-next" aria-label="Next">→</button><button id="lb-close">Close</button></div></div>
+<footer class="wrap">Click a chart to zoom: scroll or pinch to zoom, drag to move, double-click to toggle, 0 to fit, ← → to browse.</footer>
+<div id="lightbox" hidden><div id="lb-stage"><img id="lb-img" alt="" draggable="false"></div>
+  <div id="lb-bar"><button id="lb-prev" aria-label="Previous chart">←</button><span id="lb-cap"></span>
+  <button id="lb-out" aria-label="Zoom out">−</button><span id="lb-zoom">100%</span><button id="lb-in" aria-label="Zoom in">+</button>
+  <button id="lb-fit">Fit</button><a id="lb-interactive" hidden target="_blank">Interactive</a>
+  <button id="lb-discuss">💬 Discuss</button><button id="lb-next" aria-label="Next chart">→</button><button id="lb-close">Close</button></div></div>
+<aside id="discuss" hidden aria-label="Discuss this chart">
+  <div id="d-head"><div style="flex:1"><h3 id="d-title"></h3><p class="note" id="d-backend"></p></div>
+    <button id="d-new">New</button><button id="d-close">Close</button></div>
+  <div id="d-body"><div id="d-code"></div><div id="d-prev"></div><div id="d-thread"></div></div>
+  <div id="d-foot"><textarea id="d-msg" placeholder="Describe a hypothesis about this chart — e.g. “The CTA growth is concentrated in states that expanded office-based imaging.” (⌘↵ to send)"></textarea>
+    <div class="row"><button class="primary" id="d-send">Send</button>
+      <span id="d-outcome-row" hidden>Outcome: <select id="d-outcome"><option value="open">open</option><option value="supported">supported</option>
+      <option value="not_supported">not supported</option><option value="inconclusive">inconclusive</option></select></span></div></div>
+</aside>
 <script type="application/json" id="figdata">{figdata}</script>
 <script>{JS}</script>
 </body></html>

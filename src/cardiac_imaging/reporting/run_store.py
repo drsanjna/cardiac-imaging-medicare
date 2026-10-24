@@ -17,18 +17,22 @@ class _Tee:
     """Write to the real stream and the run's console.log at the same time."""
 
     def __init__(self, stream, log):
+        """Remember the real stream and the log file."""
         self.stream, self.log = stream, log
 
     def write(self, s):
+        """Write text to both the real stream and the log."""
         self.stream.write(s)
         self.log.write(s)
         return len(s)
 
     def flush(self):
+        """Flush both streams."""
         self.stream.flush()
         self.log.flush()
 
     def __getattr__(self, name):
+        """Delegate any other attribute to the real stream."""
         return getattr(self.stream, name)
 
 
@@ -52,6 +56,7 @@ def data_fingerprint(parquet_dir=None):
 
 
 def package_versions():
+    """Installed versions of Python and the key analysis packages."""
     out = {'python': platform.python_version()}
     for p in PACKAGES:
         try:
@@ -62,6 +67,7 @@ def package_versions():
 
 
 def tag_for(run_id):
+    """Git tag name holding the code snapshot of a run."""
     return f'run-{run_id}'
 
 
@@ -69,6 +75,7 @@ class Run:
     """Context for one pipeline run: snapshots the code, redirects figures into the run folder, tees the console."""
 
     def __init__(self, label=None):
+        """Create the run folder, snapshot + tag the code, start teeing the console."""
         self.started = datetime.now().astimezone()
         head = gitinfo.git('rev-parse', 'HEAD')
         dirty = bool(gitinfo.git('status', '--porcelain', '--untracked-files=all'))
@@ -105,6 +112,7 @@ class Run:
               f"{(code.get('snapshot') or 'FAILED')[:12]}{' (includes uncommitted changes)' if dirty else ''}")
 
     def log_step(self, name, seconds, ok):
+        """Record one pipeline step's duration and status."""
         self.manifest['steps'].append(dict(step=name, seconds=round(seconds, 1), status='ok' if ok else 'failed'))
 
     def save_tables(self, tables):
@@ -133,9 +141,10 @@ class Run:
             print(f"  Could not save tables: {e}")
         m['figures'] = sorted(p.name for p in (self.dir / 'figures').glob('*.png'))
         m['bytes'] = sum(p.stat().st_size for p in self.dir.rglob('*') if p.is_file())
+        from . import gallery, index, insights, publish as pub   # imported here: they read manifests this module writes
+        _try(lambda: insights.annotate(self.dir, m, previous_run(m['run_id'])), 'summary')
         write_manifest(self.dir, m)
 
-        from . import gallery, index, publish as pub   # imported here: they read manifests this module writes
         _try(lambda: gallery.build(self.dir), 'gallery/PDF')
         if config.PUBLISH_RUNS if publish is None else publish:
             _try(lambda: pub.publish_run(self.dir), 'GitHub release')
@@ -151,6 +160,7 @@ class Run:
 
 
 def _try(fn, what):
+    """Run a reporting step, printing (not raising) any failure."""
     try:
         fn()
     except Exception as e:
@@ -158,16 +168,24 @@ def _try(fn, what):
 
 
 def _filter_table():
+    """The current run's filter log as a DataFrame (empty dict if nothing was filtered)."""
     import pandas as pd
     return {'filter_log': pd.DataFrame(audit.FILTER_LOG).set_index('filter')} if audit.FILTER_LOG else {}
 
 
 def read_manifest(run_dir):
+    """Load a run folder's manifest.json."""
     return json.loads((Path(run_dir) / 'manifest.json').read_text())
 
 
 def write_manifest(run_dir, m):
+    """Write a run folder's manifest.json."""
     (Path(run_dir) / 'manifest.json').write_text(json.dumps(m, indent=2, default=str))
+
+
+def previous_run(run_id, runs_dir=None):
+    """Manifest of the most recent run started before `run_id` (None if it is the first)."""
+    return next((r for r in list_runs(runs_dir) if r['run_id'] < run_id), None)
 
 
 def list_runs(runs_dir=None):

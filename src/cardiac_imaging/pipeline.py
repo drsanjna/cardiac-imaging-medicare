@@ -51,6 +51,7 @@ Claims: Medicare Physician & Other Practitioners by Provider and Service
 
 # ── steps: each takes and extends the shared context dict ───────────────────
 def step_connect(ctx):
+    """Open the read-only database, check required tables, and record claim rows per year."""
     if ctx.get('con') is None:
         ctx['con'] = get_connection(ctx['database'], read_only=True)
     require_tables(ctx['con'])
@@ -61,6 +62,7 @@ def step_connect(ctx):
 
 
 def step_load_claims(ctx):
+    """Verify specialty strings, load cardiac claim detail, and build segment aggregates + national trend."""
     con = ctx['con']
     claims.verify_specialty_strings(con)
     print("=" * 80 + "\nLOADING AND PROCESSING DATA\n" + "=" * 80)
@@ -71,6 +73,7 @@ def step_load_claims(ctx):
 
 
 def step_figure1(ctx):
+    """Figure 1 and the 2018 → 2023 change summary."""
     print("Building Figure 1: Volume/Enrollment/Rate Decomposition...")
     decomp_df = rates.decompose(ctx['trend'])
     decomposition.plot_figure1(decomp_df)
@@ -81,6 +84,7 @@ def step_figure1(ctx):
 
 
 def step_figure2(ctx):
+    """Figure 2 and the national market share table."""
     print("Building Figure 2: Market Share...")
     market_share.plot_figure2(rates.market_share_by_segment(ctx['df_agg']))
     nat_pct = rates.national_market_share(ctx['trend'])
@@ -91,6 +95,7 @@ def step_figure2(ctx):
 
 
 def step_state_maps(ctx):
+    """State rates for 2018 and 2023, Figures 3–7 and the all-modality panel."""
     print("Building Figures 3–7: State Choropleth Heatmaps...")
     con, df = ctx['con'], ctx['df_detail']
     ctx['state_ffs_2023'] = enrollment.load_state_ffs(con, config.END_YEAR)
@@ -107,6 +112,7 @@ def step_state_maps(ctx):
 
 
 def step_state_table(ctx):
+    """Print and save the 2023 state rate table."""
     print("=" * 80)
     print(f"State-Level Procedure Rate per 1,000 FFS Beneficiaries ({config.END_YEAR}, Top 20)")
     print("=" * 80)
@@ -117,6 +123,7 @@ def step_state_table(ctx):
 
 
 def step_density_models(ctx):
+    """Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs."""
     print(f"Building multivariable NB (age + sex adjustment), {config.END_YEAR}...")
     con, state_ffs = ctx['con'], ctx['state_ffs_2023']
     demo = demographics.load_gv_demographics(con, config.GV_YEAR)
@@ -149,6 +156,7 @@ def step_density_models(ctx):
 
 
 def step_table1_forest(ctx):
+    """Table 1 (specialty shares by modality) and the Figure 9 forest plot."""
     table1 = tables.specialty_distribution(ctx['con'])
     ctx['tables']['table1_specialty_distribution'] = table1
     share_rad, share_card = tables.cta_shares(table1)
@@ -206,6 +214,7 @@ def run_all(con=None, database=None, report_errors=True, record=True, label=None
 
 
 def main():
+    """Command-line entry point: parse options and run the pipeline."""
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--db', default=None, help=f"Database file or md:<name> (default {config.DATABASE})")
     p.add_argument('--no-report', action='store_true', help="Don't write error logs or open GitHub issues")

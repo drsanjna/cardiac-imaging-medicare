@@ -8,7 +8,7 @@ from ..style import GRAY
 from .export import save_pub_fig
 
 
-def plot_density_fit(fit, title, color, fname, n_physicians, tiff_dpi=config.TIFF_LINEART_DPI):
+def plot_density_fit(fit, title, color, fname, n_physicians, tiff_dpi=None):
     """Single panel: scatter + both NB fits + inline text box with unadjusted and adjusted IRR, CI, p."""
     d, density_col = fit['d'], fit['density_col']
     dens = d[density_col].values.astype(float)
@@ -57,4 +57,4 @@ def plot_density_fit(fit, title, color, fname, n_physicians, tiff_dpi=config.TIF
     ax.set_title(title, fontsize=13, fontweight='bold', pad=12)
 
     plt.tight_layout()
-    save_pub_fig(fig, fname, tiff_dpi)
+    save_pub_fig(fig, fname, tiff_dpi or config.TIFF_LINEART_DPI)   # read at call time so config overrides apply

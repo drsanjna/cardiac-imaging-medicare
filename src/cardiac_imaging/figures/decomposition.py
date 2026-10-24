@@ -15,6 +15,7 @@ ROW_CONFIG = [
 
 
 def plot_figure1(decomp_df):
+    """Draw and save Figure 1 (volume, FFS enrollment and rate per modality, 3 × 5 panels)."""
     fig = plt.figure(figsize=(22, 13))
     outer_gs = gridspec.GridSpec(3, 5, hspace=0.45, wspace=0.35,
                                  left=0.05, right=0.97, top=0.87, bottom=0.07)

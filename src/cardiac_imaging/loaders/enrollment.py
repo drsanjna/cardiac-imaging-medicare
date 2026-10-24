@@ -7,6 +7,7 @@ _JUNK_ROWS = 'BLANK|All Areas|United States|Notes|Source|¹|²|Area of Residence
 
 
 def _finish(df, ffs_col, year):
+    """Drop note/total rows, map state names to codes, drop territories, return (year, state, ffs)."""
     df = df[~df['Area_of_Residence'].astype(str).str.contains(_JUNK_ROWS, na=False)].copy()
     df['STCD'] = df['Area_of_Residence'].astype(str).str.strip().map(config.STATE_ABBR_MAP)
     df = df.dropna(subset=['STCD'])

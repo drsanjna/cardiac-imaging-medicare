@@ -56,11 +56,13 @@ GB = 1e9
 
 
 def header(csv_path: Path) -> list[str]:
+    """Return the CSV's header row (column names)."""
     with open(csv_path, newline="", encoding="utf-8-sig", errors="replace") as f:
         return next(csv.reader(f))
 
 
 def read_csv_sql(csv_path: Path) -> str:
+    """DuckDB read_csv(...) expression for a CSV, forcing identifier/code columns to VARCHAR."""
     cols = set(header(csv_path))
     overrides = {c: "VARCHAR" for c in FORCE_VARCHAR if c in cols}
     types = "{" + ", ".join(f"'{c}': '{t}'" for c, t in overrides.items()) + "}"
@@ -69,6 +71,7 @@ def read_csv_sql(csv_path: Path) -> str:
 
 
 def main() -> int:
+    """Find the yearly CSVs, convert each to zstd Parquet, verify row counts, and report sizes."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--duckdb", action="store_true", help="also build combined cms.duckdb")
     ap.add_argument("--force", action="store_true", help="re-convert existing parquet files")

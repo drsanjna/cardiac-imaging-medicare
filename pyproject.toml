@@ -22,6 +22,19 @@ dependencies = [
 
 [project.optional-dependencies]
 notebook = ["ipykernel", "papermill"]
+test = ["pytest>=8", "pytest-cov>=5"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+markers = [
+    "slow: longer end-to-end tests",
+    "real_data: needs the real ~/Downloads/cms_parquet/cms.duckdb (skipped in CI)",
+]
+filterwarnings = ["ignore::DeprecationWarning", "ignore:FigureCanvasAgg is non-interactive"]
+
+[tool.coverage.run]
+source = ["src/cardiac_imaging"]

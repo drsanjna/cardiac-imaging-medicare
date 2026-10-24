@@ -7,6 +7,7 @@ _CTA_WHERE = (f"year={config.END_YEAR} AND HCPCS_Cd='{config.CTA_CODE}' "
 
 
 def _specialty_npis(con, types, count_col):
+    """Unique CTA-billing NPIs per state for one specialty group, 2023."""
     df = con.execute(f"""
         SELECT Rndrng_NPI, Rndrng_Prvdr_State_Abrvtn AS state
         FROM {config.CLAIMS_TABLE} WHERE {_CTA_WHERE} AND Rndrng_Prvdr_Type IN {types}
@@ -16,6 +17,7 @@ def _specialty_npis(con, types, count_col):
 
 
 def _with_enrollment(df, state_ffs, label):
+    """Attach FFS enrollment to a state frame and log states dropped for lacking it."""
     df['ffs_enrollment'] = df['state'].map(state_ffs)
     kept = df.dropna(subset=['ffs_enrollment'])
     log_filter(f'{label}: states with FFS enrollment', len(df), len(kept), unit='states',
@@ -24,6 +26,7 @@ def _with_enrollment(df, state_ffs, label):
 
 
 def _specialty_frame(vol, npis, count_col, density_col, state_ffs, demo, label):
+    """State CTA volume + specialty NPI density + demographics; keeps states with ≥1 specialty biller."""
     df = vol.merge(npis, on='state', how='left')
     df[count_col] = df[count_col].fillna(0).astype(int)
     df = _with_enrollment(df, state_ffs, label)
