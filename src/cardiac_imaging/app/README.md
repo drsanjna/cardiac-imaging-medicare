@@ -13,7 +13,6 @@ flowchart LR
   subgraph here["src/cardiac_imaging/app/"]
     n___main___py["__main__.py"]
     n_chat_py["chat.py"]
-    n_markdown_py["markdown.py"]
     n_restore_py["restore.py"]
     n_server_py["server.py"]
   end
@@ -31,7 +30,6 @@ flowchart LR
   n_figures_ --> n_chat_py
   n_gitinfo_py --> n_chat_py
   n_gitinfo_py --> n_restore_py
-  n_markdown_py --> n_chat_py
   n_reporting_ --> n_chat_py
   n_reporting_ --> n_restore_py
   n_reporting_ --> n_server_py
@@ -45,7 +43,6 @@ flowchart LR
 |---|---|
 | [`__main__.py`](__main__.py) | Start the local app: python -m cardiac_imaging.app [--port 8765] [--no-browser]. |
 | [`chat.py`](chat.py) | Discuss a chart with Claude: builds context from the code that drew it (at the run's snapshot), its tables and data model. |
-| [`markdown.py`](markdown.py) | Safe Markdown → HTML for chat replies: headings, bold/italic, code, lists, links, quotes, tables, rules (escape-first, no raw HTML). |
 | [`restore.py`](restore.py) | Restore the code to a run's snapshot (or undo that) as a new commit, after backing up the current state as a tag. |
 | [`server.py`](server.py) | Local web server: serves RUNS_DIR (index + galleries) and a small JSON API for restore/undo/push and chart chats. |
 
@@ -68,31 +65,19 @@ Every function and class in this directory, including internal helpers.
 - `save(conv)` — Write a conversation to CONVERSATIONS_DIR.
 - `new_conversation(run_id, stem)` — Start an empty conversation about one chart.
 - `list_conversations(run_id, stem)` — Saved conversations (newest first), optionally for one run and/or chart.
-- `with_html(conv)` — Copy of a conversation for the browser: assistant messages gain rendered Markdown (`html`); API history dropped.
 - `set_outcome(conv_id, outcome, note)` — Record what the discussion concluded about the hypothesis (open / supported / not_supported / inconclusive).
-- `_version_key(path)` *(internal)* — Sort key from the version folder of a bundled CLI path (…/claude-code/2.1.308/…).
-- `claude_binary()` — Claude Code CLI to use: CARDIAC_CLAUDE_BIN or `claude` on PATH, else the newest copy bundled with the Claude desktop app.
-- `claude_logged_in(binary)` — Whether `binary auth status` reports a login usable outside the desktop app (cached for 20 s).
 - `_run_cli(cmd)` *(internal)* — Run the Claude Code CLI from the repo root (separate function so tests can replace it).
 - `class ClaudeCodeBackend` — Claude Code CLI in print mode, read-only tools, resuming the same session each turn (uses your Claude login).
-- `ClaudeCodeBackend.available()` — True when a Claude Code CLI is found and logged in.
+- `ClaudeCodeBackend.available()` — True when the Claude Code CLI is installed.
 - `ClaudeCodeBackend.reply(conv, message, ctx)` — Send `message` and return Claude's answer; stores the session id on `conv`.
 - `class AnthropicBackend` — Anthropic Messages API (needs the `anthropic` package and an API key or `ant auth login` profile).
 - `AnthropicBackend.available()` — True when the SDK is installed and credentials look configured.
 - `AnthropicBackend.reply(conv, message, ctx)` — Send `message` (with the chart image on the first turn) and return the text answer.
 - `class HandoffBackend` — No model available: return a ready-made prompt to paste into Claude Code.
 - `HandoffBackend.available()` — Always available.
-- `HandoffBackend.reply(conv, message, ctx)` — Explain the one step that enables live chat here, and return the full prompt to copy meanwhile.
-- `setup_hint()` — Plain-English instruction for turning on live chat on this Mac (depends on what is installed).
+- `HandoffBackend.reply(conv, message, ctx)` — Explain how to enable live chat and return the full prompt to copy.
 - `backend()` — The configured backend, or with CHAT_BACKEND=auto the first available of claude-code → api → handoff.
 - `send(run_id, stem, message, conv_id, engine)` — Add a user message to a (new or existing) conversation about a chart, get Claude's reply, save, return the conversation.
-
-**`markdown.py`**
-- `_inline(text)` *(internal)* — Inline formatting on one line of text: `code`, **bold**, *italic*/_italic_, ~~strike~~ and [links](url).
-- `_emphasis(s)` *(internal)* — **bold**, __bold__, *italic*, _italic_ and ~~strike~~ on already-escaped text (snake_case is left alone).
-- `_cells(row)` *(internal)* — Cells of a Markdown table row (outer pipes optional).
-- `_list_html(items)` *(internal)* — Nested <ul>/<ol> from [(indent, ordered, text)] items.
-- `render(text)` — Convert Markdown text to HTML. All input is escaped first, so raw HTML/scripts in the text are shown, never run.
 
 **`restore.py`**
 - `class RestoreError` — A restore could not be done safely; the message says why in plain English.

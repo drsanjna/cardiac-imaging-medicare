@@ -20,7 +20,6 @@ flowchart LR
     n_test_github_integration_py["test_github_integration.py"]
     n_test_gitinfo_restore_py["test_gitinfo_restore.py"]
     n_test_loaders_py["test_loaders.py"]
-    n_test_markdown_py["test_markdown.py"]
     n_test_pipeline_py["test_pipeline.py"]
     n_test_real_data_py["test_real_data.py"]
     n_test_reporting_py["test_reporting.py"]
@@ -41,7 +40,6 @@ flowchart LR
 | [`test_github_integration.py`](test_github_integration.py) | GitHub-facing code with GitHub simulated: publishing runs, reading them back, downloading, error issues, API chat. |
 | [`test_gitinfo_restore.py`](test_gitinfo_restore.py) | Code snapshots and one-click restore/undo, in a throwaway git repo. |
 | [`test_loaders.py`](test_loaders.py) | Loaders: claims detail and filters, enrollment parsing, GV demographics, provider density. |
-| [`test_markdown.py`](test_markdown.py) | Markdown rendering for chat replies: the basic elements render, and nothing in a reply can inject HTML or scripts. |
 | [`test_pipeline.py`](test_pipeline.py) | End-to-end: a full recorded run on synthetic data, plus failure handling. |
 | [`test_real_data.py`](test_real_data.py) | Regression tests on the real CMS data (skipped when ~/Downloads/cms_parquet/cms.duckdb is absent, e.g. in CI). |
 | [`test_reporting.py`](test_reporting.py) | Reporting: audit log, summaries/comparisons, gallery, index, release notes, publishing helpers. |
@@ -90,11 +88,7 @@ Every function and class in this directory, including internal helpers.
 - `EchoBackend.reply(conv, message, ctx)` — Echo the message with the chart label.
 - `test_conversation_flow_and_outcome(run_copy)` — Messages are saved; follow-ups append to the same conversation; outcomes are validated and stored.
 - `test_backend_errors_are_shown_not_raised(run_copy)` — A failing backend produces a ⚠️ message instead of crashing.
-- `test_handoff_backend_gives_full_prompt(run_copy, monkeypatch)` — Without a model, the reply is a ready-made prompt containing the code and the hypothesis, plus setup steps.
-- `test_setup_hint_when_bundled_cli_not_logged_in(monkeypatch)` — If Claude Code is present but logged out, the hint gives the exact one-time login command for that binary.
-- `test_claude_binary_prefers_path_then_newest_bundled(tmp_path, monkeypatch)` — `claude` on PATH wins; otherwise the newest version bundled with the desktop app is used.
-- `test_claude_logged_in_reads_auth_status(tmp_path, monkeypatch)` — Login state comes from `auth status` JSON; errors count as logged out; results are cached briefly.
-- `test_claude_code_backend_unavailable_when_logged_out(monkeypatch)` — A logged-out CLI doesn't count as an available backend (so auto falls back instead of erroring).
+- `test_handoff_backend_gives_full_prompt(run_copy)` — Without a model, the reply is a ready-made prompt containing the code and the hypothesis.
 - `test_backend_selection(monkeypatch)` — auto picks Claude Code when installed, else the API when configured, else hand-off.
 - `test_claude_code_backend_command(run_copy, monkeypatch)` — The CLI is called read-only with the context on turn 1 and --resume afterwards.
 - `app(run_copy)` — Running app server on a free port; yields (base_url, run_id).
@@ -103,7 +97,6 @@ Every function and class in this directory, including internal helpers.
 - `test_server_session_context_and_chat(app)` — Session gives a token; context returns code; chat works with the token and is refused without it.
 - `test_server_rejects_foreign_host_and_bad_input(app)` — DNS-rebinding style Host headers are refused; bad requests give 400; unknown routes 404.
 - `test_server_restore_endpoint(app)` — POST /api/restore restores the run's code in the repo and returns an undoable backup tag.
-- `test_cli_calls_never_inherit_stdin(monkeypatch)` — Both CLI calls pass stdin=DEVNULL (an inherited open stdin made `claude` hang until the timeout).
 
 **`test_config.py`**
 - `test_population_rules()` — Territories and invalid codes are excluded; specialty groups don't overlap.
@@ -167,21 +160,6 @@ Every function and class in this directory, including internal helpers.
 - `test_cta_density_frames(con)` — Density frames drop states lacking enrollment (AA) or specialty billers (AK/SD, DE/WY) and carry demographics.
 - `test_national_counts_deduplicate_multistate_npis(con)` — National unique NPI counts never exceed the sum of per-state counts; specialty counts ≤ all.
 - `test_states_without_billers(con, capsys)` — Missing-biller report lists exactly the synthetic gaps.
-
-**`test_markdown.py`**
-- `test_paragraphs_and_line_breaks()` — Blank lines separate paragraphs; single newlines become <br>.
-- `test_inline_formatting()` — Bold, italic, strikethrough and inline code.
-- `test_snake_case_and_arithmetic_are_not_emphasis()` — Identifiers like fit_density_models and expressions like 2 * 3 * 4 stay literal.
-- `test_headings_are_chat_sized()` — # → h3 … #### → h6 (capped).
-- `test_lists_nested_and_ordered()` — Bulleted, numbered and nested lists, including wrapped continuation lines.
-- `test_code_block_is_escaped_and_tagged()` — Fenced code keeps its content verbatim (escaped) with a language class.
-- `test_unclosed_code_block_runs_to_end()` — A missing closing fence still renders everything after it as code.
-- `test_table()` — Pipe tables with a separator row become HTML tables; inline formatting works in cells.
-- `test_blockquote_and_rule()` — Quotes (may contain other Markdown) and horizontal rules.
-- `test_links_safe_and_unsafe()` — http(s)/mailto/relative links become anchors; javascript: and data: links stay plain text; URLs aren't mangled.
-- `test_html_and_scripts_are_never_executed()` — Raw HTML in a reply is escaped wherever it appears — text, headings, lists, tables, quotes, link text.
-- `test_link_url_cannot_break_out_of_attribute()` — Quotes in a URL are escaped, so they can't add attributes.
-- `test_empty_and_none()` — Empty input renders to an empty string.
 
 **`test_pipeline.py`**
 - `test_run_completes_every_step(pipeline_run)` — All steps succeed and the manifest says so.

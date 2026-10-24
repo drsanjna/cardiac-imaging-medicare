@@ -2,6 +2,27 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-24 10:53 UTC — 1 commit (`ca9e052..b878a1b`)
+
+### What was done
+
+- **Add physician-scientist role to the Claude Code instructions** (`b878a1b`)
+  - CLAUDE.md now opens with a Role section: senior physician-scientist and data researcher persona for every Claude Code session in this repo.
+  - It sets how analyses are run (pre-specified hypotheses and outcomes, data profiling before modelling, effect sizes with CIs, sensitivity analyses by default) and how results are communicated.
+  - Impact: instructions only; no analysis code, data definitions or outputs change.
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: app | 1 | 17 | 2 |
+| repo root | 1 | 49 | 0 |
+| tests | 1 | 23 | 1 |
+
+### Tests
+
+❌ 99 passed, 1 failed, 0 skipped.
+
 ## 2026-10-24 09:57 UTC — 4 commits (`2bb9222..28424d2`)
 
 ### What was done
