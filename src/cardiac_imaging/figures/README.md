@@ -11,6 +11,7 @@ Solid `A --> B` = B imports A (A feeds B). Dotted = A runs B. Other directories 
 ```mermaid
 flowchart LR
   subgraph here["src/cardiac_imaging/figures/"]
+    n_catalog_py["catalog.py"]
     n_choropleths_py["choropleths.py"]
     n_decomposition_py["decomposition.py"]
     n_density_py["density.py"]
@@ -21,9 +22,11 @@ flowchart LR
   n_analysis_["analysis/"]
   n_config_py["config.py"]
   n_pipeline_py["pipeline.py"]
+  n_reporting_["reporting/"]
   n_style_py["style.py"]
   n_analysis_ --> n_density_py
   n_analysis_ --> n_market_share_py
+  n_catalog_py --> n_reporting_
   n_choropleths_py --> n_pipeline_py
   n_config_py --> n_decomposition_py
   n_config_py --> n_density_py
@@ -39,6 +42,7 @@ flowchart LR
   n_export_py --> n_market_share_py
   n_forest_py --> n_pipeline_py
   n_market_share_py --> n_pipeline_py
+  n_style_py --> n_catalog_py
   n_style_py --> n_choropleths_py
   n_style_py --> n_decomposition_py
   n_style_py --> n_density_py
@@ -50,10 +54,11 @@ flowchart LR
 
 | File | What it does |
 |---|---|
+| [`catalog.py`](catalog.py) | Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF). |
 | [`choropleths.py`](choropleths.py) | Figures 3–7: state choropleths per modality (2018 / 2023 / change), plus the unnumbered all-modality 2023 panel. |
 | [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 modalities. |
 | [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
-| [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF, and display them only inside notebooks. |
+| [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks. |
 | [`forest.py`](forest.py) | Figure 9 (final): forest plot of density IRRs before/after demographic adjustment, by interpreting specialty. |
 | [`market_share.py`](market_share.py) | Figure 2: modality market share by rural/urban × office/facility, with advanced-modality zoom insets. |
 
@@ -72,9 +77,10 @@ flowchart LR
 **`export.py`**
 - `in_notebook()`
 - `out_path(name)`
+- `tiff_path(stem)`
 - `save_pub_fig(fig, stem, tiff_dpi)` — Save a matplotlib figure as working PNG (300 DPI) + submission TIFF (LZW), then show/close it.
-- `png_to_tiff(png_path, dpi)` — Convert a plotly PNG export to TIFF with DPI metadata.
-- `save_plotly(fig, filename, width, height, scale)` — Write a plotly figure to PNG + TIFF; shows it in notebooks.
+- `png_to_tiff(png_path, dpi)` — Convert a plotly PNG export to TIFF (in tiff/) with DPI metadata.
+- `save_plotly(fig, filename, width, height, scale)` — Write a plotly figure to PNG (+ TIFF unless disabled); shows it in notebooks.
 
 **`forest.py`**
 - `plot_forest(rows)` — rows: [(label, share_note, result_dict(irr_un, irr_adj, n_physicians), color), ...].

@@ -4,6 +4,7 @@ log(CTA count)_s = β0 + β1·density + β2·meanAge + β3·%female + log(FFS_s)
 exp(β1) = density IRR. Covariates z-scored; density in natural units.
 """
 import numpy as np
+import pandas as pd
 import statsmodels.api as sm
 from scipy import stats
 from statsmodels.discrete.discrete_model import NegativeBinomial
@@ -104,3 +105,14 @@ def print_model_report(fit, title, n_physicians, year):
     print(f"NB alpha: unadj {fit['alpha_un']:.3f} / adj {fit['alpha_adj']:.3f} | "
           f"Poisson dispersion ~{fit['dispersion_un']:.0f}")
     print("=" * 76)
+
+
+def results_table(results, names):
+    """One row per density model: states, physicians, unadjusted and adjusted IRR with 95% CI and p."""
+    rows = []
+    for key, r in results.items():
+        (u, ul, uh, up), (a, al, ah, ap) = r['irr_un'], r['irr_adj']
+        rows.append({'model': names.get(key, key), 'states': r['n'], 'physicians': r['n_physicians'],
+                     'IRR unadjusted': u, 'CI low (unadj)': ul, 'CI high (unadj)': uh, 'p (unadj)': up,
+                     'IRR adjusted': a, 'CI low (adj)': al, 'CI high (adj)': ah, 'p (adj)': ap})
+    return pd.DataFrame(rows).set_index('model')

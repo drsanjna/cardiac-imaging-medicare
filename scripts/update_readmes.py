@@ -27,7 +27,7 @@ DIR_PURPOSE = {  # directories without an __init__.py docstring
     'legacy': 'The original single-file analysis script, kept unchanged for reference. Not imported by anything.',
 }
 ROOT_HIDDEN = {'config.py', 'style.py', 'audit.py'}   # feed every layer; drawn as one box on the root chart
-SUBPACKAGES = ('analysis', 'db', 'figures', 'loaders')
+SUBPACKAGES = ('analysis', 'db', 'figures', 'loaders', 'reporting')
 MANUAL_RE = re.compile(r'<!-- BEGIN MANUAL -->.*?<!-- END MANUAL -->', re.S)
 DEFAULT_MANUAL = '<!-- BEGIN MANUAL -->\n<!-- END MANUAL -->'
 
@@ -235,7 +235,8 @@ def render_root(files, edges, runs):
              '  csv[("CMS CSVs<br/>~/Downloads, 19 GB")]',
              '  pq[("Parquet, zstd<br/>~/Downloads/cms_parquet, 2.1 GB")]',
              '  duck[("cms.duckdb<br/>claims view + reference tables")]',
-             '  out[/"outputs/<br/>PNG + TIFF figures"/]',
+             '  out[/"~/Downloads/cms_runs/&lt;run&gt;/<br/>figures · tables · console.log<br/>gallery.html · all_figures.pdf"/]',
+             '  idx[/"cms_runs/index.html<br/>all runs"/]',
              '  claude(["Claude Code"])',
              '  gh(["GitHub repo"])',
              f'  subgraph code["{pkg}/"]']
@@ -245,7 +246,7 @@ def render_root(files, edges, runs):
     chart += [f'  {node_id(a)} --> {node_id(b)}' for a, b in sorted(pairs)]
     chart += [f'  {node_id(a)} -. runs .-> {node_id(b)}' for a, b in sorted(run_pairs)]
     chart += [f'  csv -- "convert_cms_to_parquet.py" --> pq', f'  pq -- "build_database.py" --> duck',
-              f'  duck -- "read-only SQL" --> {node_id("db/")}', f'  {node_id("figures/")} --> out',
+              f'  duck -- "read-only SQL" --> {node_id("db/")}', f'  {node_id("reporting/")} --> out', 'out --> idx',
               f'  {node_id("notebooks/")} -- "papermill traceback" --> claude',
               f'  claude -- "fix src/, commit, push" --> gh', f'  gh -- "git pull" --> {node_id("notebooks/")}',
               '```']
@@ -263,7 +264,10 @@ def render_root(files, edges, runs):
         '```bash\nsource ~/jupyter-env/bin/activate && pip install -e ".[notebook]"\n```',
         '```bash\npython scripts/convert_cms_to_parquet.py\n```',
         '```bash\npython scripts/build_database.py\n```',
-        '```bash\npapermill notebooks/main.ipynb runs/out.ipynb\n```', '',
+        '```bash\npython -m cardiac_imaging.pipeline\n```', '',
+        'Each run gets its own folder in `~/Downloads/cms_runs/` (linked as `runs/` here): figures (PNG + TIFF), '
+        'result tables (CSV), `console.log`, `manifest.json`, a `gallery.html` of every chart and `all_figures.pdf`. '
+        '`runs/index.html` lists every run with its headline IRRs. Use `--no-tiff` for quick runs, `--label` to tag one.', '',
         'Paths default to `~/Downloads`; override with the variables in [`.env.example`](.env.example). '
         'Full setup and the Claude debug loop: [`docs/SETUP_PLAN.md`](docs/SETUP_PLAN.md).', '',
         '## Directory map', '', '\n'.join(dir_rows), '',

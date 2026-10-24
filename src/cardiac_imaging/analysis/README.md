@@ -50,9 +50,11 @@ flowchart LR
 - `vif_table(Xz_df)`
 - `fit_density_models(df, density_col, density_label)` — Fit unadjusted and age/sex-adjusted NB2 models for one density measure.
 - `print_model_report(fit, title, n_physicians, year)` — Console table of adjusted-model IRRs plus unadjusted vs adjusted density IRR.
+- `results_table(results, names)` — One row per density model: states, physicians, unadjusted and adjusted IRR with 95% CI and p.
 
 **`rates.py`**
 - `decompose(trend)` — Add national FFS enrollment and rate per 1,000 to the year × modality trend (Figure 1 data).
+- `change_summary(decomp_df, y0, y1)` — % change in volume, national FFS enrollment and rate between y0 and y1, one row per modality.
 - `print_change_summary(decomp_df, y0, y1)` — Print volume / enrollment / rate % change between y0 and y1 for each modality.
 - `market_share_by_segment(df_agg)` — {segment: year × modality % share} for the four rural/urban × office/facility segments (Figure 2 data).
 - `national_market_share(trend)` — Year × modality % share nationally, plus Traditional and Advanced totals.

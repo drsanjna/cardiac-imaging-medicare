@@ -1,4 +1,6 @@
 """Utilization rates per 1,000 FFS beneficiaries: national decomposition, market share, state rates and deltas."""
+import pandas as pd
+
 from .. import config
 from ..audit import log_filter
 from ..style import PROC_ORDER
@@ -14,19 +16,28 @@ def decompose(trend):
     return decomp_df
 
 
-def print_change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR):
-    """Print volume / enrollment / rate % change between y0 and y1 for each modality."""
+def change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR):
+    """% change in volume, national FFS enrollment and rate between y0 and y1, one row per modality."""
     enr = config.MEDICARE_ENROLLMENT
-    print(f"\n  {y0} → {y1} Change Summary:")
-    print(f"  {'Modality':<15} {'Volume Δ%':>12} {'Enrollment Δ%':>15} {'Rate Δ%':>12}")
     enr_chg = (enr[y1] - enr[y0]) / enr[y0] * 100
+    rows = []
     for proc in PROC_ORDER:
         sub = decomp_df[decomp_df['procedure_category'] == proc]
         v0 = sub.loc[sub['year'] == y0, 'total_services'].values[0]
         v1 = sub.loc[sub['year'] == y1, 'total_services'].values[0]
         r0 = sub.loc[sub['year'] == y0, 'rate_per_1000'].values[0]
         r1 = sub.loc[sub['year'] == y1, 'rate_per_1000'].values[0]
-        print(f"  {proc:<15} {(v1-v0)/v0*100:>+11.1f}% {enr_chg:>+14.1f}% {(r1-r0)/r0*100:>+11.1f}%")
+        rows.append(dict(modality=proc, volume_pct=(v1 - v0) / v0 * 100, enrollment_pct=enr_chg,
+                         rate_pct=(r1 - r0) / r0 * 100))
+    return pd.DataFrame(rows).set_index('modality')
+
+
+def print_change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR):
+    """Print volume / enrollment / rate % change between y0 and y1 for each modality."""
+    print(f"\n  {y0} → {y1} Change Summary:")
+    print(f"  {'Modality':<15} {'Volume Δ%':>12} {'Enrollment Δ%':>15} {'Rate Δ%':>12}")
+    for proc, r in change_summary(decomp_df, y0, y1).iterrows():
+        print(f"  {proc:<15} {r.volume_pct:>+11.1f}% {r.enrollment_pct:>+14.1f}% {r.rate_pct:>+11.1f}%")
 
 
 def market_share_by_segment(df_agg):

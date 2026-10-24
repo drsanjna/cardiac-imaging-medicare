@@ -14,10 +14,17 @@
 
 ## Debug loop
 1. Run headless: `papermill notebooks/main.ipynb runs/out.ipynb` (or `python -m cardiac_imaging.pipeline --no-report`).
-2. On failure read `logs/last_error.md` (names the failing step from `pipeline.STEPS`) or the papermill traceback.
+2. On failure read `logs/last_error.md` (names the failing step from `pipeline.STEPS`), the papermill traceback,
+   or the run folder: `runs/latest/console.log` and `runs/latest/manifest.json` (step timings, status, error).
 3. Fix the code in `src/`, NOT the .ipynb JSON. Only touch a cell if the bug is in the cell itself.
 4. Re-run step 1 until it passes.
 5. Run `python scripts/update_readmes.py`, then commit code + READMEs together.
+
+## Outputs
+- Every run writes `~/Downloads/cms_runs/<timestamp>_<commit>[-dirty][_label]/` (repo link: `runs/`):
+  `figures/` (PNG, `tiff/`), `tables/*.csv`, `console.log`, `manifest.json`, `gallery.html`, `all_figures.pdf`.
+  `runs/index.html` lists all runs; `runs/latest` points to the newest. Compare runs via their `tables/` CSVs.
+- New figures: add an entry to `figures/catalog.py` so the gallery and PDF label them.
 
 ## Rules
 - Every module gets a one-line module docstring and every public function/class a one-line docstring (they feed the READMEs).
