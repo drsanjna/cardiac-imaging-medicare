@@ -71,7 +71,7 @@ function card(r, isLatest) {
              : (p ? `<button class="btn primary" data-fetch="${id}">Download to this Mac</button>` : '');
   const changes = (cmp.changes || []).map(x => `<li>${esc(x)}</li>`).join('');
   const impact = (cmp.impact || []).map(x => `<li>${esc(x)}</li>`).join('');
-  const tech = [r.local ? `<a href="${id}/gallery.html#details">technical details</a>` : '', p ? `<a href="${esc(p.release_url)}">GitHub record</a>` : ''].filter(Boolean).join(' · ');
+  const tech = [r.local ? `<a href="${id}/gallery.html#development">development details</a>` : '', p ? `<a href="${esc(p.release_url)}">GitHub record</a>` : ''].filter(Boolean).join(' · ');
   return `<article class="run" data-text="${esc([r.run_id, r.label, r.summary].join(' ').toLowerCase())}">
     <div class="when"><span class="${ok ? 'ok-dot' : 'bad-dot'}">${ok ? '✓' : '✗'}</span>${when(r.started)}
       ${isLatest ? '<span class="tag latest">latest</span>' : ''}${r.label ? `<span class="tag">${esc(r.label)}</span>` : ''}

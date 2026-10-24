@@ -77,6 +77,8 @@ Every function and class in this directory, including internal helpers.
 - `make_thumbs(run_dir, figs, width)` — figures/thumbs/<stem>.png at `width` px for the grid; the full-resolution PNG opens in the viewer.
 - `headline_cards(m)` — HTML stat cards for headline IRRs, steps completed and figure count.
 - `details_html(m, repo)` — Run details panel: code snapshot + restore command, GitHub upload, data, versions.
+- `summary_html(m)` — Top-of-page card: the run's plain-English summary, plus what changed since the previous run and its impact.
+- `development_html(m, repo, steps_rows, files)` — Bottom-of-page Development tab (collapsed): run details, pipeline steps and files — for reproducing or debugging.
 - `compare_note(m, runs_dir)` — One line comparing headline numbers with the previous successful run.
 - `build(run_dir)` — Write gallery.html and all_figures.pdf into run_dir from its manifest.json, figures/ and tables/.
 - `build_pdf(run_dir, m, figs, max_px)` — all_figures.pdf: a cover page, then one landscape page per chart with its label and title.

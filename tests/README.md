@@ -216,6 +216,7 @@ Every function and class in this directory, including internal helpers.
 - `test_compare_unchanged_results()` — Identical findings → 'No change in results'.
 - `test_compare_code_changes_between_snapshots(isolated)` — Commits and files between the two snapshots are listed.
 - `test_gallery_html(pipeline_run)` — Gallery lists every chart with zoom + discuss buttons, the run details panel and the viewer controls.
+- `test_gallery_layout_summary_top_development_bottom(pipeline_run)` — The run's English summary is the first section; run details/steps/files sit in a collapsed Development tab at the end.
 - `test_fmt_num()` — Compact number formatting for tables.
 - `test_index_embeds_runs_and_actions(pipeline_run)` — Index embeds each run's summary and offers open / what-changed / restore actions.
 - `test_release_notes_roundtrip(pipeline_run)` — Release notes carry the English summary, what changed, restore command and a decodable run record.

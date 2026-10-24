@@ -96,6 +96,12 @@ th:first-child, td:first-child { text-align:left; } thead th { position:sticky; 
 #d-foot button.primary { background:var(--accent); color:#fff; border-color:transparent; }
 .prev { font-size:13px; margin:6px 0; } .prev a { cursor:pointer; }
 footer { color:var(--muted); font-size:12px; padding:30px 0 40px; }
+.summary-card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-top:16px; box-shadow:var(--shadow); }
+.summary-card h2 { margin:0 0 6px; } .summary-card p { margin:0 0 10px; font-size:15px; line-height:1.55; }
+.changes-box { background:var(--bg); border:1px solid var(--line); border-radius:10px; margin:0; }
+.changes-box h4 { margin:10px 14px 4px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+.changes-box ul { margin:0 14px 10px; padding-left:18px; font-size:14px; }
+#development h3 { font-size:14px; margin:16px 14px 8px; } .dev-body { padding-bottom:10px; } .dev-body ul { margin:0 14px; }
 """
 
 JS = """
@@ -194,6 +200,9 @@ $('#d-open-app').onclick = async () => { if (!conv || !conv.id) return;
   $('#d-open-app').disabled = false; $('#d-open-app').textContent = 'Continue in Claude app'; thread(); };
 $('#d-close').onclick = () => { $('#discuss').hidden = true; };
 document.querySelectorAll('[data-discuss]').forEach(b => b.addEventListener('click', () => openDiscuss(b.dataset.discuss)));
+function openDevIfLinked() { if (['#development', '#details', '#steps', '#files'].includes(location.hash)) {
+  $('#dev-panel').open = true; document.querySelector(location.hash).scrollIntoView(); } }
+window.addEventListener('hashchange', openDevIfLinked); openDevIfLinked();
 """
 
 
@@ -299,8 +308,31 @@ def details_html(m, repo):
         ('Versions', esc(', '.join(f'{k} {v}' for k, v in m.get('versions', {}).items()))),
     ]
     trs = ''.join(f'<tr><td>{k}</td><td style="text-align:left;white-space:normal">{v}</td></tr>' for k, v in rows)
-    return (f'<section id="details"><h2>Run details</h2><details open><summary>Code, data and timing</summary>'
-            f'<div class="tablewrap"><table><tbody>{trs}</tbody></table></div></details></section>')
+    return f'<div class="tablewrap"><table><tbody>{trs}</tbody></table></div>'
+
+
+def summary_html(m):
+    """Top-of-page card: the run's plain-English summary, plus what changed since the previous run and its impact."""
+    cmp_ = m.get('comparison') or {}
+    changes = ''.join(f'<li>{esc(x)}</li>' for x in cmp_.get('changes', []))
+    impact = ''.join(f'<li>{esc(x)}</li>' for x in cmp_.get('impact', []))
+    prev = cmp_.get('previous')
+    since = f' since <a href="../{esc(prev)}/gallery.html" class="mono">{esc(prev)}</a>' if prev else ''
+    more = (f'<details class="changes-box"><summary>What changed &amp; impact</summary>'
+            f'<h4>What changed{since}</h4><ul>{changes or "<li>No comparison recorded.</li>"}</ul>'
+            f'<h4>Impact on results</h4><ul>{impact or "<li>—</li>"}</ul></details>') if cmp_ else ''
+    return (f'<section id="summary" class="summary-card"><h2>Summary</h2>'
+            f'<p>{esc(m.get("summary") or "No summary recorded for this run.")}</p>{more}</section>')
+
+
+def development_html(m, repo, steps_rows, files):
+    """Bottom-of-page Development tab (collapsed): run details, pipeline steps and files — for reproducing or debugging."""
+    return (f'<section id="development"><h2>Development</h2>'
+            f'<details id="dev-panel"><summary>Code, data, timing, steps and files — for reproducing or debugging this run</summary>'
+            f'<div class="dev-body"><h3 id="details">Run details</h3>{details_html(m, repo)}'
+            f'<h3 id="steps">Pipeline steps</h3><div class="tablewrap"><table><thead><tr><th>Step</th><th>Seconds</th>'
+            f'<th>Status</th></tr></thead><tbody>{steps_rows}</tbody></table></div>'
+            f'<h3 id="files">Files</h3><ul>' + ''.join(f'<li>{x}</li>' for x in files) + '</ul></div></details></section>')
 
 
 def compare_note(m, runs_dir):
@@ -332,7 +364,7 @@ def build(run_dir):
               else esc(c.get('head', '')[:7]))
     sections = [s for s in SECTIONS + ['Other'] if any(f['section'] == s for f in figs)]
     nav = ''.join(f'<a href="#{s.lower().replace(" ", "-")}">{esc(s)}</a>' for s in sections)
-    nav += '<a href="#details">Run details</a><a href="#results">Results</a><a href="#steps">Steps</a><a href="#files">Files</a>'
+    nav = '<a href="#summary">Summary</a>' + nav + '<a href="#results">Results</a><a href="#development">Development</a>'
 
     body = []
     if m.get('error'):
@@ -340,8 +372,8 @@ def build(run_dir):
         body.append(f'<div class="error"><strong>Failed in step <span class="mono">{esc(e["step"])}</span>:</strong> '
                     f'{esc(e["type"])}: {esc(e["message"])}<br>Full traceback in <a href="console.log">console.log</a> '
                     'and <span class="mono">logs/last_error.md</span>.</div>')
+    body.append(summary_html(m))
     body.append(headline_cards(m) + compare_note(m, run_dir.parent))
-    body.append(details_html(m, repo))
 
     for sec in sections:
         cards = []
@@ -379,14 +411,11 @@ def build(run_dir):
 
     steps = ''.join(f'<tr><td class="mono">{esc(s["step"])}</td><td>{s["seconds"]:.1f}</td>'
                     f'<td><span class="badge {esc(s["status"])}">{esc(s["status"])}</span></td></tr>' for s in m.get('steps', []))
-    body.append(f'<section id="steps"><h2>Steps</h2><details open><summary>Pipeline steps and timings</summary>'
-                f'<div class="tablewrap"><table><thead><tr><th>Step</th><th>Seconds</th><th>Status</th></tr></thead>'
-                f'<tbody>{steps}</tbody></table></div></details></section>')
     files = ['<a href="all_figures.pdf">all_figures.pdf</a> (every chart, one per page)',
              '<a href="console.log">console.log</a> (full printed output)',
              '<a href="manifest.json">manifest.json</a> (run metadata)',
              '<a href="figures/">figures/</a>', '<a href="tables/">tables/</a>']
-    body.append('<section id="files"><h2>Files</h2><ul>' + ''.join(f'<li>{x}</li>' for x in files) + '</ul></section>')
+    body.append(development_html(m, repo, steps, files))
 
     figdata = json.dumps([dict(src=f'figures/{f["stem"]}.png', label=f['label'], title=f['title'], stem=f['stem'],
                                interactive=(f'figures/interactive/{f["stem"]}.html'

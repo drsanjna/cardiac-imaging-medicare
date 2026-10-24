@@ -85,6 +85,20 @@ def test_gallery_html(pipeline_run):
     assert 'Interactive' in html
 
 
+def test_gallery_layout_summary_top_development_bottom(pipeline_run):
+    """The run's English summary is the first section; run details/steps/files sit in a collapsed Development tab at the end."""
+    from cardiac_imaging.reporting import run_store
+    html = (pipeline_run['run_dir'] / 'gallery.html').read_text()
+    m = run_store.read_manifest(pipeline_run['run_dir'])
+    order = [html.index(x) for x in ('id="summary"', 'id="main-text"', 'id="results"', 'id="development"')]
+    assert order == sorted(order)
+    top = html[html.index('id="summary"'):html.index('id="main-text"')]
+    assert gallery.esc(m['summary']) in top and 'What changed' in top
+    dev = html[html.index('id="development"'):]
+    assert '<details id="dev-panel">' in dev and 'Rows per year' in dev and 'Pipeline steps' in dev and 'console.log' in dev
+    assert 'href="#development">Development</a>' in html
+
+
 def test_fmt_num():
     """Compact number formatting for tables."""
     assert gallery.fmt_num(1234.5) == '1,234' and gallery.fmt_num(0.00001) == '1.0e-05'
