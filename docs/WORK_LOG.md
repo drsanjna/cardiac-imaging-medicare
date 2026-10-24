@@ -2,6 +2,50 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-24 21:38 UTC — 4 commits (`b29719a..edf94e1`)
+
+### What was done
+
+- **Register hypotheses H1-H7 and add the H1 MA-selection analysis plan** (`a9af40c`)
+  - Added docs/hypotheses/registry.json: seven numbered hypotheses (H1-H7) from the adjacent-dataset research, each with direction, linked public dataset, design and main threat. All are post hoc relative to the main study.
+  - consolidate_hypotheses.py now renders the registry as a "Registered hypotheses" section at the top of HYPOTHESES.md, so hand-curated entries survive regeneration; tested in tests/test_scripts.py.
+  - Added docs/hypotheses/H1_ma_selection.md, a draft (unlocked) pre-registered plan testing whether Medicare Advantage growth inflates FFS cardiac imaging rates, using GV PUF columns already in the database.
+  - PENDING.md: new item 7 (the paper's denominator is 12-16% larger than the GV PUF's FFS Part A & B count, which may deflate 2023 rates by ~4.3%) and item 8 (approve and lock the H1 plan).
+  - Regenerating the log also pulled in six existing chart discussions from the local app.
+- **Count PET/CT perfusion codes (78430/78431) as Cardiac PET** (`8be88fb`)
+  - Cardiac PET is now 78491, 78492, 78430, 78431. CPT 2020 moved PET perfusion done with concurrent CT to 78430/78431, so counting only 78491/78492 made PET look like it was disappearing.
+  - Impact: 2023 PET services 98,752 → 234,098; 2018→2023 PET rate change −34.4% → +55.4%; Advanced share of 2023 services 3.6% → 5.1%. CTA models, Table 1 CTA shares and other modalities are unchanged.
+  - Still excluded: 78432/78433 (perfusion + metabolic), 78429/78459 (metabolic), 78434 (blood-flow add-on).
+  - Real-data PET pin updated; new config test; STUDY.md definitions and PENDING item 1 resolved. Figures: run 2026-10-24_162154_a9af40c-dirty_pet-codes-78430-78431.
+- **Add invasive coronary angiography to Figure 1 and as a new state map (Figure 10)** (`5947fb4`)
+  - Invasive coronary angiography (ICA, CPT 93454–93461) is a comparator, not an imaging modality, so it is kept out of the modality definitions: market share, Table 1, Traditional/Advanced totals and the state summary stay imaging-only.
+  - Figure 1 has a sixth column for ICA. Figure 10 is an ICA state map with the same layout as Figures 3–7 (2018 / 2023 / change). New table ica_state_rates; change_summary gains an ICA row.
+  - ICA nationally: 734,826 → 555,168 services (−24.4%); rate per 1,000 FFS beneficiaries 19.34 → 16.48 (−14.8%). Imaging numbers are unchanged.
+  - Tests: ICA loader, change summary ordering, pipeline outputs; synthetic data has ICA rows; real-data pin gains the ICA row. Figures: run 2026-10-24_172521_8be88fb-dirty_ica-figure1-and-map.
+- **Merge remote-tracking branch 'origin/main'** (`edf94e1`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: analysis | 2 | 5 | 5 |
+| code: core | 4 | 37 | 5 |
+| code: db | 1 | 8 | 8 |
+| code: figures | 4 | 109 | 72 |
+| code: loaders | 2 | 26 | 0 |
+| docs | 6 | 362 | 29 |
+| repo root | 1 | 1 | 0 |
+| scripts | 2 | 28 | 3 |
+| tests | 9 | 80 | 11 |
+
+### Impact on the code
+
+- New functions (12): `scripts/consolidate_hypotheses.py: load_registry`, `scripts/consolidate_hypotheses.py: render_registry`, `src/cardiac_imaging/figures/choropleths.py: map_stem`, `src/cardiac_imaging/figures/choropleths.py: plot_ica_state_maps`, `src/cardiac_imaging/figures/choropleths.py: plot_one_state_map`, `src/cardiac_imaging/loaders/claims.py: ica_trend`, `src/cardiac_imaging/loaders/claims.py: load_ica_detail`, `src/cardiac_imaging/pipeline.py: step_ica_map`, `tests/test_analysis.py: test_change_summary_adds_ica_after_imaging_modalities`, `tests/test_config.py: test_pet_codes_are_perfusion_pet_with_and_without_ct`, `tests/test_loaders.py: test_load_ica_detail_and_trend`, `tests/test_scripts.py: test_consolidate_hypotheses_registry`
+
+### Tests
+
+✅ 150 passed, 0 failed, 0 skipped.
+
 ## 2026-10-24 13:39 UTC — 1 commit (`46d4dab..e238aea`)
 
 ### What was done
