@@ -19,18 +19,25 @@ SHOWN_TABLES = [
 ]
 
 CSS = """
-:root { --bg:#f7f7f5; --panel:#ffffff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e3e2dc; --accent:#6b2c91;
-        --ok:#1e7f4f; --okbg:#e3f4ea; --bad:#b42318; --badbg:#fde8e6; --chip:#efeef3; --shadow:0 1px 2px rgba(0,0,0,.06); }
+:root { --bg:#f4f6f8; --panel:#ffffff; --ink:#17212b; --muted:#5b6876; --line:#dde3ea; --chip:#eef1f5;
+        --brand:#1d3557; --brand-ink:#ffffff; --brand-muted:#b9c6d8; --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#e3f2f0;
+        --ok:#1e7f4f; --okbg:#e3f4ea; --bad:#b42318; --badbg:#fde8e6; --warn:#a15c07; --warnbg:#fdf0d5; --shadow:0 1px 2px rgba(16,24,40,.05); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg:#141413; --panel:#1f1f1d; --ink:#ecebe6; --muted:#a3a29b; --line:#34332f; --accent:#c79ee6;
-  --ok:#6fd39b; --okbg:#173326; --bad:#ff8a80; --badbg:#3a1a17; --chip:#2a2930; --shadow:none; } }
-:root[data-theme="dark"] { --bg:#141413; --panel:#1f1f1d; --ink:#ecebe6; --muted:#a3a29b; --line:#34332f;
-  --accent:#c79ee6; --ok:#6fd39b; --okbg:#173326; --bad:#ff8a80; --badbg:#3a1a17; --chip:#2a2930; --shadow:none; }
+  --bg:#0e141b; --panel:#151d26; --ink:#e5ebf1; --muted:#93a1b0; --line:#253140; --chip:#1c2632;
+  --brand:#12233b; --brand-ink:#eef3f8; --brand-muted:#8ea3bd; --accent:#2bb3a3; --accent-ink:#06201d; --accent-soft:#11302d;
+  --ok:#6fd39b; --okbg:#173326; --bad:#ff8a80; --badbg:#3a1a17; --warn:#f2b65a; --warnbg:#3a2a10; --shadow:none; } }
+:root[data-theme="dark"] { --bg:#0e141b; --panel:#151d26; --ink:#e5ebf1; --muted:#93a1b0; --line:#253140; --chip:#1c2632;
+  --brand:#12233b; --brand-ink:#eef3f8; --brand-muted:#8ea3bd; --accent:#2bb3a3; --accent-ink:#06201d; --accent-soft:#11302d;
+  --ok:#6fd39b; --okbg:#173326; --bad:#ff8a80; --badbg:#3a1a17; --warn:#f2b65a; --warnbg:#3a2a10; --shadow:none; }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
 a { color:var(--accent); }
 .wrap { max-width:1280px; margin:0 auto; padding:0 16px; }
-header.top { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:14px 0 10px; }
+header.top { position:sticky; top:0; z-index:5; background:var(--brand); color:var(--brand-ink); padding:12px 0 10px; }
+header.top a { color:var(--brand-muted); } header.top .meta { color:var(--brand-muted); }
+header.top nav a { background:rgba(255,255,255,.10); color:var(--brand-ink); }
+header.top nav a:hover { background:rgba(255,255,255,.20); }
+header.top .badge.ok { background:rgba(111,211,155,.18); color:#bff0d3; }
 h1 { font-size:20px; margin:4px 0; } h2 { font-size:17px; margin:32px 0 12px; } .mono { font-family:ui-monospace, Menlo, monospace; font-size:.92em; }
 .meta { color:var(--muted); font-size:13px; display:flex; flex-wrap:wrap; gap:4px 14px; }
 nav { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
@@ -47,6 +54,8 @@ figure.card { margin:0; background:var(--panel); border:1px solid var(--line); b
 figure.card > button { all:unset; display:block; cursor:zoom-in; background:#fff; width:100%; }
 figure.card > button img { display:block; width:100%; height:300px; object-fit:contain; padding:8px; box-sizing:border-box; }
 figcaption { padding:10px 14px 12px; border-top:1px solid var(--line); }
+.fig-title { padding:10px 14px 8px; border-bottom:1px solid var(--line); font-size:15px; line-height:1.35; }
+.fig-title .label { color:var(--accent); font-weight:650; margin-right:6px; }
 figcaption .label { color:var(--accent); font-weight:650; margin-right:6px; } figcaption p { margin:4px 0 6px; color:var(--muted); font-size:13px; }
 .links a { font-size:13px; margin-right:10px; }
 .missing { padding:40px 14px; text-align:center; color:var(--muted); }
@@ -391,9 +400,9 @@ def build(run_dir):
                         f'<button data-discuss="{esc(f["stem"])}">💬 Discuss a hypothesis</button></div>')
             else:
                 links, media, acts = '', '<div class="missing">Not produced in this run</div>', ''
-            cards.append(f'<figure class="card">{media}<figcaption><span class="label">{esc(f["label"])}</span>'
-                         f'<strong>{esc(f["title"])}</strong><p>{esc(f["caption"])}</p>{acts}<div class="links">{links}</div>'
-                         '</figcaption></figure>')
+            cards.append(f'<figure class="card"><div class="fig-title"><span class="label">{esc(f["label"])}</span>'
+                         f'<strong>{esc(f["title"])}</strong></div>{media}<figcaption><p>{esc(f["caption"])}</p>{acts}'
+                         f'<div class="links">{links}</div></figcaption></figure>')
         body.append(f'<section id="{sec.lower().replace(" ", "-")}"><h2>{esc(sec)}</h2><div class="grid">{"".join(cards)}</div></section>')
 
     tables = m.get('tables', {})

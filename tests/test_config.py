@@ -66,3 +66,32 @@ def test_catalog_sources_point_at_real_functions():
             module, func = ref.split(':')
             mod = importlib.import_module(f'cardiac_imaging.{module}')
             assert callable(getattr(mod, func, None)), ref
+
+
+def test_load_dotenv_fills_unset_vars_only(tmp_path, monkeypatch):
+    """.env values (quoted or not, with comments) fill unset variables but never override ones already set."""
+    env = tmp_path / '.env'
+    env.write_text('# comment\nCMS_X_ONE="/a b/c"\nCMS_X_TWO=plain  # trailing note\nCMS_X_SET=from_file\nCMS_X_EMPTY=\nnot a line\n')
+    monkeypatch.delenv('CMS_X_ONE', raising=False)
+    monkeypatch.delenv('CMS_X_TWO', raising=False)
+    monkeypatch.setenv('CMS_X_SET', 'from_shell')
+    config.load_dotenv(env)
+    import os
+    assert os.environ['CMS_X_ONE'] == '/a b/c' and os.environ['CMS_X_TWO'] == 'plain'
+    assert os.environ['CMS_X_SET'] == 'from_shell' and 'CMS_X_EMPTY' not in os.environ
+    for k in ('CMS_X_ONE', 'CMS_X_TWO'):
+        monkeypatch.delenv(k)
+    config.load_dotenv(tmp_path / 'missing.env')     # no file → no error
+
+
+def test_setup_script_is_valid_bash_and_documents_steps():
+    """scripts/setup_laptop.sh parses, never deletes anything, and covers every setup step."""
+    import subprocess
+    from conftest import REAL_REPO
+    script = REAL_REPO / 'scripts' / 'setup_laptop.sh'
+    assert subprocess.run(['bash', '-n', str(script)]).returncode == 0
+    text = script.read_text()
+    assert ' rm ' not in text and 'rm -' not in text
+    for needle in ('pip install -q -e ".[notebook,test]"', 'install_hooks.sh', 'build_database.py', '-m real_data',
+                   'runs.py fetch --all', 'auth login', '> .env.setup', 'cardiac_imaging.app'):
+        assert needle in text, needle

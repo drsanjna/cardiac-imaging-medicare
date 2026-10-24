@@ -59,7 +59,7 @@ flowchart LR
 | File | What it does |
 |---|---|
 | [`gallery.py`](gallery.py) | Per-run gallery.html (every chart, grouped by section, with a full-screen viewer and results tables) and all_figures.pdf. |
-| [`index.py`](index.py) | RUNS_DIR/index.html: results history — when each run happened, what it found (plain English), what changed, one-click restore. |
+| [`index.py`](index.py) | RUNS_DIR/index.html: the landing page — a filterable run list beside the selected run's summary, changes, labels and actions. |
 | [`insights.py`](insights.py) | Plain-English run summaries: key findings from a run's tables, and what changed (and its impact) vs the previous run. |
 | [`publish.py`](publish.py) | Upload a run to GitHub as a Release on its code-snapshot tag (outputs zipped as assets), and download runs back. |
 | [`run_store.py`](run_store.py) | Per-run output folder RUNS_DIR/<timestamp>_<commit>/: figures/, tables/, console.log, manifest.json, plus a code-snapshot tag. |
@@ -84,7 +84,7 @@ Every function and class in this directory, including internal helpers.
 - `build_pdf(run_dir, m, figs, max_px)` — all_figures.pdf: a cover page, then one landscape page per chart with its label and title.
 
 **`index.py`**
-- `build(runs_dir)` — Rewrite index.html in runs_dir: local run summaries embedded; GitHub runs and app actions loaded by the page.
+- `build(runs_dir)` — Rewrite index.html in runs_dir: local run summaries embedded; GitHub runs, labels and app actions loaded by the page.
 
 **`insights.py`**
 - `_read(run_dir, name)` *(internal)* — A saved results table, or None when the run didn't produce it.
@@ -126,6 +126,7 @@ Every function and class in this directory, including internal helpers.
 - `_filter_table()` *(internal)* — The current run's filter log as a DataFrame (empty dict if nothing was filtered).
 - `read_manifest(run_dir)` — Load a run folder's manifest.json.
 - `write_manifest(run_dir, m)` — Write a run folder's manifest.json.
+- `set_label(run_id, label, note, runs_dir)` — Record your verdict on a run (success / failure / needs_review / archived, or None to clear) in its manifest.
 - `previous_run(run_id, runs_dir)` — Manifest of the most recent run started before `run_id` (None if it is the first).
 - `list_runs(runs_dir)` — Manifests of every run in runs_dir, newest first.
 

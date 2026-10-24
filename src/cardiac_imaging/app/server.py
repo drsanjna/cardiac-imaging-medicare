@@ -7,7 +7,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from .. import config
-from ..reporting import index, publish
+from ..reporting import index, publish, run_store
 from . import chat, restore
 
 TOKEN = secrets.token_urlsafe(24)   # per server start; only same-origin pages can read it from /api/session
@@ -91,6 +91,16 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(200, restore.undo(b['backup_tag']))
             if path == '/api/push':
                 return self._json(200, restore.push())
+            if path == '/api/label':
+                m = run_store.set_label(b['run'], b.get('label'), b.get('note', ''))
+                synced = False
+                if m.get('published'):
+                    try:
+                        synced = publish.update_release_notes(config.RUNS_DIR / b['run'])
+                    except Exception as e:      # label is saved locally either way
+                        print(f"  label not synced to GitHub: {e}")
+                _try_rebuild_index()
+                return self._json(200, {'review': m.get('review'), 'synced_to_github': synced})
             if path == '/api/fetch':
                 publish.fetch_run(b['run'])
                 _try_rebuild_index()

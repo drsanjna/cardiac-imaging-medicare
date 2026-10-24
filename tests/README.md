@@ -109,6 +109,7 @@ Every function and class in this directory, including internal helpers.
 - `test_open_in_claude_app_errors(run_copy, monkeypatch)` — Copy-paste conversations can't be handed off; a refusal from the app is reported in plain words.
 - `test_open_desktop_uses_pty_and_no_stdin(monkeypatch)` — The desktop hand-off runs through `script` (a pseudo-terminal) with stdin closed.
 - `test_server_open_in_app_endpoint(app, monkeypatch)` — POST /api/open-in-app returns 409 with a readable message when the conversation can't be handed off.
+- `test_server_label_endpoint(app)` — POST /api/label saves the label (not synced for unpublished runs), clears it, and rejects unknown labels.
 
 **`test_config.py`**
 - `test_population_rules()` — Territories and invalid codes are excluded; specialty groups don't overlap.
@@ -118,6 +119,8 @@ Every function and class in this directory, including internal helpers.
 - `test_relative_env_paths_resolve_inside_repo(monkeypatch)` — CARDIAC_* relative paths are resolved against the repo root.
 - `test_catalog_entries_are_complete_and_unique()` — Every figure has a unique stem, a known section, and code + table references.
 - `test_catalog_sources_point_at_real_functions()` — Each 'module:function' in the catalog exists (so chart discussions load real code).
+- `test_load_dotenv_fills_unset_vars_only(tmp_path, monkeypatch)` — .env values (quoted or not, with comments) fill unset variables but never override ones already set.
+- `test_setup_script_is_valid_bash_and_documents_steps()` — scripts/setup_laptop.sh parses, never deletes anything, and covers every setup step.
 
 **`test_db.py`**
 - `test_synthetic_db_matches_data_model(con)` — The synthetic database (built from the schema) validates cleanly.
@@ -225,6 +228,10 @@ Every function and class in this directory, including internal helpers.
 - `test_previous_run_and_list(tmp_path)` — list_runs is newest first; previous_run finds the run before a given id.
 - `test_data_fingerprint_changes_with_files(tmp_path)` — The data fingerprint changes when a Parquet file changes.
 - `test_save_tables(tmp_path)` — Run.save_tables writes CSVs and registers them in the manifest (via a stub Run).
+- `test_set_label_store_clear_and_validate(tmp_path)` — Labels are saved in the manifest, can be cleared, must be known, and need the run to be local.
+- `test_label_travels_to_github_notes_and_index(pipeline_run, tmp_path)` — A label appears in the release notes and in the run record the landing page reads (local and from GitHub).
+- `test_landing_page_structure(pipeline_run)` — Landing page: app bar, search, filters incl. Archived, run list + detail pane, label controls, keyboard hints.
+- `test_figure_title_above_chart(pipeline_run)` — Each card shows the figure label and title above the image, caption below.
 
 **`test_scripts.py`**
 - `load(name)` — Import scripts/<name>.py as a module.

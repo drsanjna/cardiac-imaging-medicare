@@ -199,7 +199,7 @@ def test_server_serves_index_and_gallery(app):
     """Static pages are served from RUNS_DIR."""
     base, run = app
     with urllib.request.urlopen(f'{base}/') as r:
-        assert b'results history' in r.read()
+        assert 'Cardiac imaging · Results'.encode() in r.read()
     with urllib.request.urlopen(f'{base}/{run}/gallery.html') as r:
         assert b'data-discuss' in r.read()
 
@@ -318,3 +318,15 @@ def test_server_open_in_app_endpoint(app, monkeypatch):
     conv = _req(f'{base}/api/chat', {'run': run, 'stem': 'figure1_decomposition', 'message': 'x'}, token=token)[1]
     status, out = _req(f'{base}/api/open-in-app', {'conversation': conv['id']}, token=token)
     assert status == 400 and 'Only discussions answered by Claude Code' in out['error']
+
+
+def test_server_label_endpoint(app):
+    """POST /api/label saves the label (not synced for unpublished runs), clears it, and rejects unknown labels."""
+    base, run = app
+    token = _req(f'{base}/api/session')[1]['token']
+    status, out = _req(f'{base}/api/label', {'run': run, 'label': 'success'}, token=token)
+    assert status == 200 and out['review']['label'] == 'success' and out['synced_to_github'] is False
+    assert json.loads((config.RUNS_DIR / run / 'manifest.json').read_text())['review']['label'] == 'success'
+    assert _req(f'{base}/api/label', {'run': run, 'label': None}, token=token)[1]['review'] is None
+    assert _req(f'{base}/api/label', {'run': run, 'label': 'nope'}, token=token)[0] == 400
+    assert _req(f'{base}/api/label', {'run': run, 'label': 'success'})[0] == 403

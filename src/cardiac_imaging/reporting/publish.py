@@ -27,7 +27,7 @@ def _gh(*args, capture=False):
 def summary(m):
     """The subset of a manifest shown in index.html (also embedded in the release notes)."""
     keep = ('run_id', 'label', 'status', 'started', 'finished', 'seconds', 'code', 'database', 'data', 'versions',
-            'headline', 'error', 'save_tiff', 'bytes', 'published', 'summary', 'comparison', 'findings')
+            'headline', 'error', 'save_tiff', 'bytes', 'published', 'summary', 'comparison', 'findings', 'review')
     s = {k: m.get(k) for k in keep}
     s['figures'] = len(m.get('figures', []))
     s['steps_ok'] = sum(1 for x in m.get('steps', []) if x['status'] == 'ok')
@@ -50,6 +50,8 @@ def release_notes(m):
                  f"{d.get('claims_rows_total', 0):,} claims rows"),
         ('Versions', ', '.join(f'{k} {v}' for k, v in m.get('versions', {}).items())),
         ('Figures', f"{len(m.get('figures', []))}" + ('' if m.get('save_tiff') else ' (no TIFFs)')),
+        ('Your label', (m.get('review') or {}).get('label', 'none').replace('_', ' ')
+                       + (f" — {m['review']['note']}" if (m.get('review') or {}).get('note') else '')),
     ]
     cmp_ = m.get('comparison') or {}
     lines = [f"Pipeline run **{m['run_id']}**", '', m.get('summary', ''), '']

@@ -8,6 +8,26 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def load_dotenv(path=None):
+    """Read KEY=VALUE lines from the repo's .env into os.environ (never overriding variables already set).
+
+    Each laptop keeps its own .env (gitignored) — scripts/setup_laptop.sh writes the data paths it finds there.
+    """
+    path = Path(path or REPO_ROOT / '.env')
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.split(' #', 1)[0].strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = (x.strip() for x in line.split('=', 1))
+        if value and key not in os.environ:
+            os.environ[key] = value.strip('"').strip("'")
+
+
+load_dotenv()
+
+
 def _path(env_var, default):
     """Env-var path, resolved against the repo root when relative."""
     p = Path(os.environ.get(env_var) or default).expanduser()
@@ -33,12 +53,12 @@ APP_PORT = int(os.environ.get('CARDIAC_APP_PORT', '8765'))
 # Raw inputs (read only by scripts/convert_cms_to_parquet.py and scripts/build_database.py)
 PARQUET_DIR   = _path('CMS_PARQUET_DIR', Path.home() / 'Downloads' / 'cms_parquet')
 REFERENCE_DIR = _path('CMS_REFERENCE_DIR', Path.home() / 'Downloads' / 'Data')   # enrollment .xlsx
-GV_PUF_GLOB   = os.environ.get('CMS_GV_GLOB') or str(
-    Path.home() / 'Downloads' / 'Medicare_GV_by_National_State_County_2024_copy*.csv')
+GV_PUF_GLOB   = os.path.expanduser(os.environ.get('CMS_GV_GLOB') or str(
+    Path.home() / 'Downloads' / 'Medicare_GV_by_National_State_County_2024_copy*.csv'))
 
 # Analysis database: local DuckDB file built from the Parquet files.
 # Set CARDIAC_DB=md:<name> (plus MOTHERDUCK_TOKEN) to use a MotherDuck copy instead.
-DATABASE = os.environ.get('CARDIAC_DB') or str(PARQUET_DIR / 'cms.duckdb')
+DATABASE = os.path.expanduser(os.environ.get('CARDIAC_DB') or str(PARQUET_DIR / 'cms.duckdb'))
 
 CLAIMS_TABLE     = 'partb_provider_service'  # Physician & Other Practitioners PUF, all years + `year`
 ENROLLMENT_TABLE = 'state_ffs_enrollment'    # cleaned (year, state, ffs)

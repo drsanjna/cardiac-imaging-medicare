@@ -174,3 +174,43 @@ def test_save_tables(tmp_path):
     r.manifest = dict(tables={})
     r.save_tables({'t': pd.DataFrame({'a': [1]})})
     assert (tmp_path / 'tables' / 't.csv').exists() and r.manifest['tables'] == {'t': 'tables/t.csv'}
+
+
+def test_set_label_store_clear_and_validate(tmp_path):
+    """Labels are saved in the manifest, can be cleared, must be known, and need the run to be local."""
+    (tmp_path / 'r1').mkdir()
+    run_store.write_manifest(tmp_path / 'r1', dict(run_id='r1'))
+    m = run_store.set_label('r1', 'needs_review', 'check IRR drift', runs_dir=tmp_path)
+    assert m['review']['label'] == 'needs_review' and m['review']['note'] == 'check IRR drift' and m['review']['at']
+    assert run_store.read_manifest(tmp_path / 'r1')['review']['label'] == 'needs_review'
+    assert run_store.set_label('r1', None, runs_dir=tmp_path)['review'] is None
+    with pytest.raises(ValueError):
+        run_store.set_label('r1', 'great', runs_dir=tmp_path)
+    with pytest.raises(FileNotFoundError, match='download it first'):
+        run_store.set_label('missing', 'success', runs_dir=tmp_path)
+
+
+def test_label_travels_to_github_notes_and_index(pipeline_run, tmp_path):
+    """A label appears in the release notes and in the run record the landing page reads (local and from GitHub)."""
+    m = run_store.read_manifest(pipeline_run['run_dir'])
+    m['review'] = dict(label='archived', note='superseded', at='2026-10-24T10:00:00')
+    notes = publish.release_notes(m)
+    assert '| Your label | archived — superseded |' in notes
+    rec = json.loads(base64.b64decode(notes.split(publish.MARKER)[1].split('-->')[0].strip()))
+    assert rec['review']['label'] == 'archived'
+
+
+def test_landing_page_structure(pipeline_run):
+    """Landing page: app bar, search, filters incl. Archived, run list + detail pane, label controls, keyboard hints."""
+    index.build(pipeline_run['runs_dir'])
+    html = (pipeline_run['runs_dir'] / 'index.html').read_text()
+    for needle in ('class="appbar"', 'id="q"', 'id="filters"', 'id="list"', 'id="detail"', "['archived', 'Archived']",
+                   'data-label', '/api/label', '<kbd>/</kbd> search', 'data-restore', 'What changed'):
+        assert needle in html, needle
+
+
+def test_figure_title_above_chart(pipeline_run):
+    """Each card shows the figure label and title above the image, caption below."""
+    html = (pipeline_run['run_dir'] / 'gallery.html').read_text()
+    card = html[html.index('<figure class="card">'):html.index('</figure>')]
+    assert card.index('fig-title') < card.index('<img') < card.index('<figcaption>')

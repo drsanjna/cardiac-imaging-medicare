@@ -75,6 +75,7 @@ Every function and class in this directory, including internal helpers.
 - `log_filter(label, before, after, unit, dropped_items)` — Print '[filter] label: before → after unit (n dropped)', record it in FILTER_LOG, and return `after`.
 
 **`config.py`**
+- `load_dotenv(path)` — Read KEY=VALUE lines from the repo's .env into os.environ (never overriding variables already set).
 - `_path(env_var, default)` *(internal)* — Env-var path, resolved against the repo root when relative.
 
 **`errors.py`**

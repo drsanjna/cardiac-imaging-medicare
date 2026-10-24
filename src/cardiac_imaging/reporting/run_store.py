@@ -183,6 +183,24 @@ def write_manifest(run_dir, m):
     (Path(run_dir) / 'manifest.json').write_text(json.dumps(m, indent=2, default=str))
 
 
+LABELS = ('success', 'failure', 'needs_review', 'archived')   # your verdict on a run; separate from its technical status
+
+
+def set_label(run_id, label, note='', runs_dir=None):
+    """Record your verdict on a run (success / failure / needs_review / archived, or None to clear) in its manifest."""
+    from datetime import datetime
+    if label is not None and label not in LABELS:
+        raise ValueError(f"label must be one of {LABELS} or None")
+    run_dir = Path(runs_dir or config.RUNS_DIR) / run_id
+    if not (run_dir / 'manifest.json').exists():
+        raise FileNotFoundError(f"Run {run_id} isn't on this Mac — download it first.")
+    m = read_manifest(run_dir)
+    m['review'] = None if label is None else dict(label=label, note=note,
+                                                  at=datetime.now().astimezone().isoformat(timespec='seconds'))
+    write_manifest(run_dir, m)
+    return m
+
+
 def previous_run(run_id, runs_dir=None):
     """Manifest of the most recent run started before `run_id` (None if it is the first)."""
     return next((r for r in list_runs(runs_dir) if r['run_id'] < run_id), None)

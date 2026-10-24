@@ -56,6 +56,7 @@ quantitative analysis.
 - `legacy/original_sourcecode.py` — frozen original; never edit or import it.
 
 ## Data
+- Two laptops: `scripts/setup_laptop.sh` (see `docs/NEW_LAPTOP.md`) sets up a new machine; each laptop's data paths live in its own `.env`, which every command reads (`config.load_dotenv`).
 - Local DuckDB `~/Downloads/cms_parquet/cms.duckdb` (override: `CARDIAC_DB`). Tables: `partb_provider_service`
   (view over the yearly Parquet files, with `year`), `state_ffs_enrollment`, `gv_puf`.
 - Analysis connections are read-only. Only `scripts/build_database.py` writes.

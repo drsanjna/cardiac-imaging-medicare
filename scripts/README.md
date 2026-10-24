@@ -19,6 +19,7 @@ flowchart LR
     n_update_readmes_py["update_readmes.py"]
     n_work_log_py["work_log.py"]
     n_install_hooks_sh["install_hooks.sh"]
+    n_setup_laptop_sh["setup_laptop.sh"]
   end
   n__githooks_[".githooks/"]
   n__github_workflows_[".github/workflows/"]
@@ -37,6 +38,10 @@ flowchart LR
   n__github_workflows_ -. runs .-> n_check_docs_py
   n__github_workflows_ -. runs .-> n_update_readmes_py
   n__github_workflows_ -. runs .-> n_work_log_py
+  n_setup_laptop_sh -. runs .-> n_build_database_py
+  n_setup_laptop_sh -. runs .-> n_convert_cms_to_parquet_py
+  n_setup_laptop_sh -. runs .-> n_install_hooks_sh
+  n_setup_laptop_sh -. runs .-> n_runs_py
 ```
 
 ## Files
@@ -49,6 +54,7 @@ flowchart LR
 | [`convert_cms_to_parquet.py`](convert_cms_to_parquet.py) | Convert CMS "Medicare Physician & Other Practitioners - by Provider and Service" |
 | [`install_hooks.sh`](install_hooks.sh) | Point git at .githooks/ so READMEs regenerate on every local commit. Run once per clone. |
 | [`runs.py`](runs.py) | Manage run history: list local + GitHub runs, publish runs as GitHub Releases, download runs back, rebuild the index. |
+| [`setup_laptop.sh`](setup_laptop.sh) | Set up this project on another Mac so you can pick up the research exactly where you left off. |
 | [`update_readmes.py`](update_readmes.py) | Regenerate every README.md (root + one per code directory) from the code itself: docstrings, functions, imports. |
 | [`work_log.py`](work_log.py) | Write an English summary of pushed work to docs/WORK_LOG.md (run by the post-push GitHub Action on every push to main). |
 
