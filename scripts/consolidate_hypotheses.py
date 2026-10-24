@@ -5,6 +5,8 @@ Sources
      outcome you set (supported / not supported / inconclusive / open) and Claude's last answer.
   2. Claude Code conversations on this project (~/.claude/projects/<this repo>/*.jsonl) — your messages that propose
      or question a hypothesis are listed as candidates.
+  3. docs/hypotheses/registry.json — hand-curated, numbered hypotheses (H1, H2, …), each optionally linked to its own
+     analysis-plan file in docs/hypotheses/. Edit it by hand; the script only reads it.
 
     python scripts/consolidate_hypotheses.py            # update docs/hypotheses/HYPOTHESES.md + hypotheses.json
     python scripts/consolidate_hypotheses.py --dry-run  # print what would be written
@@ -116,7 +118,26 @@ def merge(new, old):
     return new
 
 
-def render(records, n_conv, n_sessions):
+def load_registry(path):
+    """Hand-curated hypotheses from registry.json (empty list if the file does not exist)."""
+    return json.loads(Path(path).read_text()) if Path(path).exists() else []
+
+
+def render_registry(registry):
+    """Markdown section for the numbered hypotheses in registry.json."""
+    lines = ['## Registered hypotheses', '',
+             'Hand-curated in `registry.json`. Each is **post hoc** relative to the main study until its plan is locked.', '']
+    if not registry:
+        return lines + ['None yet.', '']
+    lines += ['| ID | Hypothesis | Linked data | Design | Main threat | Status |', '|---|---|---|---|---|---|']
+    for h in registry:
+        ident = f"[{h['id']}]({h['plan']})" if h.get('plan') else h['id']
+        cells = [ident] + [str(h.get(k, '')).replace('|', '\\|') for k in ('hypothesis', 'data', 'design', 'threat', 'status')]
+        lines.append('| ' + ' | '.join(cells) + ' |')
+    return lines + ['']
+
+
+def render(records, n_conv, n_sessions, registry=()):
     """HYPOTHESES.md content."""
     def status(r):
         return r.get('status_override') or r['status']
@@ -128,6 +149,7 @@ def render(records, n_conv, n_sessions):
     lines = ['# Hypotheses log', '',
              f"Consolidated {datetime.now():%Y-%m-%d} from {n_conv} chart discussion(s) and {n_sessions} Claude Code session(s) "
              'by `scripts/consolidate_hypotheses.py`. Edit `status_override` / `notes` in `hypotheses.json` to correct an entry.', '']
+    lines += render_registry(list(registry))
     lines += ['## Tested through chart discussions', '']
     if tested:
         lines += ['Tally: ' + ', '.join(f'{k}: {v}' for k, v in sorted(counts.items())), '',
@@ -159,7 +181,8 @@ def main():
     old_json = OUT_DIR / 'hypotheses.json'
     old = json.loads(old_json.read_text()) if old_json.exists() else []
     records = merge(chart_recs + cc_recs, old)
-    md = render(records, len(list(Path(args.conversations).glob('*.json'))), len(list(Path(tdir).glob('*.jsonl'))))
+    md = render(records, len(list(Path(args.conversations).glob('*.json'))), len(list(Path(tdir).glob('*.jsonl'))),
+                load_registry(OUT_DIR / 'registry.json'))
     if args.dry_run:
         print(md)
         return

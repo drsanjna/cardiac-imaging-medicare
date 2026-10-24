@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "id": "96fed2aefa",
+    "source": "chart discussion",
+    "hypothesis": "what does this chart means ?",
+    "chart": "Figure 1 \u2014 Volume vs FFS enrollment vs utilization rate",
+    "run": "2026-10-23_224420_cf1cf8c_github-publish-test",
+    "date": "2026-10-24",
+    "status": "open",
+    "note": "",
+    "follow_ups": 0,
+    "conclusion": "## What Figure 1 shows It's a 3 \u00d7 5 grid. Each **column** is one modality (Echo, SPECT, Cardiac CTA, Cardiac MRI, Cardiac PET). Each **row** is one piece of the same calculation: | Row | Marker | What it is | Source | |---|---|---|---| | 1 | circles | **Volume**: total services billed per year (`Tot_Srvcs` summed) | Part B Physician & Other Practitioners file | | 2 | squares | **Denominator**: na\u2026"
+  },
+  {
+    "id": "cdb2fd8364",
+    "source": "chart discussion",
+    "hypothesis": "what can I do next here ?",
+    "chart": "Figure 1 \u2014 Volume vs FFS enrollment vs utilization rate",
+    "run": "2026-10-23_224420_cf1cf8c_github-publish-test",
+    "date": "2026-10-24",
+    "status": "open",
+    "note": "",
+    "follow_ups": 0,
+    "conclusion": "The most important next step is to check the PET finding before reading anything into it. The \u221234% PET decline may be a coding artifact, not a real drop in use. ## 1. Check the data before building hypotheses on it **a. PET codes (most important).** In `config.MODALITY_CASE` (`src/cardiac_imaging/config.py:79`), Cardiac PET is only `78491`/`78492`. CPT 2020 added PET codes with concurrently acqui\u2026"
+  },
+  {
+    "id": "ec82d2bb28",
+    "source": "chart discussion",
+    "hypothesis": "what does this do ?",
+    "chart": "Figure 1 \u2014 Volume vs FFS enrollment vs utilization rate",
+    "run": "2026-10-23_224420_cf1cf8c_github-publish-test",
+    "date": "2026-10-24",
+    "status": "open",
+    "note": "",
+    "follow_ups": 0,
+    "conclusion": "Figure 1 splits each modality's change in procedure count into two parts: how many people were in fee-for-service (FFS) Medicare, and how much each of them used the test. ## What the chart shows It's a 3 \u00d7 5 grid. Each column is one modality (CTA, MRI, PET, Echo, SPECT), and each row is one measure for 2018\u20132023: 1. **Volume (circles):** total Medicare Part B services billed for that modality. 2.\u2026"
+  },
+  {
+    "id": "4e78972725",
+    "source": "chart discussion",
+    "hypothesis": "what can be improved here ?",
+    "chart": "Figure 1 \u2014 Volume vs FFS enrollment vs utilization rate",
+    "run": "2026-10-23_224420_cf1cf8c_github-publish-test",
+    "date": "2026-10-24",
+    "status": "open",
+    "note": "",
+    "follow_ups": 0,
+    "conclusion": ""
+  },
+  {
+    "id": "b067428317",
+    "source": "chart discussion",
+    "hypothesis": "what column does this data uses ?",
+    "chart": "Figure 1 \u2014 Volume vs FFS enrollment vs utilization rate",
+    "run": "2026-10-23_224420_cf1cf8c_github-publish-test",
+    "date": "2026-10-24",
+    "status": "open",
+    "note": "",
+    "follow_ups": 0,
+    "conclusion": "Figure 1 uses only a few columns. Most of the data model isn't involved. **From the claims view `partb_provider_service`** (pulled in `loaders.claims:load_detail`): | Column | Role in Figure 1 | |---|---| | `year` | x-axis; grouping key | | `HCPCS_Cd` | mapped to the five modalities through `config.MODALITY_CASE`, giving `procedure_category` (one column of panels per modality) | | `Tot_Srvcs` | *\u2026"
+  },
+  {
+    "id": "f94f277555",
+    "source": "chart discussion",
+    "hypothesis": "hello",
+    "chart": "Figure 2 \u2014 Modality market share by setting",
+    "run": "2026-10-23_224420_cf1cf8c_github-publish-test",
+    "date": "2026-10-24",
+    "status": "open",
+    "note": "",
+    "follow_ups": 0,
+    "conclusion": "Hi. We're looking at **Figure 2: modality market share by setting**. It shows each modality's share of cardiac imaging volume (`Tot_Srvcs`) in four segments, urban or rural crossed with office or facility, for 2018\u20132023. Under each panel there's a zoomed view of CTA + CMR + PET. Here's how the chart is built, which limits what it can test: - **Shares, not rates.** `market_share_by_segment` divide\u2026"
+  }
+]

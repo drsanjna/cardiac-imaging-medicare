@@ -46,5 +46,18 @@ system prompt and does not. Do once the chat work is committed.
 *Added 2026-10-24.* Primary/secondary outcomes, pre-specified sensitivity analyses (exclude 2020; PET code set;
 independent density measure; spatial dependence), labelled pre-specified vs post hoc. Depends on items 1–4.
 
+### 7. State denominator may include beneficiaries without Part B (decision needed — affects every rate)
+*Added 2026-10-24.* The paper's denominator (CMS Program Statistics, Original Medicare) exceeds the GV PUF's FFS
+Part A & B count (`BENES_OM_CNT`) by 12.2% in 2018 (37.99 M vs 33.37 M) and 16.0% in 2023 (33.69 M vs 28.31 M).
+If the gap is people without Part B, who cannot generate Part B claims, the paper's 2023 rates are deflated by
+about 4.3% relative to 2018, uniformly across modalities. Confirm the cause from both data dictionaries, then
+decide whether to switch denominators or report the alternative as a sensitivity analysis. Changing the
+denominator changes pinned `real_data` numbers.
+
+### 8. Approve and lock the H1 (MA-selection) analysis plan
+*Added 2026-10-24.* Draft: [hypotheses/H1_ma_selection.md](hypotheses/H1_ma_selection.md). Needs: a review,
+approval of its proposed config entries (years, r grid, 1.04 threshold, bootstrap seed), item 1 settled first, then
+a commit whose hash is recorded in the plan before any H1 outcome is queried.
+
 ## Resolved
 None yet.

@@ -98,6 +98,28 @@ def test_consolidate_hypotheses(tmp_path, monkeypatch):
     assert 'hand note' in (out / 'HYPOTHESES.md').read_text()
 
 
+def test_consolidate_hypotheses_registry(tmp_path, monkeypatch):
+    """registry.json entries render first, link to their plan file, escape pipes, and survive a re-run untouched."""
+    cons = load('consolidate_hypotheses')
+    out = tmp_path / 'out'
+    out.mkdir()
+    registry = [dict(id='H1', hypothesis='MA growth raises FFS rates (IRR > 1)', data='GV PUF', design='state-year FE',
+                     threat='a | b', status='plan drafted', plan='H1_x.md'),
+                dict(id='H2', hypothesis='Guideline steepened CTA', data='claims', design='ITS', threat='COVID',
+                     status='candidate', plan='')]
+    (out / 'registry.json').write_text(json.dumps(registry))
+    monkeypatch.setattr(cons, 'OUT_DIR', out)
+    monkeypatch.setattr(sys, 'argv', ['x', '--conversations', str(tmp_path / 'none'), '--transcripts', str(tmp_path / 'none')])
+    cons.main()
+    md = (out / 'HYPOTHESES.md').read_text()
+    assert md.index('## Registered hypotheses') < md.index('## Tested through chart discussions')
+    assert '| [H1](H1_x.md) | MA growth raises FFS rates (IRR > 1) |' in md and '| H2 | Guideline steepened CTA |' in md
+    assert 'a \\| b' in md
+    assert json.loads((out / 'registry.json').read_text()) == registry
+    assert cons.load_registry(tmp_path / 'missing.json') == []
+    assert 'None yet.' in '\n'.join(cons.render_registry([]))
+
+
 def test_work_log_entry(tmp_path, monkeypatch):
     """The work-log entry summarises commits, areas touched and functions added/removed; re-running is idempotent."""
     wl = load('work_log')

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "H1",
+    "added": "2026-10-24",
+    "hypothesis": "Within a state, +10 pp Medicare Advantage participation is associated with a higher FFS cardiac imaging rate per 1,000 FFS beneficiaries (IRR > 1), because people who stay in FFS cost more.",
+    "data": "GV PUF (already loaded): MA_PRTCPTN_RATE, BENES_OM_CNT, BENE_DUAL_PCT; state + year",
+    "design": "State-year Poisson QMLE with state and year FE, 2018–2023, plus an analytic bias bound on published changes",
+    "threat": "Expected effect is small (~1–2.5% over 2018–2023), so the panel may be underpowered; MA spillover pulls the other way",
+    "status": "analysis plan drafted, not locked",
+    "plan": "H1_ma_selection.md"
+  },
+  {
+    "id": "H2",
+    "added": "2026-10-24",
+    "hypothesis": "After the Oct 2021 AHA/ACC chest pain guideline, the CTA trend steepened (+) and the SPECT trend fell further (−), with echo unchanged (negative control).",
+    "data": "Already in hand: claims by HCPCS, state, year",
+    "design": "Comparative interrupted time series by state-year; 2020 dropped or modelled; test a change in slope, not level",
+    "threat": "COVID recovery happens at the same time; only two post-guideline years",
+    "status": "candidate (post hoc, no plan)",
+    "plan": ""
+  },
+  {
+    "id": "H3",
+    "added": "2026-10-24",
+    "hypothesis": "Cardiologists who gain a hospital affiliation or join a top-quartile-size group shift echo and SPECT from office to facility billing (+), with no change in total volume.",
+    "data": "CMS Doctors & Clinicians file (archived releases): Org_PAC_ID, num_org_mem, hosp_afl_1–5; NPI",
+    "design": "NPI-year staggered difference-in-differences on the switch year",
+    "threat": "Snapshots are not a clean panel; acquisition changes billing without changing where care happens",
+    "status": "candidate (post hoc, no plan)",
+    "plan": ""
+  },
+  {
+    "id": "H4",
+    "added": "2026-10-24",
+    "hypothesis": "Physicians who first receive industry payments tied to a product (FFR-CT, PET tracer) bill more of the matching modality afterwards (+), with no change for unrelated products.",
+    "data": "CMS Open Payments general payments: recipient NPI (2021+), product name; NPI + year",
+    "design": "NPI-year event study on first payment; unrelated-product payments as negative control",
+    "threat": "Reverse causation (manufacturers target high-volume readers); suppression of low-volume rows",
+    "status": "candidate (post hoc, no plan)",
+    "plan": ""
+  },
+  {
+    "id": "H5",
+    "added": "2026-10-24",
+    "hypothesis": "Counties with no cardiologist and low CT supply have a lower CTA-to-SPECT ratio than metro counties (−), with a wider rural gap for CTA, PET and MRI than for echo.",
+    "data": "HRSA Area Health Resources File: cardiologist counts, CT supply; county FIPS",
+    "design": "County cross-section, repeated by year, age/sex standardized",
+    "threat": "Provider-file suppression (< 11 beneficiaries) and provider-address geography push rural rates toward zero",
+    "status": "candidate (post hoc, no plan)",
+    "plan": ""
+  },
+  {
+    "id": "H6",
+    "added": "2026-10-24",
+    "hypothesis": "HRRs with higher standardized SPECT + CTA rates have no lower 30-day AMI/HF mortality (slope ≈ 0).",
+    "data": "Dartmouth ZIP→HRR crosswalk (2019); Care Compare MORT_30_AMI/HF via hospital CCN",
+    "design": "HRR-year ecological analysis; descriptive, cannot support a causal claim",
+    "threat": "Imaging located by provider address, not patient; confounding by indication",
+    "status": "candidate (post hoc, no plan)",
+    "plan": ""
+  },
+  {
+    "id": "H7",
+    "added": "2026-10-24",
+    "hypothesis": "The CY2025 hospital-outpatient payment rise for CTA (75574) increased facility CTA relative to office CTA and facility SPECT (+).",
+    "data": "OPPS Addendum B by HCPCS + year (payment size unverified); needs the 2025 provider file",
+    "design": "NPI- or state-year difference-in-differences",
+    "threat": "Untestable in the 2018–2023 window; the provider file never shows the facility payment",
+    "status": "candidate (post hoc, no plan; data not yet released)",
+    "plan": ""
+  }
+]

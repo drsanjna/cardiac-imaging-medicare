@@ -92,7 +92,9 @@ Every function and class in this directory, including internal helpers.
 - `from_claude_code(transcript_dir)` — Candidate hypotheses: user messages in this project's Claude Code sessions that propose or question an effect.
 - `transcripts_dir()` — ~/.claude/projects/<repo path with / → ->, where Claude Code stores this project's conversations.
 - `merge(new, old)` — Keep hand-edited fields (status_override, notes) from the previous hypotheses.json.
-- `render(records, n_conv, n_sessions)` — HYPOTHESES.md content.
+- `load_registry(path)` — Hand-curated hypotheses from registry.json (empty list if the file does not exist).
+- `render_registry(registry)` — Markdown section for the numbered hypotheses in registry.json.
+- `render(records, n_conv, n_sessions, registry)` — HYPOTHESES.md content.
 - `main()` — Collect, merge and write the hypotheses log (or print it with --dry-run).
 
 **`convert_cms_to_parquet.py`**

@@ -244,6 +244,7 @@ Every function and class in this directory, including internal helpers.
 - `test_readme_manual_block_survives(tmp_path)` — Hand-written text inside the MANUAL markers is preserved across regenerations.
 - `_transcript(path, messages)` *(internal)* — Write a minimal Claude Code JSONL transcript with the given user messages.
 - `test_consolidate_hypotheses(tmp_path, monkeypatch)` — Chart discussions become tested hypotheses; hypothesis-like Claude Code messages become candidates; secrets redacted.
+- `test_consolidate_hypotheses_registry(tmp_path, monkeypatch)` — registry.json entries render first, link to their plan file, escape pipes, and survive a re-run untouched.
 - `test_work_log_entry(tmp_path, monkeypatch)` — The work-log entry summarises commits, areas touched and functions added/removed; re-running is idempotent.
 - `test_work_log_junit_counts(tmp_path)` — Test counts are read from a JUnit report.
 
