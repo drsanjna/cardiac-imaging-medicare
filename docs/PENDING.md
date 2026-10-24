@@ -5,26 +5,6 @@ When one is settled, move it to **Resolved** with the date, the decision and the
 
 ## Open
 
-### 1. Cardiac PET code set misses PET/CT codes (decision needed — changes `config.py`)
-*Added 2026-10-24.* `config.py` defines Cardiac PET as 78491/78492 only. CPT added myocardial PET performed with
-concurrent CT, 78429–78434, from 1 Jan 2020. Services in the claims table (50 states + DC):
-
-| HCPCS | 2019 | 2020 | 2023 |
-|---|---|---|---|
-| 78492 (counted) | 194,534 | 150,919 | 98,674 |
-| 78491 (counted) | 769 | 227 | 78 |
-| 78431 PET/CT perfusion, multiple studies (not counted) | 0 | 32,630 | 135,139 |
-| 78430 PET/CT perfusion, single study (not counted) | 0 | 109 | 207 |
-| 78433 PET/CT perfusion + metabolic (not counted) | 0 | 534 | 934 |
-| 78429 PET/CT metabolic (not counted) | 0 | 320 | 664 |
-| 78434 absolute blood-flow **add-on** (not counted) | 0 | 35,221 | 117,251 |
-
-As coded, PET appears to fall by about half after 2019; most of that is volume moving to the new codes.
-- Decide: which codes define Cardiac PET (likely add 78430/78431/78432/78433; 78429 and 78459 are metabolic/viability —
-  include or not; 78434 is an add-on and must not be counted as a separate study).
-- Before approving, ask Claude for before/after numbers for PET, the "Advanced" total, Figures 1–2 and Table 1.
-- Approval means `pytest -m real_data` pinned numbers change on purpose; update them in the same commit.
-
 ### 2. Confirm the scope of Echo and CTA (Methods wording)
 *Added 2026-10-24.* Echo is resting TTE only (excludes stress echo 93350/93351, ~200k/yr, and TEE 93312). CTA is
 coronary CTA 75574 only (excludes calcium score 75571, structural CT 75572/75573, FFR-CT 0501T). Confirm these are
@@ -60,4 +40,11 @@ approval of its proposed config entries (years, r grid, 1.04 threshold, bootstra
 a commit whose hash is recorded in the plan before any H1 outcome is queried.
 
 ## Resolved
-None yet.
+
+### 1. Cardiac PET code set — resolved 2026-10-24
+*Decision (user):* Cardiac PET = 78491, 78492, 78430, 78431 (myocardial perfusion PET, with or without concurrent CT).
+Not counted: 78432/78433 (perfusion + metabolic, ~900 services/yr), 78429/78459 (metabolic/viability), 78434
+(blood-flow add-on). *Impact:* 2023 PET services 98,752 → 234,098; 2018→2023 PET rate change −34.4% → +55.4%;
+Advanced share of 2023 services 3.6% → 5.1%; Table 1 PET row now 85.5% cardiology / 4.4% radiology / 10.1% other.
+CTA models, Table 1 CTA shares and all other modalities unchanged. Run `2026-10-24_162154_a9af40c-dirty_pet-codes-78430-78431`;
+commit "Count PET/CT perfusion codes (78430/78431) as Cardiac PET".

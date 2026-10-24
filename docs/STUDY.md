@@ -31,11 +31,12 @@ Open decisions live in [PENDING.md](PENDING.md).
 | SPECT | 78451, 78452 | Traditional |
 | Cardiac CTA | 75574 (coronary CTA only) | Advanced |
 | Cardiac MRI | 75557–75565 | Advanced |
-| Cardiac PET | 78491, 78492 | Advanced |
+| Cardiac PET | 78491, 78492 (PET); 78430, 78431 (PET with concurrent CT, from 2020) | Advanced |
 
 Codes deliberately or possibly out of scope (must be stated in Methods): stress echo 93350/93351, TEE 93312,
-calcium score 75571, structural cardiac CT 75572/75573, FFR-CT 0501T–0504T, PET with concurrent CT 78429–78434
-(see PENDING.md — likely an error, not a choice).
+calcium score 75571, structural cardiac CT 75572/75573, FFR-CT 0501T–0504T; PET perfusion + metabolic 78432/78433,
+metabolic/viability PET 78429/78459, and the absolute blood-flow add-on 78434 (an add-on to a perfusion study, so
+never counted as a separate study). PET codes set by the user on 2026-10-24 (PENDING.md, Resolved).
 
 - **Rate**: services (`Tot_Srvcs`) per 1,000 FFS beneficiaries. Nationally: national FFS enrollment; by state: state FFS
   enrollment.
@@ -77,7 +78,9 @@ calcium score 75571, structural cardiac CT 75572/75573, FFR-CT 0501T–0504T, PE
   services, and `Tot_Benes` is not unique across providers. Never describe results as patients or studies performed.
 - **2020 is a COVID discontinuity**: trend statements need a sensitivity analysis excluding 2020.
 - **CPT code changes inside the window**: every modality's code set must be audited year by year for added or deleted
-  codes (the PET/CT codes of 2020 are the known case).
+  codes. PET: CPT 2020 split PET perfusion into PET only (78491/78492) and PET with concurrent CT (78430/78431); both
+  are counted since 2026-10-24, so the series is continuous. This was a correction of a coding error found while
+  reviewing the PET trend; report it in Methods as such. Echo, SPECT, CTA and MRI still need the same audit.
 - **Ecological design**: n ≤ 51; associations are state-level only (no individual-level inference). Density and use can
   drive each other (supply-induced demand vs demand attracting physicians), so no causal language. Neighbouring states
   are not independent (spatial autocorrelation). Keep covariates few for 51 units, and report how many density measures

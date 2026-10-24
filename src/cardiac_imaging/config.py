@@ -94,11 +94,14 @@ CARD_TYPES = ('Cardiology', 'Interventional Cardiology',
               'Clinical Cardiac Electrophysiology',
               'Advanced Heart Failure and Transplant Cardiology')
 
+# Cardiac PET = myocardial perfusion PET: 78491/78492 (PET only) + 78430/78431 (PET with concurrent CT, CPT 2020+).
+# Not counted: 78432/78433 (perfusion + metabolic), 78429/78459 (metabolic/viability), 78434 (blood-flow add-on to
+# a perfusion study, never a separate study). Set by the user 2026-10-24 (docs/PENDING.md item 1).
 MODALITY_CASE = """
     CASE
         WHEN HCPCS_Cd BETWEEN '75557' AND '75565' THEN 'Cardiac MRI'
         WHEN HCPCS_Cd = '75574'                    THEN 'Cardiac CTA'
-        WHEN HCPCS_Cd IN ('78491','78492')          THEN 'Cardiac PET'
+        WHEN HCPCS_Cd IN ('78491','78492','78430','78431') THEN 'Cardiac PET'
         WHEN HCPCS_Cd IN ('93306','93307','93308')  THEN 'Echo'
         WHEN HCPCS_Cd IN ('78451','78452')          THEN 'SPECT'
     END
@@ -108,7 +111,7 @@ MODALITY_TYPE_CASE = """
     CASE
         WHEN HCPCS_Cd BETWEEN '75557' AND '75565' THEN 'Advanced'
         WHEN HCPCS_Cd = '75574'                    THEN 'Advanced'
-        WHEN HCPCS_Cd IN ('78491','78492')          THEN 'Advanced'
+        WHEN HCPCS_Cd IN ('78491','78492','78430','78431') THEN 'Advanced'
         WHEN HCPCS_Cd IN ('93306','93307','93308')  THEN 'Traditional'
         WHEN HCPCS_Cd IN ('78451','78452')          THEN 'Traditional'
     END
@@ -117,7 +120,7 @@ MODALITY_TYPE_CASE = """
 CARDIAC_HCPCS_WHERE = """
     (HCPCS_Cd BETWEEN '75557' AND '75565'
      OR HCPCS_Cd = '75574'
-     OR HCPCS_Cd IN ('78491','78492')
+     OR HCPCS_Cd IN ('78491','78492','78430','78431')
      OR HCPCS_Cd IN ('93306','93307','93308')
      OR HCPCS_Cd IN ('78451','78452'))
 """

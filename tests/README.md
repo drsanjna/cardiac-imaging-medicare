@@ -118,6 +118,7 @@ Every function and class in this directory, including internal helpers.
 - `test_geography_lookups_cover_50_states_plus_dc()` — Name and FIPS lookups agree on the same 51 jurisdictions.
 - `test_study_window_and_enrollment()` — National enrollment exists for every study year.
 - `test_modality_sql_maps_every_cardiac_code()` — Every code in the HCPCS filter is assigned a modality and a modality type.
+- `test_pet_codes_are_perfusion_pet_with_and_without_ct()` — Cardiac PET = 78491, 78492, 78430, 78431 (Advanced); add-on 78434 and metabolic/combined codes are not counted.
 - `test_relative_env_paths_resolve_inside_repo(monkeypatch)` — CARDIAC_* relative paths are resolved against the repo root.
 - `test_catalog_entries_are_complete_and_unique()` — Every figure has a unique stem, a known section, and code + table references.
 - `test_catalog_sources_point_at_real_functions()` — Each 'module:function' in the catalog exists (so chart discussions load real code).
@@ -208,7 +209,7 @@ Every function and class in this directory, including internal helpers.
 - `test_headline_irrs_unchanged(real_run)` — Adjusted density IRRs and CIs match the published values to 4 decimals.
 - `test_table1_cta_shares_unchanged(real_run)` — Radiologists read 59.1% and cardiologists 37.2% of cardiac CTAs in 2023.
 - `test_physician_counts_and_states(real_run)` — Model sizes: 51 / 49 / 46 states; 2,847 / 1,616 / 1,140 unique physicians.
-- `test_change_summary_unchanged(real_run)` — 2018→2023 rate change per modality.
+- `test_change_summary_unchanged(real_run)` — 2018→2023 rate change per modality (PET = 78491/78492/78430/78431 since 2026-10-24; was −34.4 without PET/CT).
 - `test_manifest_records_real_rows(real_run)` — The run records all 58,853,705 claim rows.
 
 **`test_reporting.py`**
