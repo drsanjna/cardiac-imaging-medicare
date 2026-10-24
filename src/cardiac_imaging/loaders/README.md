@@ -50,6 +50,8 @@ Every function and class in this directory, including internal helpers.
 **`claims.py`**
 - `verify_specialty_strings(con)` — Every specialty string must exist verbatim in the PUF.
 - `load_detail(con)` — One row per provider × HCPCS × year for the 5 cardiac modalities (territories excluded).
+- `load_ica_detail(con)` — Invasive coronary angiography (config.ICA_CODES) rows, same columns as load_detail (territories excluded).
+- `ica_trend(df_ica)` — Total ICA services by year, in the national_trend format (year, procedure_category, total_services).
 - `aggregate_segments(df_detail)` — Services and unique NPIs by year × modality × rural/urban × place of service (Unknown RUCA dropped).
 - `national_trend(df_agg)` — Total services by year × modality.
 

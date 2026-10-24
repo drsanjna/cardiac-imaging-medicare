@@ -3,7 +3,7 @@ import pandas as pd
 
 from .. import config
 from ..audit import log_filter
-from ..style import PROC_ORDER
+from ..style import FIG1_ORDER, PROC_ORDER
 
 SEGMENTS = ['Urban / Office', 'Urban / Facility', 'Rural / Office', 'Rural / Facility']
 
@@ -16,12 +16,12 @@ def decompose(trend):
     return decomp_df
 
 
-def change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR):
-    """% change in volume, national FFS enrollment and rate between y0 and y1, one row per modality."""
+def change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR, procs=None):
+    """% change in volume, national FFS enrollment and rate between y0 and y1, one row per modality (or `procs`)."""
     enr = config.MEDICARE_ENROLLMENT
     enr_chg = (enr[y1] - enr[y0]) / enr[y0] * 100
     rows = []
-    for proc in PROC_ORDER:
+    for proc in procs or [p for p in FIG1_ORDER if p in set(decomp_df['procedure_category'])]:
         sub = decomp_df[decomp_df['procedure_category'] == proc]
         v0 = sub.loc[sub['year'] == y0, 'total_services'].values[0]
         v1 = sub.loc[sub['year'] == y1, 'total_services'].values[0]

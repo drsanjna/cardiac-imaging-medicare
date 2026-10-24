@@ -80,7 +80,7 @@ def test_compare_code_changes_between_snapshots(isolated):
 def test_gallery_html(pipeline_run):
     """Gallery lists every chart with zoom + discuss buttons, the run details panel and the viewer controls."""
     html = (pipeline_run['run_dir'] / 'gallery.html').read_text()
-    assert html.count('data-discuss=') == 12 and 'id="lb-in"' in html and 'id="lb-fit"' in html
+    assert html.count('data-discuss=') == 13 and 'id="lb-in"' in html and 'id="lb-fit"' in html
     assert 'id="discuss"' in html and 'Restore this code' in html and 'Rows per year' in html
     assert 'Interactive' in html
 
@@ -122,7 +122,7 @@ def test_release_notes_roundtrip(pipeline_run):
     assert m['summary'] in notes and '**What changed**' in notes and f"git checkout {m['code']['tag']}" in notes
     b64 = notes.split(publish.MARKER)[1].split('-->')[0].strip()
     rec = json.loads(base64.b64decode(b64))
-    assert rec['run_id'] == m['run_id'] and rec['figures'] == 12 and rec['summary'] == m['summary']
+    assert rec['run_id'] == m['run_id'] and rec['figures'] == 13 and rec['summary'] == m['summary']
 
 
 def test_zip_splits_tiffs(tmp_path):
