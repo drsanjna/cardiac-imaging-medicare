@@ -2,6 +2,40 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-24 13:39 UTC — 1 commit (`46d4dab..e238aea`)
+
+### What was done
+
+- **Sync runs between laptops and verify every GitHub release** (`e238aea`)
+  - reporting/sync.py: verify_release (every file present and non-empty, notes match the manifest), publish_reliably (publish, verify, repair, retry; failures kept as publish_error until the next sync), and a two-way sync (upload missing, download the other laptop's runs, newest label wins).
+  - publish_run repairs partial releases (uploads only missing files, refreshes notes) instead of failing on "release exists"; clearing a label is now timestamped.
+  - Every finished run publishes reliably and says whether GitHub is verified.
+  - scripts/sync_runs.py: sync / --dry-run / --check / optional LaunchAgent schedule.
+  - App: background sync on start (CARDIAC_SYNC_ON_START), "Sync now" button, "GitHub copy incomplete" notice, POST /api/sync.
+  - CI: release-check.yml + scripts/check_releases.py check every run release on tag push and daily.
+  - Tests (tests/test_sync.py) and docs (NEW_LAPTOP.md, CLAUDE.md, .env.example).
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| automation | 2 | 30 | 0 |
+| code: app | 2 | 34 | 5 |
+| code: core | 1 | 2 | 0 |
+| code: reporting | 5 | 268 | 30 |
+| docs | 1 | 23 | 0 |
+| repo root | 3 | 6 | 1 |
+| scripts | 4 | 202 | 0 |
+| tests | 6 | 330 | 2 |
+
+### Impact on the code
+
+- New functions (41): `scripts/check_releases.py: check`, `scripts/check_releases.py: gh_json`, `scripts/check_releases.py: main`, `scripts/check_releases.py: problems_for`, `scripts/check_releases.py: repo_slug`, `scripts/sync_runs.py: install_schedule`, `scripts/sync_runs.py: main`, `scripts/sync_runs.py: plist_text`, `scripts/sync_runs.py: uninstall_schedule`, `src/cardiac_imaging/app/server.py: run_sync`, `src/cardiac_imaging/reporting/publish.py: _build_assets`, `src/cardiac_imaging/reporting/publish.py: expected_assets`, `src/cardiac_imaging/reporting/publish.py: record_from_body`, `src/cardiac_imaging/reporting/publish.py: release_info`, `src/cardiac_imaging/reporting/sync.py: _newer`, `src/cardiac_imaging/reporting/sync.py: _set_publish_error`, `src/cardiac_imaging/reporting/sync.py: publish_reliably`, `src/cardiac_imaging/reporting/sync.py: summarize`, `src/cardiac_imaging/reporting/sync.py: sync`, `src/cardiac_imaging/reporting/sync.py: verify_release`, `tests/test_sync.py: load`, `tests/test_sync.py: make_run`, `tests/test_sync.py: no_rebuild`, `tests/test_sync.py: release_for`, `tests/test_sync.py: runs` …
+
+### Tests
+
+✅ 146 passed, 0 failed, 0 skipped.
+
 ## 2026-10-24 12:39 UTC — 4 commits (`bca10d2..638101d`)
 
 ### What was done
