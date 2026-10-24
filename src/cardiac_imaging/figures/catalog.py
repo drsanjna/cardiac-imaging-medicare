@@ -5,7 +5,7 @@ from ..style import PROC_ORDER
 _CLAIMS = ['loaders.claims:load_detail', 'loaders.claims:aggregate_segments']
 _SRC = {
     'decomposition': (['figures.decomposition:plot_figure1', 'analysis.rates:decompose', 'analysis.rates:change_summary',
-                       'loaders.claims:national_trend', 'loaders.claims:ica_trend', 'loaders.claims:load_ica_detail',
+                       'loaders.claims:national_trend', 'loaders.claims:comparator_trend', 'loaders.claims:load_comparator_detail',
                        *_CLAIMS, 'pipeline:step_figure1'],
                       ['national_volume_rates', 'change_summary']),
     'market_share': (['figures.market_share:plot_figure2', 'analysis.rates:market_share_by_segment',
@@ -14,10 +14,14 @@ _SRC = {
     'maps': (['figures.choropleths:plot_state_maps', 'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas',
               'loaders.enrollment:load_state_ffs', 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
              ['state_rates_2018', 'state_rates_2023', 'state_rate_change']),
-    'ica_map': (['figures.choropleths:plot_ica_state_maps', 'figures.choropleths:plot_one_state_map',
-                 'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_ica_detail',
-                 'loaders.enrollment:load_state_ffs', 'pipeline:step_ica_map'],
+    'ica_map': (['figures.choropleths:plot_comparator_state_maps', 'figures.choropleths:plot_one_state_map',
+                 'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
+                 'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
                 ['ica_state_rates']),
+    'tavr_map': (['figures.choropleths:plot_comparator_state_maps', 'figures.choropleths:plot_one_state_map',
+                  'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
+                  'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
+                 ['tavr_state_rates']),
     'panel': (['figures.choropleths:plot_all_modalities_panel', 'analysis.rates:compute_state_rates',
                'loaders.enrollment:load_state_ffs', 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
               ['state_rates_2023', 'state_summary_2023']),
@@ -43,7 +47,8 @@ FIGURES = [
     dict(stem='figure1_decomposition', label='Figure 1', section='Main text',
          title='Volume vs FFS enrollment vs utilization rate',
          caption='Annual procedure volume, national FFS enrollment and rate per 1,000 beneficiaries '
-                 'for each imaging modality and for invasive coronary angiography (CPT 93454–93461), 2018–2023.', **_src('decomposition')),
+                 'for each imaging modality, invasive coronary angiography (CPT 93454–93461) and TAVR (CPT 33361–33366), '
+                 '2018–2023. TAVR services ≈ 2 × procedures (co-surgeon billing).', **_src('decomposition')),
     dict(stem='figure2_market_share', label='Figure 2', section='Main text',
          title='Modality market share by setting',
          caption='Share of cardiac imaging volume by modality in urban/rural × office/facility segments, '
@@ -66,6 +71,11 @@ FIGURES = [
          caption='Invasive coronary angiography (diagnostic catheterization with coronary angiography, CPT 93454–93461) '
                  'rate per 1,000 FFS beneficiaries by state in 2018 and 2023, and the change (red = decrease, '
                  'blue = increase). Same layout as Figures 3–7. Territories excluded.', **_src('ica_map')),
+    dict(stem='figure11_tavr_state_maps', label='Figure 11', section='Main text',
+         title='TAVR: state rates 2018 / 2023 / change',
+         caption='Transcatheter aortic valve replacement (CPT 33361–33366) services per 1,000 FFS beneficiaries by state '
+                 'in 2018 and 2023, and the change. TAVR is usually billed by two co-surgeons, so services ≈ 2 × '
+                 'procedures. States with no 2018 rows are blank. Same layout as Figures 3–7.', **_src('tavr_map')),
     dict(stem='figure_panel_all_modalities_2023', label='Composite', section='Composite',
          title='All modalities, 2023 state rates',
          caption='Unnumbered composite of 2023 state rates for all five modalities (optional Central Illustration).',

@@ -66,7 +66,7 @@ def test_relative_env_paths_resolve_inside_repo(monkeypatch):
 def test_catalog_entries_are_complete_and_unique():
     """Every figure has a unique stem, a known section, and code + table references."""
     stems = [f['stem'] for f in catalog.FIGURES]
-    assert len(stems) == len(set(stems)) == 13   # 12 imaging figures + Figure 10 (ICA map)
+    assert len(stems) == len(set(stems)) == 14   # 12 imaging figures + Figures 10–11 (ICA, TAVR maps)
     for f in catalog.FIGURES:
         assert f['section'] in catalog.SECTIONS
         assert f['title'] and f['caption'] and f['label']
