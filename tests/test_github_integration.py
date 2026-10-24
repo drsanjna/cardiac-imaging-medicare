@@ -2,6 +2,7 @@
 import base64
 import json
 import shutil
+import subprocess
 import sys
 import types
 import zipfile
@@ -37,6 +38,8 @@ class FakeGh:
         """Fake publish._gh."""
         self.calls.append(args)
         if args[:2] == ('release', 'view'):
+            if not any(c[:2] == ('release', 'create') for c in self.calls):
+                raise subprocess.CalledProcessError(1, 'gh release view')   # no release until one is created
             return json.dumps({'url': 'https://github.com/owner/repo/releases/tag/x', 'publishedAt': '2026-10-24T01:00:00Z',
                                'assets': [{'name': 'run.zip', 'url': 'https://example/run.zip'}]})
         return ''

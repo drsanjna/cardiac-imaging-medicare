@@ -13,9 +13,11 @@ flowchart LR
   subgraph here["scripts/"]
     n_build_database_py["build_database.py"]
     n_check_docs_py["check_docs.py"]
+    n_check_releases_py["check_releases.py"]
     n_consolidate_hypotheses_py["consolidate_hypotheses.py"]
     n_convert_cms_to_parquet_py["convert_cms_to_parquet.py"]
     n_runs_py["runs.py"]
+    n_sync_runs_py["sync_runs.py"]
     n_update_readmes_py["update_readmes.py"]
     n_work_log_py["work_log.py"]
     n_install_hooks_sh["install_hooks.sh"]
@@ -30,12 +32,15 @@ flowchart LR
   n_config_py --> n_build_database_py
   n_config_py --> n_consolidate_hypotheses_py
   n_config_py --> n_runs_py
+  n_config_py --> n_sync_runs_py
   n_db_ --> n_build_database_py
   n_gitinfo_py --> n_runs_py
   n_reporting_ --> n_runs_py
+  n_reporting_ --> n_sync_runs_py
   n__githooks_ -. runs .-> n_check_docs_py
   n__githooks_ -. runs .-> n_update_readmes_py
   n__github_workflows_ -. runs .-> n_check_docs_py
+  n__github_workflows_ -. runs .-> n_check_releases_py
   n__github_workflows_ -. runs .-> n_update_readmes_py
   n__github_workflows_ -. runs .-> n_work_log_py
   n_setup_laptop_sh -. runs .-> n_build_database_py
@@ -50,11 +55,13 @@ flowchart LR
 |---|---|
 | [`build_database.py`](build_database.py) | Create cms.duckdb: a claims view over the Parquet files, plus the enrollment and GV reference tables. |
 | [`check_docs.py`](check_docs.py) | Fail if any module, function, method or class in src/, scripts/ or tests/ lacks a docstring (READMEs explain every function). |
+| [`check_releases.py`](check_releases.py) | Check on GitHub that every run's code-snapshot tag has a complete release (standard library + `gh` only; used in CI). |
 | [`consolidate_hypotheses.py`](consolidate_hypotheses.py) | Consolidate project conversations into a log of hypotheses and how they were tested: docs/hypotheses/. |
 | [`convert_cms_to_parquet.py`](convert_cms_to_parquet.py) | Convert CMS "Medicare Physician & Other Practitioners - by Provider and Service" |
 | [`install_hooks.sh`](install_hooks.sh) | Point git at .githooks/ so READMEs regenerate on every local commit. Run once per clone. |
 | [`runs.py`](runs.py) | Manage run history: list local + GitHub runs, publish runs as GitHub Releases, download runs back, rebuild the index. |
 | [`setup_laptop.sh`](setup_laptop.sh) | Set up this project on another Mac so you can pick up the research exactly where you left off. |
+| [`sync_runs.py`](sync_runs.py) | Sync runs between your laptops through GitHub: upload what's missing, download what's new, repair incomplete releases. |
 | [`update_readmes.py`](update_readmes.py) | Regenerate every README.md (root + one per code directory) from the code itself: docstrings, functions, imports. |
 | [`work_log.py`](work_log.py) | Write an English summary of pushed work to docs/WORK_LOG.md (run by the post-push GitHub Action on every push to main). |
 
@@ -69,6 +76,13 @@ Every function and class in this directory, including internal helpers.
 - `missing_docstrings(paths)` — ['file:line name', ...] for every module/class/function (incl. methods and private helpers) without a docstring.
 - `source_files()` — Every .py file in src/, scripts/ and tests/.
 - `main()` — Print missing docstrings and exit 1 if there are any.
+
+**`check_releases.py`**
+- `gh_json(path)` — GET a GitHub API path (all pages) via `gh api`, flattened into one list.
+- `repo_slug()` — owner/name from GITHUB_REPOSITORY or the git remote.
+- `problems_for(tag, release)` — Plain-English problems with one run release ([] = complete).
+- `check(slug, only)` — {tag: problems} for every run-* tag (or just `only`).
+- `main()` — Check releases (optionally waiting for one) and exit 1 on problems.
 
 **`consolidate_hypotheses.py`**
 - `clean(text)` — Strip app/system wrappers, collapse whitespace, redact secrets, cap the length.
@@ -90,6 +104,12 @@ Every function and class in this directory, including internal helpers.
 - `backfill_code(run_dir, sha, note)` — Give a run made before code snapshots existed a best-known code commit (marked approximate).
 - `refresh_all()` — Recompute findings, English summary and comparison for every local run (oldest first); sync GitHub notes.
 - `main()` — Parse the subcommand (list, publish, fetch, index) and run it.
+
+**`sync_runs.py`**
+- `plist_text(minutes)` — LaunchAgent definition that runs this script every `minutes` minutes with the current Python.
+- `install_schedule(minutes)` — Write and load the LaunchAgent (replacing an existing one).
+- `uninstall_schedule()` — Unload and remove the LaunchAgent if present.
+- `main()` — Parse options and sync, check, or manage the schedule.
 
 **`update_readmes.py`**
 - `first_line(text)` — First line of a docstring (empty string if none).

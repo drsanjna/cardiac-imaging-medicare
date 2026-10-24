@@ -183,7 +183,8 @@ def test_set_label_store_clear_and_validate(tmp_path):
     m = run_store.set_label('r1', 'needs_review', 'check IRR drift', runs_dir=tmp_path)
     assert m['review']['label'] == 'needs_review' and m['review']['note'] == 'check IRR drift' and m['review']['at']
     assert run_store.read_manifest(tmp_path / 'r1')['review']['label'] == 'needs_review'
-    assert run_store.set_label('r1', None, runs_dir=tmp_path)['review'] is None
+    cleared = run_store.set_label('r1', None, runs_dir=tmp_path)['review']
+    assert cleared['label'] is None and cleared['at']          # clearing is timestamped for sync
     with pytest.raises(ValueError):
         run_store.set_label('r1', 'great', runs_dir=tmp_path)
     with pytest.raises(FileNotFoundError, match='download it first'):

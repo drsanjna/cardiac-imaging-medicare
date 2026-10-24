@@ -13,9 +13,11 @@ flowchart LR
   subgraph here[".github/workflows/"]
     n_claude_yml["claude.yml"]
     n_post_push_yml["post-push.yml"]
+    n_release_check_yml["release-check.yml"]
   end
   n_scripts_["scripts/"]
   n_post_push_yml -. runs .-> n_scripts_
+  n_release_check_yml -. runs .-> n_scripts_
 ```
 
 ## Files
@@ -24,6 +26,7 @@ flowchart LR
 |---|---|
 | [`claude.yml`](claude.yml) | Claude — Claude fixes code when an issue/comment mentions @claude or an issue gets the notebook-error label. |
 | [`post-push.yml`](post-push.yml) | post-push — On every push/PR: docstring rule + tests; on push: refresh READMEs; on main: append an English work-log entry. |
+| [`release-check.yml`](release-check.yml) | release-check — Every run's GitHub release must be complete: checked when a run's tag is pushed, daily, and on demand. |
 
 ## Notes
 

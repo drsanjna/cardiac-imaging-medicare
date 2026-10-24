@@ -16,6 +16,7 @@ flowchart LR
     n_insights_py["insights.py"]
     n_publish_py["publish.py"]
     n_run_store_py["run_store.py"]
+    n_sync_py["sync.py"]
   end
   n_app_["app/"]
   n_audit_py["audit.py"]
@@ -28,11 +29,13 @@ flowchart LR
   n_config_py --> n_index_py
   n_config_py --> n_publish_py
   n_config_py --> n_run_store_py
+  n_config_py --> n_sync_py
   n_figures_ --> n_gallery_py
   n_gallery_py --> n_index_py
   n_gallery_py --> n_publish_py
   n_gallery_py --> n_run_store_py
   n_gallery_py --> n_scripts_
+  n_gallery_py --> n_sync_py
   n_gitinfo_py --> n_index_py
   n_gitinfo_py --> n_insights_py
   n_gitinfo_py --> n_publish_py
@@ -40,18 +43,23 @@ flowchart LR
   n_index_py --> n_app_
   n_index_py --> n_run_store_py
   n_index_py --> n_scripts_
+  n_index_py --> n_sync_py
   n_insights_py --> n_run_store_py
   n_insights_py --> n_scripts_
   n_publish_py --> n_app_
   n_publish_py --> n_index_py
-  n_publish_py --> n_run_store_py
   n_publish_py --> n_scripts_
+  n_publish_py --> n_sync_py
   n_run_store_py --> n_app_
   n_run_store_py --> n_gallery_py
   n_run_store_py --> n_index_py
   n_run_store_py --> n_pipeline_py
   n_run_store_py --> n_publish_py
   n_run_store_py --> n_scripts_
+  n_run_store_py --> n_sync_py
+  n_sync_py --> n_app_
+  n_sync_py --> n_run_store_py
+  n_sync_py --> n_scripts_
 ```
 
 ## Files
@@ -63,6 +71,7 @@ flowchart LR
 | [`insights.py`](insights.py) | Plain-English run summaries: key findings from a run's tables, and what changed (and its impact) vs the previous run. |
 | [`publish.py`](publish.py) | Upload a run to GitHub as a Release on its code-snapshot tag (outputs zipped as assets), and download runs back. |
 | [`run_store.py`](run_store.py) | Per-run output folder RUNS_DIR/<timestamp>_<commit>/: figures/, tables/, console.log, manifest.json, plus a code-snapshot tag. |
+| [`sync.py`](sync.py) | Keep runs identical on every laptop through GitHub: verify/repair each run's release, publish reliably, sync both ways. |
 
 ## Functions
 
@@ -101,7 +110,11 @@ Every function and class in this directory, including internal helpers.
 - `release_notes(m)` — Markdown release notes for a run: summary table, headline IRRs, restore command, embedded run record.
 - `_zip(run_dir, out, include_tiff)` *(internal)* — Zip run_dir as <run_id>/... ; TIFFs go only in the TIFF zip.
 - `_push_tag(tag)` *(internal)* — Push one tag (and the snapshot commit it points to) to GitHub.
-- `publish_run(run_dir, force)` — Push the run's tag and create its GitHub Release with the outputs attached; records `published` in the manifest.
+- `expected_assets(run_dir, m)` — Names of the files a complete release for this run must have.
+- `_build_assets(run_dir, m, tmp)` *(internal)* — Write the release files (outputs zip, TIFF zip, PDF, manifest) into tmp; returns their paths.
+- `release_info(tag)` — The GitHub release for `tag` (url, publishedAt, isDraft, body, assets with name/size/url), or None if there isn't one.
+- `publish_run(run_dir, force)` — Push the run's tag and make its GitHub Release complete; records `published` in the manifest.
+- `record_from_body(body)` — The run record embedded in release notes (decoded), or None.
 - `update_release_notes(run_dir)` — Rewrite an existing GitHub release's notes from the run's current manifest (e.g. after refreshing summaries).
 - `remote_runs()` — Run summaries decoded from the GitHub releases' notes (newest first), each with its release URL and time.
 - `_gh_api_releases()` *(internal)* — All of the repo's releases from the GitHub API (all pages).
@@ -129,6 +142,14 @@ Every function and class in this directory, including internal helpers.
 - `set_label(run_id, label, note, runs_dir)` — Record your verdict on a run (success / failure / needs_review / archived, or None to clear) in its manifest.
 - `previous_run(run_id, runs_dir)` — Manifest of the most recent run started before `run_id` (None if it is the first).
 - `list_runs(runs_dir)` — Manifests of every run in runs_dir, newest first.
+
+**`sync.py`**
+- `verify_release(run_dir)` — Problems with a run's GitHub release, in plain English ([] = complete and up to date).
+- `_set_publish_error(run_dir, problems)` *(internal)* — Record (or clear, when problems is empty) the last publishing failure in the manifest.
+- `publish_reliably(run_dir, attempts)` — Publish a run and check the result on GitHub; repair and retry until complete. Returns the remaining problems.
+- `_newer(a, b)` *(internal)* — True when review `a` is more recent than review `b` (either may be None).
+- `sync(upload, download, dry_run, runs_dir)` — Two-way sync with GitHub. Returns [{run_id, action, detail}] describing what was (or, with dry_run, would be) done.
+- `summarize(report)` — One-line plain-English summary of a sync report.
 
 ## Notes
 

@@ -12,6 +12,8 @@ body { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 .appbar { background:var(--brand); color:var(--brand-ink); padding:10px 18px; display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; }
 .appbar h1 { font-size:16px; margin:0; letter-spacing:.01em; } .appbar .meta { color:var(--brand-muted); font-size:12px; gap:4px 14px; }
 .appbar .spacer { flex:1; }
+.appbar .btn.sync { background:rgba(255,255,255,.10); color:var(--brand-ink); border-color:rgba(255,255,255,.25); padding:5px 11px; font-size:13px; }
+.appbar .btn.sync:hover { background:rgba(255,255,255,.2); } .appbar .warn { color:#ffd38a; }
 .appbar kbd { background:rgba(255,255,255,.12); border-radius:4px; padding:0 5px; font-size:11px; font-family:inherit; }
 .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 18px; border-bottom:1px solid var(--line); background:var(--panel); }
 .toolbar input { flex:1; min-width:180px; max-width:360px; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; font-size:14px; }
@@ -140,6 +142,7 @@ function renderDetail() {
       ${r.local ? `<a class="btn" href="${id}/gallery.html#development">Development details</a>` : ''}
       ${p ? `<a class="btn" href="${esc(p.release_url)}" target="_blank" rel="noopener">GitHub record ↗</a>` : ''}</div>
     <div class="labelbar"><span class="note">Mark as:</span>${r.local ? labelBtns : '<span class="note">download the run to label it</span>'}</div>
+    ${r.publish_error ? `<div class="panel"><h3>GitHub copy incomplete</h3><p>${esc((r.publish_error.problems || []).join('; '))} — click <strong>⟳ Sync now</strong> to retry.</p></div>` : ''}
     ${r.error ? `<div class="panel"><h3>Why it stopped</h3><p>Step <code>${esc(r.error.step)}</code>: ${esc(r.error.type)} — ${esc(r.error.message)}</p></div>` : ''}
     <div class="panel"><h3>Summary</h3><p>${esc(r.summary || 'No summary recorded for this run.')}</p></div>
     ${tiles ? `<div class="tiles">${tiles}</div>` : ''}
@@ -171,8 +174,21 @@ async function loadGitHub() {
   } catch (e) { $('#gh').textContent = 'GitHub unreachable — showing runs on this Mac'; }
   render();
 }
+function showSync(st) {
+  const el = $('#syncstate'); if (!st) { el.textContent = ''; return; }
+  el.className = st.failed ? 'warn' : '';
+  el.textContent = st.running ? 'Syncing with GitHub…' : (st.summary ? `Last sync ${when(st.at, {hour:'numeric', minute:'2-digit'})}: ${st.summary}` : '');
+  if (st.running) setTimeout(async () => { try { const s = await api('/api/session'); showSync(s.sync); if (!s.sync.running) location.reload(); } catch (e) {} }, 4000);
+}
+async function syncNow() {
+  if (!APP) return toast('Sync needs the app: <code>python -m cardiac_imaging.app</code>');
+  $('#syncnow').disabled = true; showSync({running: true});
+  try { const out = await api('/api/sync', {}); toast(esc(out.sync.summary), [], 6000); location.reload(); }
+  catch (e) { toast('Sync problem: ' + esc(e.message)); $('#syncnow').disabled = false; showSync(APP && APP.sync); }
+}
 async function loadApp() {
   try { APP = await api('/api/session'); } catch (e) { APP = null; }
+  showSync(APP && APP.sync);
   const s = APP && APP.status;
   $('#code').textContent = s ? `${s.branch} · ${s.subject}${s.dirty ? ' (unsaved edits)' : ''}` : 'Static view — start the app for Restore and labels';
 }
@@ -226,6 +242,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Enter' && SEL && runs.get(SEL).local) location.href = `${SEL}/gallery.html`;
 });
 $('#q').addEventListener('input', render);
+$('#syncnow').addEventListener('click', syncNow);
 render(); loadApp(); loadGitHub();
 """
 
@@ -241,7 +258,8 @@ def build(runs_dir=None):
 <title>Cardiac imaging results</title><style>{CSS}{INDEX_CSS}</style></head>
 <body data-repo="{esc(repo)}" data-marker="{esc(MARKER)}">
 <header class="appbar"><h1>Cardiac imaging · Results</h1>
-  <div class="meta"><span id="code"></span><span id="gh">Checking GitHub…</span></div><span class="spacer"></span>
+  <div class="meta"><span id="code"></span><span id="gh">Checking GitHub…</span><span id="syncstate"></span></div><span class="spacer"></span>
+  <button class="btn sync" id="syncnow" title="Upload new runs, download runs from your other laptop, repair incomplete releases">⟳ Sync now</button>
   <div class="meta"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open charts</span><span><kbd>/</kbd> search</span></div></header>
 <div class="toolbar"><input id="q" type="search" placeholder="Search runs, summaries, labels…" aria-label="Search runs">
   <div class="seg" id="filters" role="group" aria-label="Filter runs"></div></div>

@@ -106,6 +106,7 @@ Every function and class in this directory, including internal helpers.
 - `push()` — Push the current branch to GitHub; returns a plain-English result.
 
 **`server.py`**
+- `run_sync()` — Sync runs with GitHub once (skipped if a sync is already running); updates SYNC_STATE and returns the report.
 - `class Handler` — Static files from RUNS_DIR plus /api/* endpoints (POSTs need the session token).
 - `Handler.log_message(fmt)` — Quiet access log (errors still surface through responses).
 - `Handler.end_headers()` — Never let the browser cache API answers or regenerated pages.
@@ -115,7 +116,7 @@ Every function and class in this directory, including internal helpers.
 - `Handler.do_GET()` — Static files, or a GET API route.
 - `Handler.do_POST()` — Mutating API routes; require the session token in X-App-Token.
 - `_try_rebuild_index()` *(internal)* — Refresh index.html so runs finished since the server started appear (best effort).
-- `make_server(port, host)` — A ready-to-serve server bound to localhost (port 0 picks a free port).
+- `make_server(port, host, sync_on_start)` — A ready-to-serve server bound to localhost (port 0 picks a free port); starts a background GitHub sync.
 
 ## Notes
 

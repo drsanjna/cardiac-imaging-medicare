@@ -45,3 +45,26 @@ project rules, so it works the same way as on the first laptop.
 
 Before switching laptops: commit and push your code. On the other laptop: `git pull` (or re-run the setup script) and
 open the results page — runs made on either laptop appear in the list.
+
+### Keeping runs in sync
+
+Runs sync on their own. You never need to copy anything by hand:
+
+- **After every run**, the run is uploaded to GitHub and then **checked**: every file must be there and not empty, and
+  the release notes must match the run. If the check fails, the upload is repaired and retried (3 attempts). If it still
+  fails (say you're offline), the run is flagged *GitHub copy incomplete* on the results page, and the next sync finishes it.
+- **When the results page starts**, and whenever you click **⟳ Sync now**, it syncs both ways:
+  - it uploads runs that aren't on GitHub yet, or only partly
+  - it downloads runs made on the other laptop
+  - it copies over labels changed on the other laptop (the most recent change wins, including clearing a label)
+- **From the terminal:**
+
+  ```bash
+  python scripts/sync_runs.py              # sync now
+  python scripts/sync_runs.py --check      # verify only; exit 1 if anything is out of sync
+  python scripts/sync_runs.py --install-schedule 30   # optional: also sync every 30 min in the background
+  ```
+- **On GitHub**, the `release-check` workflow checks each run's release after its tag is pushed, and again daily. It
+  fails, and GitHub emails you, if a release is missing, a draft, or incomplete.
+
+Set `CARDIAC_SYNC_ON_START=0` in `.env` to turn off the sync when the results page starts.

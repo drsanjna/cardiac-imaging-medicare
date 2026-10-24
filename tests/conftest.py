@@ -53,6 +53,7 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(config, 'LOG_DIR', tmp_path / 'logs')
     monkeypatch.setattr(config, 'CONVERSATIONS_DIR', tmp_path / 'conversations')
     monkeypatch.setattr(config, 'PUBLISH_RUNS', False)
+    monkeypatch.setattr(config, 'SYNC_ON_START', False)
     monkeypatch.setattr(config, 'SAVE_TIFF', False)
     monkeypatch.setattr(config, 'CHAT_BACKEND', 'handoff')
     monkeypatch.setenv('CARDIAC_REPORT_ERRORS', '0')

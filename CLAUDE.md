@@ -83,6 +83,10 @@ quantitative analysis.
   `runs/index.html` lists all runs; `runs/latest` points to the newest. Compare runs via their `tables/` CSVs.
 - Each run tags its exact code as `run-<run id>` (snapshot commit, branch untouched) and uploads itself as a GitHub
   Release on that tag. To investigate an old result: `git checkout run-<run id>`; `python scripts/runs.py fetch <run id>`.
+- Runs sync between laptops through those Releases (`reporting/sync.py`, `python scripts/sync_runs.py`, the app's
+  Sync now). Every upload is verified (all files present, notes match the manifest) and repaired/retried; a failure is
+  kept as `publish_error` in the manifest until a sync fixes it. Never delete or recreate a release to "fix" it —
+  `publish_run` uploads only what's missing. CI (`release-check.yml`) re-checks every release daily.
 - New figures: add an entry to `figures/catalog.py` so the gallery and PDF label them.
 
 ## Tests (required)

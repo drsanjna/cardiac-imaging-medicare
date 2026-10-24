@@ -25,6 +25,7 @@ flowchart LR
     n_test_real_data_py["test_real_data.py"]
     n_test_reporting_py["test_reporting.py"]
     n_test_scripts_py["test_scripts.py"]
+    n_test_sync_py["test_sync.py"]
   end
 ```
 
@@ -46,6 +47,7 @@ flowchart LR
 | [`test_real_data.py`](test_real_data.py) | Regression tests on the real CMS data (skipped when ~/Downloads/cms_parquet/cms.duckdb is absent, e.g. in CI). |
 | [`test_reporting.py`](test_reporting.py) | Reporting: audit log, summaries/comparisons, gallery, index, release notes, publishing helpers. |
 | [`test_scripts.py`](test_scripts.py) | Repository scripts: docstring rule, README generation, hypothesis consolidation, work log. |
+| [`test_sync.py`](test_sync.py) | Run sync between laptops and reliable GitHub releases (GitHub is faked — no network). |
 
 ## Functions
 
@@ -244,6 +246,29 @@ Every function and class in this directory, including internal helpers.
 - `test_consolidate_hypotheses(tmp_path, monkeypatch)` — Chart discussions become tested hypotheses; hypothesis-like Claude Code messages become candidates; secrets redacted.
 - `test_work_log_entry(tmp_path, monkeypatch)` — The work-log entry summarises commits, areas touched and functions added/removed; re-running is idempotent.
 - `test_work_log_junit_counts(tmp_path)` — Test counts are read from a JUnit report.
+
+**`test_sync.py`**
+- `make_run(runs_dir, run_id, review, published, pdf)` — A minimal run folder with a manifest complete enough for publishing and release notes.
+- `release_for(run_dir, assets, draft, record)` — What `gh release view` would return for a complete (or deliberately broken) release of run_dir.
+- `runs(isolated)` — The isolated runs folder; gallery/index rebuilding stubbed out.
+- `no_rebuild(monkeypatch)` — Skip HTML rebuilding (not under test here).
+- `test_verify_complete_release(runs, monkeypatch)` — A release with every expected file and current notes has no problems.
+- `test_verify_detects_every_problem(runs, monkeypatch)` — Missing release, draft, missing/empty files, wrong run, stale notes and no record are all reported.
+- `test_verify_without_tag(runs)` — A run without a code-snapshot tag cannot have a release.
+- `test_publish_reliably_retries_until_verified(runs, monkeypatch)` — An incomplete first upload is repaired on the next attempt, then publish_error is cleared.
+- `test_publish_reliably_records_failure(runs, monkeypatch, capsys)` — When every attempt fails, the problems are kept in the manifest for the next sync.
+- `test_finish_publishes_reliably_and_reports_failure(runs, monkeypatch, capsys)` — Every finished run goes through publish_reliably; an unverified upload is reported, not hidden.
+- `test_publish_run_repairs_partial_release(runs, monkeypatch)` — An existing, partial release gets only its missing files (--clobber) and fresh notes.
+- `test_publish_run_creates_missing_release(runs, monkeypatch)` — With no release yet, publish_run creates one on the pushed tag.
+- `test_sync_uploads_downloads_and_merges_labels(runs, monkeypatch)` — Local-only runs upload, GitHub-only runs download, and a newer label from GitHub is copied in.
+- `test_sync_keeps_newer_local_label_and_repairs(runs, monkeypatch)` — A newer local change (even clearing a label) wins; an out-of-date release is repaired.
+- `test_sync_dry_run_changes_nothing(runs, monkeypatch)` — Dry run and check mode only report what they would do.
+- `test_summarize_flags_failures()` — The one-line summary calls out failures.
+- `test_api_sync_endpoint(runs, monkeypatch)` — POST /api/sync runs a sync and returns its report; it needs the session token.
+- `test_run_sync_survives_errors(monkeypatch)` — An offline sync is recorded as failed instead of crashing the app.
+- `load(name)` — Import scripts/<name>.py as a module.
+- `test_sync_runs_schedule_plist()` — The LaunchAgent runs sync_runs.py at the requested interval.
+- `test_check_releases_problems()` — The CI check flags missing releases, drafts, missing/empty files and wrong or missing run records.
 
 ## Notes
 

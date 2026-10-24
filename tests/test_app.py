@@ -327,6 +327,6 @@ def test_server_label_endpoint(app):
     status, out = _req(f'{base}/api/label', {'run': run, 'label': 'success'}, token=token)
     assert status == 200 and out['review']['label'] == 'success' and out['synced_to_github'] is False
     assert json.loads((config.RUNS_DIR / run / 'manifest.json').read_text())['review']['label'] == 'success'
-    assert _req(f'{base}/api/label', {'run': run, 'label': None}, token=token)[1]['review'] is None
+    assert _req(f'{base}/api/label', {'run': run, 'label': None}, token=token)[1]['review']['label'] is None
     assert _req(f'{base}/api/label', {'run': run, 'label': 'nope'}, token=token)[0] == 400
     assert _req(f'{base}/api/label', {'run': run, 'label': 'success'})[0] == 403

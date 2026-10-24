@@ -141,13 +141,13 @@ class Run:
             print(f"  Could not save tables: {e}")
         m['figures'] = sorted(p.name for p in (self.dir / 'figures').glob('*.png'))
         m['bytes'] = sum(p.stat().st_size for p in self.dir.rglob('*') if p.is_file())
-        from . import gallery, index, insights, publish as pub   # imported here: they read manifests this module writes
+        from . import gallery, index, insights, sync   # imported here: they read manifests this module writes
         _try(lambda: insights.annotate(self.dir, m, previous_run(m['run_id'])), 'summary')
         write_manifest(self.dir, m)
 
         _try(lambda: gallery.build(self.dir), 'gallery/PDF')
         if config.PUBLISH_RUNS if publish is None else publish:
-            _try(lambda: pub.publish_run(self.dir), 'GitHub release')
+            _try(lambda: sync.publish_reliably(self.dir), 'GitHub release')   # verified, repaired, retried
         _try(lambda: index.build(config.RUNS_DIR), 'run index')
         _link(config.RUNS_DIR / 'latest', Path(self.id))
         m = read_manifest(self.dir)
@@ -155,8 +155,10 @@ class Run:
         print(f"  gallery : {self.dir / 'gallery.html'}")
         print(f"  all runs: {config.RUNS_DIR / 'index.html'}")
         print(f"  code    : git checkout {m['code']['tag']}")
-        if m.get('published'):
-            print(f"  GitHub  : {m['published']['release_url']} (pushed {m['published']['at']})")
+        if m.get('published') and not m.get('publish_error'):
+            print(f"  GitHub  : {m['published']['release_url']} (pushed {m['published']['at']}, verified)")
+        elif m.get('publish_error'):
+            print(f"  GitHub  : NOT complete — {'; '.join(m['publish_error']['problems'])} (next sync retries)")
 
 
 def _try(fn, what):
@@ -195,8 +197,8 @@ def set_label(run_id, label, note='', runs_dir=None):
     if not (run_dir / 'manifest.json').exists():
         raise FileNotFoundError(f"Run {run_id} isn't on this Mac — download it first.")
     m = read_manifest(run_dir)
-    m['review'] = None if label is None else dict(label=label, note=note,
-                                                  at=datetime.now().astimezone().isoformat(timespec='seconds'))
+    # A cleared label keeps its timestamp so sync can tell "cleared later" from "never labelled".
+    m['review'] = dict(label=label, note=note if label else '', at=datetime.now().astimezone().isoformat(timespec='seconds'))
     write_manifest(run_dir, m)
     return m
 

@@ -42,6 +42,8 @@ RUNS_DIR = _path('CARDIAC_RUNS_DIR', Path.home() / 'Downloads' / 'cms_runs')
 SAVE_TIFF = os.environ.get('CARDIAC_SAVE_TIFF', '1') != '0'   # submission TIFFs (slow, large)
 # Upload each finished run as a GitHub Release on its code-snapshot tag (needs the `gh` CLI, logged in).
 PUBLISH_RUNS = os.environ.get('CARDIAC_PUBLISH_RUNS', '1') != '0'
+# The results app syncs runs with GitHub (both ways) in the background when it starts.
+SYNC_ON_START = os.environ.get('CARDIAC_SYNC_ON_START', '1') != '0'
 
 # Chart discussions (local app): saved on this Mac only; consolidated hypotheses go to docs/hypotheses/.
 CONVERSATIONS_DIR = _path('CARDIAC_CONVERSATIONS_DIR', Path.home() / 'Downloads' / 'cms_conversations')

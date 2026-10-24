@@ -351,6 +351,8 @@ def render_root(files, edges, runs):
         'result tables (CSV), `console.log`, `manifest.json`, a `gallery.html` of every chart and `all_figures.pdf`. '
         '`runs/index.html` lists every run with its headline IRRs. Use `--no-tiff` for quick runs, `--label` to tag one.', '',
         '**Another laptop?** Follow [`docs/NEW_LAPTOP.md`](docs/NEW_LAPTOP.md) — one script (`scripts/setup_laptop.sh`) sets it all up. '
+        'Runs sync between laptops through GitHub (automatically after each run and when the app starts; or `python scripts/sync_runs.py`), '
+        'and every upload is verified and repaired if incomplete. '
         'Paths default to `~/Downloads`; each laptop can override them in its own `.env` (see [`.env.example`](.env.example)). '
         'Full setup and the Claude debug loop: [`docs/SETUP_PLAN.md`](docs/SETUP_PLAN.md).', '',
         '## Directory map', '', '\n'.join(dir_rows), '',

@@ -7,10 +7,30 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from .. import config
-from ..reporting import index, publish, run_store
+from ..reporting import index, publish, run_store, sync
 from . import chat, restore
 
 TOKEN = secrets.token_urlsafe(24)   # per server start; only same-origin pages can read it from /api/session
+SYNC_STATE = dict(running=False, at=None, summary=None, failed=False)
+_sync_lock = threading.Lock()
+
+
+def run_sync():
+    """Sync runs with GitHub once (skipped if a sync is already running); updates SYNC_STATE and returns the report."""
+    from datetime import datetime
+    if not _sync_lock.acquire(blocking=False):
+        return None
+    SYNC_STATE['running'] = True
+    try:
+        report = sync.sync()
+        SYNC_STATE.update(summary=sync.summarize(report), failed=any(r['action'].endswith('failed') for r in report))
+        return report
+    except Exception as e:                       # e.g. offline or gh not logged in: keep the app usable
+        SYNC_STATE.update(summary=f'sync skipped: {type(e).__name__}: {e}', failed=True)
+        return None
+    finally:
+        SYNC_STATE.update(running=False, at=datetime.now().astimezone().isoformat(timespec='seconds'))
+        _sync_lock.release()
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -62,7 +82,8 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             if url.path == '/api/session':
                 engine = chat.backend()
-                return self._json(200, {'token': TOKEN, 'chat_backend': engine.name, 'status': restore.status()})
+                return self._json(200, {'token': TOKEN, 'chat_backend': engine.name, 'status': restore.status(),
+                                        'sync': SYNC_STATE})
             if url.path == '/api/status':
                 return self._json(200, restore.status())
             if url.path == '/api/context':
@@ -101,6 +122,11 @@ class Handler(SimpleHTTPRequestHandler):
                         print(f"  label not synced to GitHub: {e}")
                 _try_rebuild_index()
                 return self._json(200, {'review': m.get('review'), 'synced_to_github': synced})
+            if path == '/api/sync':
+                report = run_sync()
+                if report is None and SYNC_STATE['running']:
+                    return self._json(409, {'error': 'a sync is already running'})
+                return self._json(200, {'sync': SYNC_STATE, 'report': report or []})
             if path == '/api/fetch':
                 publish.fetch_run(b['run'])
                 _try_rebuild_index()
@@ -133,9 +159,11 @@ def _try_rebuild_index():
             print(f"  index rebuild failed: {e}")
 
 
-def make_server(port=None, host='127.0.0.1'):
-    """A ready-to-serve server bound to localhost (port 0 picks a free port)."""
+def make_server(port=None, host='127.0.0.1', sync_on_start=None):
+    """A ready-to-serve server bound to localhost (port 0 picks a free port); starts a background GitHub sync."""
     config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
     _try_rebuild_index()
+    if config.SYNC_ON_START if sync_on_start is None else sync_on_start:
+        threading.Thread(target=run_sync, daemon=True, name='startup-sync').start()
     handler = partial(Handler, directory=str(config.RUNS_DIR))
     return ThreadingHTTPServer((host, config.APP_PORT if port is None else port), handler)

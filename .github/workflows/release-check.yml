@@ -1,0 +1,27 @@
+# Every run's GitHub release must be complete: checked when a run's tag is pushed, daily, and on demand.
+name: release-check
+
+on:
+  push:
+    tags: ['run-*']
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check run releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            python scripts/check_releases.py --wait-for "${{ github.ref_name }}" --timeout 1200
+          else
+            python scripts/check_releases.py
+          fi
