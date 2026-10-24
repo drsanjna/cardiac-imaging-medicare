@@ -19,3 +19,7 @@ runs
 __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
+
+# iCloud conflict copies ("file 2", "file 2.py") — never commit or snapshot them
+* [0-9]
+* [0-9].*

@@ -149,6 +149,35 @@ def headline_cards(m):
     return '<div class="cards">' + ''.join(cards) + '</div>'
 
 
+def details_html(m, repo):
+    """Run details panel: code snapshot + restore command, GitHub upload, data, versions."""
+    c, d, pub = m.get('code', {}), m.get('data', {}), m.get('published')
+    tag = esc(c.get('tag', ''))
+    snap = esc((c.get('snapshot') or '')[:12])
+    if c.get('exact'):
+        how = 'exact working tree, incl. uncommitted changes' if c.get('dirty') else 'clean commit'
+    else:
+        how = f'<strong>approximate</strong> — {esc(c.get("note", "exact code not captured"))}'
+    rows = [
+        ('Started', esc(m.get('started', '').replace('T', ' '))),
+        ('Finished', f"{esc(m.get('finished', '').replace('T', ' '))} ({m.get('seconds', 0):.0f} s)"),
+        ('Pushed to GitHub', (f'{esc(pub["at"])} · <a href="{esc(pub["release_url"])}">release</a>') if pub else 'not yet'),
+        ('Code snapshot', (f'<a href="{repo}/tree/{tag}" class="mono">{tag}</a> → <span class="mono">{snap}</span> ({how})'
+                           if repo else f'<span class="mono">{tag}</span> ({how})')),
+        ('Restore this code', f'<code class="mono">git fetch origin tag {tag} &amp;&amp; git checkout {tag}</code>'),
+        ('Based on commit', f'<span class="mono">{esc(c.get("head", "")[:7])}</span> on {esc(c.get("branch", ""))} — '
+                            f'{esc(c.get("subject", ""))} ({esc(c.get("date", ""))})'),
+        ('Data', f'<span class="mono">{esc(m.get("database", ""))}</span> · fingerprint <span class="mono">{esc(d.get("fingerprint", ""))}</span>'
+                 f' · {d.get("parquet_files", 0)} Parquet files ({d.get("parquet_bytes", 0) / 1e9:.2f} GB) · '
+                 f'{d.get("claims_rows_total", 0):,} claims rows'),
+        ('Rows per year', esc(', '.join(f'{y}: {n:,}' for y, n in d.get('claims_rows_by_year', {}).items())) or '—'),
+        ('Versions', esc(', '.join(f'{k} {v}' for k, v in m.get('versions', {}).items()))),
+    ]
+    trs = ''.join(f'<tr><td>{k}</td><td style="text-align:left;white-space:normal">{v}</td></tr>' for k, v in rows)
+    return (f'<section id="details"><h2>Run details</h2><details open><summary>Code, data and timing</summary>'
+            f'<div class="tablewrap"><table><tbody>{trs}</tbody></table></div></details></section>')
+
+
 def compare_note(m, runs_dir):
     """One line comparing headline numbers with the previous successful run."""
     prev = next((r for r in run_store.list_runs(runs_dir)
@@ -172,14 +201,13 @@ def build(run_dir):
     tiff_dir = run_dir / 'figures' / 'tiff'
     make_thumbs(run_dir, present)
 
-    commit = esc(m.get('commit_short', ''))
-    remote = (m.get('remote') or '').removesuffix('.git')
-    if 'github.com' in remote and m.get('commit'):
-        remote = remote.replace('git@github.com:', 'https://github.com/')
-        commit = f'<a href="{esc(remote)}/commit/{esc(m["commit"])}" class="mono">{commit}</a>'
+    c = m.get('code', {})
+    repo = f"https://github.com/{c['repo']}" if c.get('repo') else ''
+    commit = (f'<a href="{repo}/commit/{esc(c["head"])}" class="mono">{esc(c["head"][:7])}</a>' if repo and c.get('head')
+              else esc(c.get('head', '')[:7]))
     sections = [s for s in SECTIONS + ['Other'] if any(f['section'] == s for f in figs)]
     nav = ''.join(f'<a href="#{s.lower().replace(" ", "-")}">{esc(s)}</a>' for s in sections)
-    nav += '<a href="#results">Results</a><a href="#steps">Steps</a><a href="#files">Files</a>'
+    nav += '<a href="#details">Run details</a><a href="#results">Results</a><a href="#steps">Steps</a><a href="#files">Files</a>'
 
     body = []
     if m.get('error'):
@@ -188,6 +216,7 @@ def build(run_dir):
                     f'{esc(e["type"])}: {esc(e["message"])}<br>Full traceback in <a href="console.log">console.log</a> '
                     'and <span class="mono">logs/last_error.md</span>.</div>')
     body.append(headline_cards(m) + compare_note(m, run_dir.parent))
+    body.append(details_html(m, repo))
 
     for sec in sections:
         cards = []
@@ -240,7 +269,8 @@ def build(run_dir):
   <h1>Cardiac imaging run <span class="mono">{esc(m['run_id'])}</span></h1>
   <div class="meta"><span class="badge {esc(m['status'])}">{esc(m['status'])}</span>
     <span>started {esc(m['started'].replace('T', ' '))}</span><span>{m.get('seconds', 0):.0f} s</span>
-    <span>commit {commit}{' (uncommitted changes)' if m.get('dirty') else ''}</span><span>branch {esc(m.get('branch', ''))}</span>
+    <span>commit {commit}{' + uncommitted changes' if c.get('dirty') else ''}</span><span>branch {esc(c.get('branch', ''))}</span>
+    <span>{('pushed ' + esc(m['published']['at'])) if m.get('published') else 'not on GitHub yet'}</span>
     <span class="mono">{esc(m.get('database', ''))}</span></div>
   <nav>{nav}</nav>
 </div></header>
@@ -267,7 +297,7 @@ def build_pdf(run_dir, m, figs, max_px=2400):
     Image.MAX_IMAGE_PIXELS = None
     with PdfPages(run_dir / 'all_figures.pdf') as pdf:
         cover = Figure(figsize=(11, 8.5))
-        lines = [f"Run {m['run_id']}", f"Status: {m['status']}   ·   {m['started'].replace('T', ' ')}   ·   commit {m.get('commit_short', '')}",
+        lines = [f"Run {m['run_id']}", f"Status: {m['status']}   ·   {m['started'].replace('T', ' ')}   ·   commit {m.get('code', {}).get('head', '')[:7]}",
                  f"{len(figs)} figures"] + [f"{k}: IRR {h['irr']:.3f} ({h['lo']:.3f}–{h['hi']:.3f})" for k, h in m.get('headline', {}).items()]
         cover.text(0.08, 0.85, 'Cardiac imaging utilization in Medicare FFS — figures', fontsize=20, weight='bold')
         for i, line in enumerate(lines):

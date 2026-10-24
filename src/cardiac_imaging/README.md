@@ -14,6 +14,7 @@ flowchart LR
     n_audit_py["audit.py"]
     n_config_py["config.py"]
     n_errors_py["errors.py"]
+    n_gitinfo_py["gitinfo.py"]
     n_pipeline_py["pipeline.py"]
     n_style_py["style.py"]
   end
@@ -32,6 +33,7 @@ flowchart LR
   n_config_py --> n_db_
   n_config_py --> n_errors_py
   n_config_py --> n_figures_
+  n_config_py --> n_gitinfo_py
   n_config_py --> n_loaders_
   n_config_py --> n_notebooks_
   n_config_py --> n_pipeline_py
@@ -40,6 +42,9 @@ flowchart LR
   n_db_ --> n_pipeline_py
   n_errors_py --> n_pipeline_py
   n_figures_ --> n_pipeline_py
+  n_gitinfo_py --> n_errors_py
+  n_gitinfo_py --> n_reporting_
+  n_gitinfo_py --> n_scripts_
   n_loaders_ --> n_pipeline_py
   n_pipeline_py --> n_notebooks_
   n_reporting_ --> n_pipeline_py
@@ -55,6 +60,7 @@ flowchart LR
 | [`audit.py`](audit.py) | Integrity log: every filter prints what it kept and dropped, so no rows disappear silently. |
 | [`config.py`](config.py) | Single source of truth: paths, table names, population rules, HCPCS codes, enrollment, DPI. |
 | [`errors.py`](errors.py) | Capture pipeline failures: write logs/last_error.md and (optionally) open a GitHub issue that tags @claude. |
+| [`gitinfo.py`](gitinfo.py) | Git helpers: run git, find the GitHub repo, and freeze the exact working tree as a code-snapshot commit + tag. |
 | [`pipeline.py`](pipeline.py) | End-to-end run: DB → loaders → analysis → figures. Each named step reports its own failure to errors.py. |
 | [`style.py`](style.py) | Publication typography (JACC: optimal 12 pt, min 10 pt) and the shared color palette. |
 
@@ -67,6 +73,13 @@ flowchart LR
 - `format_report(exc, step)`
 - `open_issue(title, body)` — Open (or comment on an existing open) issue labeled notebook-error. Needs CARDIAC_GITHUB_TOKEN.
 - `report(exc, step)` — Write logs/last_error.md and, unless CARDIAC_REPORT_ERRORS=0, open a GitHub issue.
+
+**`gitinfo.py`**
+- `git()` — Output of `git <args>` in the repo ('' on failure unless check=True).
+- `repo_slug()` — owner/name from GITHUB_REPOSITORY or the origin remote URL (None if not on GitHub).
+- `commit_info(sha)` — Subject, author and ISO date of a commit.
+- `snapshot_commit(message)` — Commit holding the exact working tree (tracked + untracked, .gitignore respected), without touching
+- `ensure_tag(tag, sha, message)` — Create annotated tag `tag` → sha if it doesn't exist (keeps the snapshot commit from being garbage-collected).
 
 **`pipeline.py`**
 - `step_connect(ctx)`

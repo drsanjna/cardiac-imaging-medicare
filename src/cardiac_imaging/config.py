@@ -20,6 +20,8 @@ LOG_DIR = _path('CARDIAC_LOG_DIR', 'logs')
 # Kept outside the iCloud-synced Desktop by default; the repo gets a `runs` link to it.
 RUNS_DIR = _path('CARDIAC_RUNS_DIR', Path.home() / 'Downloads' / 'cms_runs')
 SAVE_TIFF = os.environ.get('CARDIAC_SAVE_TIFF', '1') != '0'   # submission TIFFs (slow, large)
+# Upload each finished run as a GitHub Release on its code-snapshot tag (needs the `gh` CLI, logged in).
+PUBLISH_RUNS = os.environ.get('CARDIAC_PUBLISH_RUNS', '1') != '0'
 
 # Raw inputs (read only by scripts/convert_cms_to_parquet.py and scripts/build_database.py)
 PARQUET_DIR   = _path('CMS_PARQUET_DIR', Path.home() / 'Downloads' / 'cms_parquet')
