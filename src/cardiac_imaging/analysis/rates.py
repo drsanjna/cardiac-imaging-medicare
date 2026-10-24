@@ -76,12 +76,18 @@ def compute_state_rates(df_detail_sub, state_ffs_lookup):
     return sp
 
 
-def rate_deltas(rates_end, rates_base):
-    """Outer-join end-year and base-year state rates; rate_delta = end − base (missing = 0)."""
+def rate_deltas(rates_end, rates_base, missing_as_zero=True):
+    """Outer-join end-year and base-year state rates; rate_delta = end − base.
+
+    missing_as_zero=False keeps a state with no rows in one year as missing (no delta) instead of treating it as 0 —
+    for procedures where an absent state means suppressed or no program, not zero use.
+    """
     delta_df = rates_end[['state', 'procedure_category', 'rate_per_1000']].merge(
         rates_base[['state', 'procedure_category', 'rate_per_1000']],
         on=['state', 'procedure_category'], suffixes=('_2023', '_2018'), how='outer'
-    ).fillna(0)
+    )
+    if missing_as_zero:
+        delta_df = delta_df.fillna(0)
     delta_df['rate_delta'] = delta_df['rate_per_1000_2023'] - delta_df['rate_per_1000_2018']
     return delta_df
 

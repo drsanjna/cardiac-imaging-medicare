@@ -61,7 +61,7 @@ Every function and class in this directory, including internal helpers.
 - `market_share_by_segment(df_agg)` — {segment: year × modality % share} for the four rural/urban × office/facility segments (Figure 2 data).
 - `national_market_share(trend)` — Year × modality % share nationally, plus Traditional and Advanced totals.
 - `compute_state_rates(df_detail_sub, state_ffs_lookup)` — State × modality services and rate per 1,000 FFS beneficiaries.
-- `rate_deltas(rates_end, rates_base)` — Outer-join end-year and base-year state rates; rate_delta = end − base (missing = 0).
+- `rate_deltas(rates_end, rates_base, missing_as_zero)` — Outer-join end-year and base-year state rates; rate_delta = end − base.
 - `state_summary_table(state_rates)` — State × modality rate table with an 'All Cardiac' total, sorted descending.
 
 **`tables.py`**

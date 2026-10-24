@@ -1,4 +1,4 @@
-"""Figures 3–7 and 10: state choropleths per modality and for ICA (2018 / 2023 / change), plus the all-modality 2023 panel."""
+"""Figures 3–7, 10, 11: state choropleths per modality and comparator procedure (2018 / 2023 / change), plus a 2023 panel."""
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -11,7 +11,14 @@ _GEOS = dict(scope='usa', projection_type='albers usa',
              showlakes=True, lakecolor='rgb(200,220,240)', bgcolor='white')
 
 
-ICA_FIG_NUM = 10   # invasive coronary angiography map: after the numbered imaging figures (3–9)
+NO_DATA_GREY = '#9e9e9e'
+
+# Comparator maps, numbered after the imaging figures (3–9): (label, figure number, footnote).
+COMPARATOR_MAPS = [
+    (config.ICA_LABEL, 10, 'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461.'),
+    (config.TAVR_LABEL, 11, 'TAVR = transcatheter aortic valve replacement, CPT 33361–33366. Usually billed by two '
+                            'co-surgeons, so services ≈ 2 × procedures.'),
+]
 
 
 def map_stem(proc, fig_num):
@@ -25,17 +32,19 @@ def plot_state_maps(state_rates_2018, state_rates_2023, delta_df):
         plot_one_state_map(proc, idx + 3, state_rates_2018, state_rates_2023, delta_df)
 
 
-def plot_ica_state_maps(state_rates_2018, state_rates_2023, delta_df):
-    """Figure 10: invasive coronary angiography state rates 2018 / 2023 / change, same layout as Figures 3–7."""
-    plot_one_state_map(config.ICA_LABEL, ICA_FIG_NUM, state_rates_2018, state_rates_2023, delta_df,
-                       note='ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461.')
+def plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rates_2023, delta_df):
+    """A comparator's state map (Figures 10–11), same layout as Figures 3–7; states with no 2018 rows are left blank."""
+    no_base = sorted(set(state_rates_2023['state']) - set(state_rates_2018['state']))
+    if no_base:
+        note += f" No 2018 rows for {', '.join(no_base)} (none or suppressed): grey, no change shown."
+    plot_one_state_map(label, fig_num, state_rates_2018, state_rates_2023, delta_df, note=note)
 
 
 def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note=''):
     """Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`."""
     p2018 = state_rates_2018[state_rates_2018['procedure_category'] == proc]
     p2023 = state_rates_2023[state_rates_2023['procedure_category'] == proc]
-    p_delta = delta_df[delta_df['procedure_category'] == proc]
+    p_delta = delta_df[delta_df['procedure_category'] == proc].dropna(subset=['rate_delta'])
     if p2023.empty:
         print(f"  No data for {proc} — skipping")
         return
@@ -74,6 +83,16 @@ def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_
         marker_line_color='white', marker_line_width=0.5,
         hovertemplate='<b>%{location}</b><br>Δ Rate: %{z:+.2f}/1K<extra></extra>',
     ), row=1, col=3)
+
+    no_base = sorted(set(p2023['state']) - set(p2018['state']))
+    for col in (1, 3):   # no base-year rows: solid grey (not white, which means "no change" on the delta scale)
+        if no_base:
+            fig.add_trace(go.Choropleth(
+                locations=no_base, z=[0] * len(no_base), locationmode='USA-states',
+                colorscale=[[0, NO_DATA_GREY], [1, NO_DATA_GREY]], showscale=False,
+                marker_line_color='white', marker_line_width=0.5,
+                hovertemplate='<b>%{location}</b><br>No 2018 rows<extra></extra>',
+            ), row=1, col=col)
 
     fig.update_geos(**_GEOS)
     fig.update_annotations(font=dict(size=18))

@@ -29,10 +29,12 @@ def test_run_saves_tables_and_records(pipeline_run):
     d = pipeline_run['run_dir']
     m = json.loads((d / 'manifest.json').read_text())
     for t in ('change_summary', 'national_market_share', 'nb_density_models', 'table1_specialty_distribution',
-              'state_summary_2023', 'filter_log', 'ica_state_rates'):
+              'state_summary_2023', 'filter_log', 'ica_state_rates', 'tavr_state_rates'):
         assert (d / 'tables' / f'{t}.csv').exists(), t
     import pandas as pd
-    assert 'Invasive Coronary Angiography' in set(pd.read_csv(d / 'tables' / 'change_summary.csv')['modality'])
+    assert {'Invasive Coronary Angiography', 'TAVR'} <= set(pd.read_csv(d / 'tables' / 'change_summary.csv')['modality'])
+    tavr = pd.read_csv(d / 'tables' / 'tavr_state_rates.csv', index_col='state')
+    assert pd.isna(tavr.loc['VT', 'rate_delta']) and tavr.loc['VT', 'rate_per_1000_2023'] > 0   # no 2018 rows: no delta
     assert 'Invasive Coronary Angiography' not in pd.read_csv(d / 'tables' / 'national_market_share.csv').columns
     assert 'Adjusted IRR — All CTA-billing providers' in m['headline']
     assert m['findings']['irr_adjusted'] and m['summary'].startswith('From 2018 to 2023')
