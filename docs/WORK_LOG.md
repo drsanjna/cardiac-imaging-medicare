@@ -2,6 +2,47 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-24 12:39 UTC — 4 commits (`bca10d2..638101d`)
+
+### What was done
+
+- **Run page: summary at the top, development details in a bottom tab** (`5173be2`)
+  - Each run page opens with its plain-English summary and a collapsible 'What changed & impact' (matching the main page).
+  - Run details (code snapshot, data, versions), pipeline steps and files move into a collapsed Development tab at the bottom; the nav link and #details/#steps/#files links open it.
+- **Two-tone landing page with run labels; run-page polish; second-laptop setup script** (`9d8cc02`)
+  - Landing page redesigned for fast use: navy app bar, search, filter chips with counts (Active, Success, Failure, Needs review, Unlabeled, Archived, All), a compact run list beside the selected run's summary, headline IRRs, what changed / impact and actions; keyboard ↑/↓, Enter, /.
+  - Runs can be marked Success, Failure, Needs review or Archived (POST /api/label). Labels are stored in the run's manifest and, for published runs, in its GitHub release notes so the other laptop sees them; archived runs are hidden from the default view.
+  - Run pages share the navy/teal palette (navy header band) and show each figure's label and title above the chart.
+  - scripts/setup_laptop.sh sets up another Mac end to end (tools check, clone outside iCloud, ~/jupyter-env, hooks, finds the data and writes per-laptop paths to .env, builds the database, runs tests incl. real-data checks, fetches run history, Claude login hints, opens the app). docs/NEW_LAPTOP.md explains it and what syncs.
+  - Every command now reads the repo's .env (config.load_dotenv) so data paths can differ per laptop; ~ is expanded in path settings.
+  - 8 new tests (130 total).
+- **Add study protocol summary and pending-items tracker; link both from CLAUDE.md** (`525250e`)
+  - docs/STUDY.md records the study as coded: question, design, data sources, HCPCS definitions, rate and density definitions, the NB2 models, the figure-to-manuscript map, known data limitations and the rules for writing the manuscript.
+  - docs/PENDING.md tracks open decisions for the user, starting with the Cardiac PET code set, which misses the PET/CT codes (78429-78434) introduced in 2020, so PET looks like it halves after 2019.
+  - CLAUDE.md now loads both files in every session and tells Claude to log new user decisions in PENDING.md.
+  - Impact: documentation only; no analysis code, definitions or outputs change.
+- **Merge remote-tracking branch 'origin/main'** (`638101d`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: app | 1 | 11 | 1 |
+| code: core | 2 | 24 | 3 |
+| code: reporting | 5 | 233 | 108 |
+| docs | 3 | 202 | 0 |
+| repo root | 2 | 9 | 1 |
+| scripts | 3 | 163 | 1 |
+| tests | 4 | 104 | 1 |
+
+### Impact on the code
+
+- New functions (12): `src/cardiac_imaging/config.py: load_dotenv`, `src/cardiac_imaging/reporting/gallery.py: development_html`, `src/cardiac_imaging/reporting/gallery.py: summary_html`, `src/cardiac_imaging/reporting/run_store.py: set_label`, `tests/test_app.py: test_server_label_endpoint`, `tests/test_config.py: test_load_dotenv_fills_unset_vars_only`, `tests/test_config.py: test_setup_script_is_valid_bash_and_documents_steps`, `tests/test_reporting.py: test_figure_title_above_chart`, `tests/test_reporting.py: test_gallery_layout_summary_top_development_bottom`, `tests/test_reporting.py: test_label_travels_to_github_notes_and_index`, `tests/test_reporting.py: test_landing_page_structure`, `tests/test_reporting.py: test_set_label_store_clear_and_validate`
+
+### Tests
+
+✅ 130 passed, 0 failed, 0 skipped.
+
 ## 2026-10-24 12:11 UTC — 1 commit (`40d1fc7..feff14e`)
 
 ### What was done
