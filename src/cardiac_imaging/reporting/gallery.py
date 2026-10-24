@@ -44,8 +44,8 @@ nav a, .chip { background:var(--chip); color:var(--ink); text-decoration:none; p
 .error { background:var(--badbg); color:var(--bad); border-radius:10px; padding:12px 14px; margin-top:16px; }
 .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap:16px; }
 figure.card { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
-figure.card button { all:unset; display:block; cursor:zoom-in; background:#fff; width:100%; }
-figure.card img { display:block; width:100%; height:300px; object-fit:contain; padding:8px; }
+figure.card > button { all:unset; display:block; cursor:zoom-in; background:#fff; width:100%; }
+figure.card > button img { display:block; width:100%; height:300px; object-fit:contain; padding:8px; box-sizing:border-box; }
 figcaption { padding:10px 14px 12px; border-top:1px solid var(--line); }
 figcaption .label { color:var(--accent); font-weight:650; margin-right:6px; } figcaption p { margin:4px 0 6px; color:var(--muted); font-size:13px; }
 .links a { font-size:13px; margin-right:10px; }
