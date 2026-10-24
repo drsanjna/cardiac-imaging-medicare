@@ -73,6 +73,7 @@ Every function and class in this directory, including internal helpers.
 - `test_decompose_rate_per_1000()` — Rate = services / national FFS enrollment × 1000.
 - `test_change_summary_matches_hand_calculation()` — 2018→2023 % change computed per modality; enrollment change identical for all.
 - `test_change_summary_adds_ica_after_imaging_modalities()` — With ICA in the trend, it is the last row of the change summary; imaging rows are unchanged.
+- `test_rate_deltas_can_keep_missing_states_missing()` — A state absent in the base year gets no delta (not end − 0) when missing_as_zero=False.
 - `test_print_change_summary_format(capsys)` — Console table keeps its original layout.
 - `test_market_shares_sum_to_100(con)` — Each segment's yearly shares sum to 100; national shares add Traditional + Advanced.
 - `test_state_rates_and_deltas()` — State rates drop states without (or with zero) enrollment, log them, and deltas fill missing years with 0.
@@ -83,6 +84,7 @@ Every function and class in this directory, including internal helpers.
 - `test_irr_and_partial_curve_properties()` — CIs bracket the estimate; the partial curve rises with density when IRR > 1 and its band contains it.
 - `test_nb_requires_ten_states()` — Fewer than 10 states with demographics is refused.
 - `test_results_table_and_report(capsys)` — results_table has one row per model with adjusted and unadjusted IRRs; the report prints the key lines.
+- `test_comparator_map_notes_states_without_base_year(monkeypatch)` — The map footnote names states with no 2018 rows; they are passed through without a delta.
 
 **`test_app.py`**
 - `run_copy(pipeline_run, monkeypatch, isolated)` — A private copy of the synthetic run inside this test's RUNS_DIR (so tests can write conversations etc.).
@@ -167,7 +169,7 @@ Every function and class in this directory, including internal helpers.
 **`test_loaders.py`**
 - `test_specialty_guard(con)` — Passes when every specialty string exists; fails loudly when one is missing.
 - `test_load_detail_filters_and_classifies(con)` — Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality.
-- `test_load_ica_detail_and_trend(con)` — ICA rows: only 93454–93461, territories excluded and logged; trend has one row per year.
+- `test_load_comparators_and_trend(con)` — ICA and TAVR rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
 - `_raw_2023()` *(internal)* — A tiny raw 2023 enrollment sheet with junk rows and a territory.

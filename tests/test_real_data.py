@@ -71,7 +71,7 @@ def test_change_summary_unchanged(real_run):
     """2018→2023 rate change per modality (PET = 78491/78492/78430/78431 since 2026-10-24; was −34.4 without PET/CT)."""
     cs = real_run['tables']['change_summary']['rate_pct'].round(1).to_dict()
     assert cs == {'Echo': 4.1, 'SPECT': -21.0, 'Cardiac CTA': 199.4, 'Cardiac MRI': 122.9, 'Cardiac PET': 55.4,
-                  'Invasive Coronary Angiography': -14.8}
+                  'Invasive Coronary Angiography': -14.8, 'TAVR': 61.6}
 
 
 def test_manifest_records_real_rows(real_run):

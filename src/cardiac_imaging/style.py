@@ -1,6 +1,8 @@
 """Publication typography (JACC: optimal 12 pt, min 10 pt) and the shared color palette."""
 import matplotlib.pyplot as plt
 
+from . import config
+
 
 def apply_rcparams():
     """Set matplotlib defaults used by every figure."""
@@ -22,8 +24,8 @@ COLOR_PET   = '#E88BE8'
 
 PROC_ORDER  = ['Echo', 'SPECT', 'Cardiac CTA', 'Cardiac MRI', 'Cardiac PET']
 PROC_COLORS = [COLOR_ECHO, COLOR_SPECT, COLOR_CTA, COLOR_MRI, COLOR_PET]
-# Figure 1 adds invasive coronary angiography (config.ICA_LABEL) as a sixth, comparator column.
-FIG1_ORDER  = PROC_ORDER + ['Invasive Coronary Angiography']
+# Figure 1 adds the comparator procedures (config.COMPARATORS: ICA, TAVR) after the imaging modalities.
+FIG1_ORDER  = PROC_ORDER + list(config.COMPARATORS)
 
 COLOR_VOLUME     = '#C0392B'
 COLOR_ENROLLMENT = '#7F8C8D'

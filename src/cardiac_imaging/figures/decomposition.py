@@ -1,4 +1,4 @@
-"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + invasive coronary angiography."""
+"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR)."""
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -12,6 +12,9 @@ ROW_CONFIG = [
     ('enrollment',     'FFS Enrollment',                COLOR_ENROLLMENT, 's'),
     ('rate_per_1000',  'Rate per 1,000 Beneficiaries',  COLOR_RATE,       'D'),
 ]
+
+TITLES = {config.ICA_LABEL: 'Invasive Coronary\nAngiography (ICA)',
+          config.TAVR_LABEL: 'Transcatheter Aortic Valve\nReplacement (TAVR)'}
 
 
 def plot_figure1(decomp_df):
@@ -53,8 +56,7 @@ def plot_figure1(decomp_df):
             yrange = ymax - ymin if ymax != ymin else ymax * 0.1
             ax.set_ylim(ymin - yrange * 0.15, ymax + yrange * 0.3)
             if row_idx == 0:
-                ax.set_title(proc.replace('Invasive Coronary Angiography', 'Invasive Coronary\nAngiography (ICA)'),
-                             fontsize=13, fontweight='bold', pad=10)
+                ax.set_title(TITLES.get(proc, proc), fontsize=13, fontweight='bold', pad=10)
             if col_idx == 0:
                 ax.set_ylabel(row_label, fontsize=11, fontweight='bold')
             if row_idx == 2:
@@ -68,6 +70,7 @@ def plot_figure1(decomp_df):
     fig.text(0.05, 0.015,
              'Symbols: circles = annual procedure volume; squares = national FFS enrollment; '
              'diamonds = utilization rate per 1,000 FFS beneficiaries. '
-             'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461.',
+             'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461. '
+             'TAVR = CPT 33361–33366; usually billed by two co-surgeons, so services ≈ 2 × procedures.',
              fontsize=10, color='#555555')
     save_pub_fig(fig, 'figure1_decomposition', config.TIFF_PANEL_DPI)

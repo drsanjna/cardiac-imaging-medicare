@@ -48,6 +48,15 @@ def test_change_summary_adds_ica_after_imaging_modalities():
     pd.testing.assert_frame_equal(cs.loc[PROC_ORDER], base)
 
 
+def test_rate_deltas_can_keep_missing_states_missing():
+    """A state absent in the base year gets no delta (not end − 0) when missing_as_zero=False."""
+    end = pd.DataFrame(dict(state=['AA', 'BB'], procedure_category='TAVR', rate_per_1000=[2.0, 3.0]))
+    base = pd.DataFrame(dict(state=['AA'], procedure_category='TAVR', rate_per_1000=[1.5]))
+    d = rates.rate_deltas(end, base, missing_as_zero=False).set_index('state')
+    assert d.loc['AA', 'rate_delta'] == 0.5 and pd.isna(d.loc['BB', 'rate_delta'])
+    assert rates.rate_deltas(end, base).set_index('state').loc['BB', 'rate_delta'] == 3.0   # default unchanged
+
+
 def test_print_change_summary_format(capsys):
     """Console table keeps its original layout."""
     rates.print_change_summary(rates.decompose(_trend()))
@@ -145,3 +154,14 @@ def test_results_table_and_report(capsys):
     nb_models.print_model_report(fit, 'Title', 123, 2023)
     out = capsys.readouterr().out
     assert 'DENSITY IRR — adjusted' in out and 'VIF:' in out
+
+
+def test_comparator_map_notes_states_without_base_year(monkeypatch):
+    """The map footnote names states with no 2018 rows; they are passed through without a delta."""
+    from cardiac_imaging.figures import choropleths
+    seen = {}
+    monkeypatch.setattr(choropleths, 'plot_one_state_map', lambda proc, n, r18, r23, d, note='': seen.update(note=note))
+    r23 = pd.DataFrame(dict(state=['AA', 'WY'], procedure_category='TAVR', rate_per_1000=[2.0, 3.0]))
+    r18 = r23.iloc[:1]
+    choropleths.plot_comparator_state_maps('TAVR', 11, 'TAVR note.', r18, r23, rates.rate_deltas(r23, r18, False))
+    assert seen['note'].startswith('TAVR note.') and 'No 2018 rows for WY' in seen['note']
