@@ -1,10 +1,10 @@
-"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 modalities."""
+"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + invasive coronary angiography."""
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
 from .. import config
-from ..style import COLOR_ENROLLMENT, COLOR_RATE, COLOR_VOLUME, PROC_ORDER
+from ..style import COLOR_ENROLLMENT, COLOR_RATE, COLOR_VOLUME, FIG1_ORDER
 from .export import save_pub_fig
 
 ROW_CONFIG = [
@@ -15,13 +15,14 @@ ROW_CONFIG = [
 
 
 def plot_figure1(decomp_df):
-    """Draw and save Figure 1 (volume, FFS enrollment and rate per modality, 3 × 5 panels)."""
-    fig = plt.figure(figsize=(22, 13))
-    outer_gs = gridspec.GridSpec(3, 5, hspace=0.45, wspace=0.35,
+    """Draw and save Figure 1 (volume, FFS enrollment and rate per column of FIG1_ORDER present in decomp_df, 3 × n)."""
+    procs = [p for p in FIG1_ORDER if p in set(decomp_df['procedure_category'])]
+    fig = plt.figure(figsize=(4.4 * len(procs), 13))
+    outer_gs = gridspec.GridSpec(3, len(procs), hspace=0.45, wspace=0.35,
                                  left=0.05, right=0.97, top=0.87, bottom=0.07)
     years_all = sorted(decomp_df['year'].unique())
 
-    for col_idx, proc in enumerate(PROC_ORDER):
+    for col_idx, proc in enumerate(procs):
         sub = decomp_df[decomp_df['procedure_category'] == proc].sort_values('year')
         years = sub['year'].values
         for row_idx, (col_name, row_label, color, marker) in enumerate(ROW_CONFIG):
@@ -52,7 +53,8 @@ def plot_figure1(decomp_df):
             yrange = ymax - ymin if ymax != ymin else ymax * 0.1
             ax.set_ylim(ymin - yrange * 0.15, ymax + yrange * 0.3)
             if row_idx == 0:
-                ax.set_title(proc, fontsize=13, fontweight='bold', pad=10)
+                ax.set_title(proc.replace('Invasive Coronary Angiography', 'Invasive Coronary\nAngiography (ICA)'),
+                             fontsize=13, fontweight='bold', pad=10)
             if col_idx == 0:
                 ax.set_ylabel(row_label, fontsize=11, fontweight='bold')
             if row_idx == 2:
@@ -65,6 +67,7 @@ def plot_figure1(decomp_df):
                  fontsize=14, fontweight='bold', y=0.96)
     fig.text(0.05, 0.015,
              'Symbols: circles = annual procedure volume; squares = national FFS enrollment; '
-             'diamonds = utilization rate per 1,000 FFS beneficiaries.',
+             'diamonds = utilization rate per 1,000 FFS beneficiaries. '
+             'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461.',
              fontsize=10, color='#555555')
     save_pub_fig(fig, 'figure1_decomposition', config.TIFF_PANEL_DPI)

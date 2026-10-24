@@ -12,7 +12,8 @@ ABBR2FIPS = {v: k for k, v in config.FIPS2ABBR.items()}
 NO_RAD = {'AK', 'SD'}                  # states with no radiologist CTA reader in 2023 (exercises the ≥1-biller filter)
 NO_CARD = {'DE', 'WY'}                 # states with no cardiologist CTA reader in 2023
 EXTRA_AREAS = ['PR', 'AA']             # territory (excluded) and military code (passes the filter, has no enrollment)
-CODES = {'Echo': '93306', 'SPECT': '78452', 'Cardiac CTA': '75574', 'Cardiac MRI': '75561', 'Cardiac PET': '78492'}
+CODES = {'Echo': '93306', 'SPECT': '78452', 'Cardiac CTA': '75574', 'Cardiac MRI': '75561', 'Cardiac PET': '78492',
+         'ICA': '93458'}   # ICA: invasive coronary angiography comparator (config.ICA_CODES)
 YEARS = list(range(2018, 2024))
 
 
@@ -33,10 +34,11 @@ def claims_frame(seed=7):
             ruca = ['1', '2.0', '3', '4.1', '10', None][npi % 6]
             for year in YEARS:
                 growth = 1 + 0.25 * (year - 2018)
-                mods = {'rad': ['Cardiac CTA', 'Cardiac MRI', 'SPECT'], 'card': ['Echo', 'SPECT', 'Cardiac CTA', 'Cardiac PET'],
+                mods = {'rad': ['Cardiac CTA', 'Cardiac MRI', 'SPECT'], 'card': ['Echo', 'SPECT', 'Cardiac CTA', 'Cardiac PET', 'ICA'],
                         'other': ['Echo']}[kind]
                 for mod in mods:
-                    base = {'Echo': 400, 'SPECT': 120, 'Cardiac CTA': 8 * density * growth, 'Cardiac MRI': 5 * growth, 'Cardiac PET': 15}[mod]
+                    base = {'Echo': 400, 'SPECT': 120, 'Cardiac CTA': 8 * density * growth, 'Cardiac MRI': 5 * growth, 'Cardiac PET': 15,
+                            'ICA': 60 * (1 - 0.04 * (year - 2018))}[mod]
                     srv = float(max(11, rng.poisson(base)))
                     rows.append({**{c: None for c in cols}, 'year': year, 'Rndrng_NPI': str(npi), 'Rndrng_Prvdr_Type': ptype,
                                  'Rndrng_Prvdr_State_Abrvtn': st, 'Rndrng_Prvdr_Cntry': 'US', 'Rndrng_Prvdr_RUCA': ruca,

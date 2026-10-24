@@ -38,6 +38,16 @@ def test_change_summary_matches_hand_calculation():
     assert cs.loc['Cardiac PET', 'rate_pct'] == pytest.approx(expected_rate)
 
 
+def test_change_summary_adds_ica_after_imaging_modalities():
+    """With ICA in the trend, it is the last row of the change summary; imaging rows are unchanged."""
+    ica = pd.DataFrame([dict(year=y, procedure_category=config.ICA_LABEL, total_services=500.0) for y in range(2018, 2024)])
+    base = rates.change_summary(rates.decompose(_trend()))
+    cs = rates.change_summary(rates.decompose(pd.concat([_trend(), ica], ignore_index=True)))
+    assert list(cs.index) == PROC_ORDER + [config.ICA_LABEL]
+    assert cs.loc[config.ICA_LABEL, 'volume_pct'] == pytest.approx(0)
+    pd.testing.assert_frame_equal(cs.loc[PROC_ORDER], base)
+
+
 def test_print_change_summary_format(capsys):
     """Console table keeps its original layout."""
     rates.print_change_summary(rates.decompose(_trend()))

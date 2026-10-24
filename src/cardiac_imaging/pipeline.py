@@ -5,6 +5,8 @@ Run from a notebook with `pipeline.run_all()` or from a shell with `python -m ca
 import argparse
 import time
 
+import pandas as pd
+
 from . import config, errors, style
 from .analysis import nb_models, rates, tables
 from .db.connection import get_connection, require_tables
@@ -14,7 +16,7 @@ from .reporting import run_store
 
 MANIFEST = """
 MAIN TEXT
-  Figure 1:  Volume / enrollment / rate decomposition (5 modalities × 3 metrics)
+  Figure 1:  Volume / enrollment / rate decomposition (5 modalities + ICA × 3 metrics)
   Figure 2:  Market share — stacked area with advanced-modality zoom insets
   Figure 3:  Echo        — state rates, 2018 / 2023 / change
   Figure 4:  SPECT       — state rates, 2018 / 2023 / change
@@ -24,6 +26,7 @@ MAIN TEXT
   Figure 8:  All-provider density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure 9:  Combined forest plot — density IRRs before/after adjustment (FINAL)
+  Figure 10: Invasive coronary angiography — state rates, 2018 / 2023 / change
   (unnumbered composite: all-modality 2023 state panel)
 
 SUPPLEMENT
@@ -69,13 +72,14 @@ def step_load_claims(ctx):
     ctx['df_detail'] = claims.load_detail(con)
     ctx['df_agg'] = claims.aggregate_segments(ctx['df_detail'])
     ctx['trend'] = claims.national_trend(ctx['df_agg'])
+    ctx['df_ica'] = claims.load_ica_detail(con)   # comparator for Figures 1 and 10; not an imaging modality
     print("Data pipeline complete.\n")
 
 
 def step_figure1(ctx):
     """Figure 1 and the 2018 → 2023 change summary."""
     print("Building Figure 1: Volume/Enrollment/Rate Decomposition...")
-    decomp_df = rates.decompose(ctx['trend'])
+    decomp_df = rates.decompose(pd.concat([ctx['trend'], claims.ica_trend(ctx['df_ica'])], ignore_index=True))
     decomposition.plot_figure1(decomp_df)
     rates.print_change_summary(decomp_df)
     ctx['tables']['national_volume_rates'] = decomp_df.set_index(['procedure_category', 'year'])
@@ -109,6 +113,19 @@ def step_state_maps(ctx):
                          state_rate_change=deltas.set_index('state'))
     choropleths.plot_all_modalities_panel(r23)
     print("Figures 3–7 complete.\n")
+
+
+def step_ica_map(ctx):
+    """Figure 10: invasive coronary angiography state rates for 2018 and 2023 and the change."""
+    print("Building Figure 10: Invasive coronary angiography state map...")
+    ica = ctx['df_ica']
+    i23 = rates.compute_state_rates(ica[ica['year'] == config.END_YEAR], ctx['state_ffs_2023'])
+    i18 = rates.compute_state_rates(ica[ica['year'] == config.BASE_YEAR], ctx['state_ffs_2018'])
+    deltas = rates.rate_deltas(i23, i18)
+    choropleths.plot_ica_state_maps(i18, i23, deltas)
+    ctx['tables']['ica_state_rates'] = (deltas.set_index('state').drop(columns='procedure_category')
+                                        .sort_values('rate_per_1000_2023', ascending=False))
+    print("Figure 10 complete.\n")
 
 
 def step_state_table(ctx):
@@ -175,6 +192,7 @@ STEPS = [
     ('figure1_decomposition', step_figure1),
     ('figure2_market_share', step_figure2),
     ('figures3_7_state_maps', step_state_maps),
+    ('figure10_ica_state_map', step_ica_map),
     ('state_summary_table', step_state_table),
     ('density_models_fig8_S1_S2', step_density_models),
     ('table1_and_figure9_forest', step_table1_forest),

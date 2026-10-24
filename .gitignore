@@ -27,3 +27,4 @@ __pycache__/
 .coverage.*
 pytest.xml
 htmlcov/
+.DS_Store

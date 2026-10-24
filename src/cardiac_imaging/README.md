@@ -97,6 +97,7 @@ Every function and class in this directory, including internal helpers.
 - `step_figure1(ctx)` — Figure 1 and the 2018 → 2023 change summary.
 - `step_figure2(ctx)` — Figure 2 and the national market share table.
 - `step_state_maps(ctx)` — State rates for 2018 and 2023, Figures 3–7 and the all-modality panel.
+- `step_ica_map(ctx)` — Figure 10: invasive coronary angiography state rates for 2018 and 2023 and the change.
 - `step_state_table(ctx)` — Print and save the 2023 state rate table.
 - `step_density_models(ctx)` — Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs.
 - `step_table1_forest(ctx)` — Table 1 (specialty shares by modality) and the Figure 9 forest plot.
