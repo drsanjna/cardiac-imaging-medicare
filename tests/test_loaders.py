@@ -22,13 +22,26 @@ def test_load_detail_filters_and_classifies(con):
     """Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality."""
     audit.FILTER_LOG.clear()
     df = claims.load_detail(con)
-    assert set(df['procedure_category']) == set(synthetic.CODES)
+    assert set(df['procedure_category']) == set(synthetic.CODES) - {'ICA'}   # ICA is a comparator, loaded separately
+    assert not set(df['HCPCS_Cd']) & set(config.ICA_CODES)
     assert 'PR' not in set(df['state']) and 'AA' in set(df['state'])
     assert set(df['rural_urban']) == {'Urban', 'Rural', 'Unknown'}
     assert set(df['modality_type']) == {'Advanced', 'Traditional'}
     assert '99213' not in set(df['HCPCS_Cd'])
     labels = [f['filter'] for f in audit.FILTER_LOG]
     assert any('excluding territories' in l for l in labels)
+
+
+def test_load_ica_detail_and_trend(con):
+    """ICA rows: only 93454–93461, territories excluded and logged; trend has one row per year."""
+    audit.FILTER_LOG.clear()
+    df = claims.load_ica_detail(con)
+    assert set(df['HCPCS_Cd']) <= set(config.ICA_CODES) and len(df)
+    assert set(df['procedure_category']) == {config.ICA_LABEL} and 'PR' not in set(df['state'])
+    assert any(f['filter'].startswith('ICA rows') and f['dropped'] > 0 for f in audit.FILTER_LOG)
+    trend = claims.ica_trend(df)
+    assert list(trend.columns) == ['year', 'procedure_category', 'total_services']
+    assert list(trend['year']) == list(range(2018, 2024)) and trend['total_services'].sum() == df['Tot_Srvcs'].sum()
 
 
 def test_ruca_threshold_matches_numeric_comparison(con):

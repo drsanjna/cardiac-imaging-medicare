@@ -45,6 +45,30 @@ def load_detail(con):
     return df_detail
 
 
+def load_ica_detail(con):
+    """Invasive coronary angiography (config.ICA_CODES) rows, same columns as load_detail (territories excluded)."""
+    query = f"""
+    SELECT year, Rndrng_NPI, HCPCS_Cd,
+        '{config.ICA_LABEL}' AS procedure_category,
+        Place_Of_Srvc AS place_of_service,
+        Rndrng_Prvdr_State_Abrvtn AS state,
+        Tot_Srvcs
+    FROM {config.CLAIMS_TABLE}
+    WHERE {config.ICA_WHERE}
+      {config.EXCL_SQL}
+    """
+    n_all = con.execute(f"SELECT COUNT(*) FROM {config.CLAIMS_TABLE} WHERE {config.ICA_WHERE}").fetchall()[0][0]
+    df = con.execute(query).fetchdf()
+    log_filter('ICA rows, excluding territories/invalid states', n_all, len(df))
+    print(f"ICA loaded: {len(df):,} rows ({config.ICA_CODES[0]}–{config.ICA_CODES[-1]})")
+    return df
+
+
+def ica_trend(df_ica):
+    """Total ICA services by year, in the national_trend format (year, procedure_category, total_services)."""
+    return df_ica.groupby(['year', 'procedure_category'])['Tot_Srvcs'].sum().rename('total_services').reset_index()
+
+
 def aggregate_segments(df_detail):
     """Services and unique NPIs by year × modality × rural/urban × place of service (Unknown RUCA dropped)."""
     df_agg = (df_detail.groupby(['year', 'procedure_category', 'rural_urban', 'place_of_service'])

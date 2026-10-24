@@ -72,6 +72,7 @@ Every function and class in this directory, including internal helpers.
 - `_trend()` *(internal)* — Year × modality totals with simple known numbers.
 - `test_decompose_rate_per_1000()` — Rate = services / national FFS enrollment × 1000.
 - `test_change_summary_matches_hand_calculation()` — 2018→2023 % change computed per modality; enrollment change identical for all.
+- `test_change_summary_adds_ica_after_imaging_modalities()` — With ICA in the trend, it is the last row of the change summary; imaging rows are unchanged.
 - `test_print_change_summary_format(capsys)` — Console table keeps its original layout.
 - `test_market_shares_sum_to_100(con)` — Each segment's yearly shares sum to 100; national shares add Traditional + Advanced.
 - `test_state_rates_and_deltas()` — State rates drop states without (or with zero) enrollment, log them, and deltas fill missing years with 0.
@@ -166,6 +167,7 @@ Every function and class in this directory, including internal helpers.
 **`test_loaders.py`**
 - `test_specialty_guard(con)` — Passes when every specialty string exists; fails loudly when one is missing.
 - `test_load_detail_filters_and_classifies(con)` — Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality.
+- `test_load_ica_detail_and_trend(con)` — ICA rows: only 93454–93461, territories excluded and logged; trend has one row per year.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
 - `_raw_2023()` *(internal)* — A tiny raw 2023 enrollment sheet with junk rows and a territory.

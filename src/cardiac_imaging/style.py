@@ -22,6 +22,8 @@ COLOR_PET   = '#E88BE8'
 
 PROC_ORDER  = ['Echo', 'SPECT', 'Cardiac CTA', 'Cardiac MRI', 'Cardiac PET']
 PROC_COLORS = [COLOR_ECHO, COLOR_SPECT, COLOR_CTA, COLOR_MRI, COLOR_PET]
+# Figure 1 adds invasive coronary angiography (config.ICA_LABEL) as a sixth, comparator column.
+FIG1_ORDER  = PROC_ORDER + ['Invasive Coronary Angiography']
 
 COLOR_VOLUME     = '#C0392B'
 COLOR_ENROLLMENT = '#7F8C8D'
