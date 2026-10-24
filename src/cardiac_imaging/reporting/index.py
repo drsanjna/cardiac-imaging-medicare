@@ -39,6 +39,7 @@ JS = """
 const LOCAL = JSON.parse(document.getElementById('local-runs').textContent);
 const REPO = document.body.dataset.repo, MARKER = document.body.dataset.marker;
 const runs = new Map(LOCAL.map(r => [r.run_id, {...r, local: true}]));
+const OPEN = new Set();   // run ids whose 'What changed' panel is open (kept across re-renders)
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const when = iso => iso ? new Date(iso).toLocaleString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}) : '—';
@@ -78,9 +79,9 @@ function card(r, isLatest) {
     <div class="sub">${ok ? 'Completed' : 'Stopped early'} in ${Math.round(r.seconds || 0)} s${p ? ` · saved to GitHub ${when(p.at)}` : ' · not yet saved to GitHub'}</div>
     <p class="summary">${esc(r.summary || 'No summary for this run yet.')}</p>
     <div class="actions">${open}
-      <button class="btn" data-toggle="${id}">What changed &amp; impact ▾</button>
+      <button class="btn" data-toggle="${id}">What changed &amp; impact ${OPEN.has(r.run_id) ? '▴' : '▾'}</button>
       <button class="btn" data-restore="${id}">↺ Restore this version</button></div>
-    <div class="changes" id="ch-${id}" hidden>
+    <div class="changes" id="ch-${id}" ${OPEN.has(r.run_id) ? '' : 'hidden'}>
       <h4>What changed${prev ? ' since ' + esc(when(prev.started)) : ''}</h4><ul>${changes || '<li>No comparison recorded for this run.</li>'}</ul>
       <h4>Impact on results</h4><ul>${impact || '<li>—</li>'}</ul></div>
     ${tech ? `<div class="tech">${tech}</div>` : ''}
@@ -155,6 +156,7 @@ async function download(id) {
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-toggle],[data-restore],[data-fetch]'); if (!t) return;
   if (t.dataset.toggle) { const el = document.getElementById('ch-' + t.dataset.toggle); el.hidden = !el.hidden;
+    el.hidden ? OPEN.delete(t.dataset.toggle) : OPEN.add(t.dataset.toggle);
     t.textContent = el.hidden ? 'What changed & impact ▾' : 'What changed & impact ▴'; }
   if (t.dataset.restore) doRestore(t.dataset.restore);
   if (t.dataset.fetch) download(t.dataset.fetch);
