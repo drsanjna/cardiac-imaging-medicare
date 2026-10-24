@@ -125,6 +125,14 @@ CARDIAC_HCPCS_WHERE = """
      OR HCPCS_Cd IN ('78451','78452'))
 """
 
+# Invasive coronary angiography (diagnostic cardiac catheterization with coronary angiography), 93454–93461.
+# A comparator, NOT an imaging modality: shown in Figure 1 and its own state map (Figure 10), kept out of the
+# modality definitions above so market share, Table 1 and the Traditional/Advanced totals stay imaging-only.
+# Added by the user 2026-10-24.
+ICA_LABEL = 'Invasive Coronary Angiography'
+ICA_CODES = ('93454', '93455', '93456', '93457', '93458', '93459', '93460', '93461')
+ICA_WHERE = f"HCPCS_Cd IN {ICA_CODES}"
+
 # ==========================================================================
 # ENROLLMENT: CMS Program Statistics — Original Medicare Enrollment
 # ==========================================================================

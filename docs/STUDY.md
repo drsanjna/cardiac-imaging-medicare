@@ -32,6 +32,11 @@ Open decisions live in [PENDING.md](PENDING.md).
 | Cardiac CTA | 75574 (coronary CTA only) | Advanced |
 | Cardiac MRI | 75557–75565 | Advanced |
 | Cardiac PET | 78491, 78492 (PET); 78430, 78431 (PET with concurrent CT, from 2020) | Advanced |
+| Invasive coronary angiography (comparator, not imaging) | 93454–93461 (diagnostic cath with coronary angiography) | — |
+
+ICA (added 2026-10-24) appears only in Figure 1 and Figure 10. It is kept out of the modality definitions, so market
+share, Table 1, the Traditional/Advanced totals and the state summary stay imaging-only. Codes stable 2018–2023; 98–99%
+billed in facilities, so rows are the professional component. PCI codes (92920–92944) are not included.
 
 Codes deliberately or possibly out of scope (must be stated in Methods): stress echo 93350/93351, TEE 93312,
 calcium score 75571, structural cardiac CT 75572/75573, FFR-CT 0501T–0504T; PET perfusion + metabolic 78432/78433,
@@ -58,11 +63,12 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 ## Outputs → manuscript
 | Output | Content |
 |---|---|
-| Figure 1 | Volume vs FFS enrollment vs rate, by modality, 2018–2023 |
+| Figure 1 | Volume vs FFS enrollment vs rate, by modality plus ICA, 2018–2023 |
 | Figure 2 | Modality share by rural/urban × office/facility |
 | Figures 3–7 | State rate maps 2018 / 2023 / change, one per modality |
 | Figure 8 | All-provider density vs CTA rate, NB fits |
 | Figure 9 | Forest plot of density IRRs, unadjusted vs adjusted |
+| Figure 10 | Invasive coronary angiography state rate maps 2018 / 2023 / change |
 | Table 1 | Specialty distribution (Cardiology / Radiology / Other) by modality |
 | Figures S1–S2 | Radiologist and cardiologist density models |
 | Composite | 2023 state rates, all modalities (candidate Central Illustration) |

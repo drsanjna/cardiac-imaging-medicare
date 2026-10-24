@@ -90,8 +90,8 @@ erDiagram
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `year` | INTEGER | Calendar year of service; taken from the YYYY__ prefix of the Parquet file name. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 19 more |
-| `Rndrng_NPI` | VARCHAR | National Provider Identifier of the rendering (billing) clinician. Unique NPIs = physicians. | `db/build.py: report_claims`<br>`loaders/claims.py: aggregate_segments`<br>`loaders/claims.py: load_detail`<br>`loaders/providers.py: _specialty_npis`<br>`loaders/providers.py: count`<br>…and 2 more |
+| `year` | INTEGER | Calendar year of service; taken from the YYYY__ prefix of the Parquet file name. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 22 more |
+| `Rndrng_NPI` | VARCHAR | National Provider Identifier of the rendering (billing) clinician. Unique NPIs = physicians. | `db/build.py: report_claims`<br>`loaders/claims.py: aggregate_segments`<br>`loaders/claims.py: load_detail`<br>`loaders/claims.py: load_ica_detail`<br>`loaders/providers.py: _specialty_npis`<br>…and 3 more |
 | `Rndrng_Prvdr_Last_Org_Name` | VARCHAR | Provider last name or organization name. | — |
 | `Rndrng_Prvdr_First_Name` | VARCHAR | Provider first name. | — |
 | `Rndrng_Prvdr_MI` | VARCHAR | Provider middle initial. | — |
@@ -100,7 +100,7 @@ erDiagram
 | `Rndrng_Prvdr_St1` | VARCHAR | Practice street address, line 1. | — |
 | `Rndrng_Prvdr_St2` | VARCHAR | Practice street address, line 2. | — |
 | `Rndrng_Prvdr_City` | VARCHAR | Practice city. | — |
-| `Rndrng_Prvdr_State_Abrvtn` | VARCHAR | Practice state postal code; defines the state of each service. Territories and invalid codes are excluded (config.EXCLUDED_AREAS). | `loaders/claims.py: load_detail`<br>`loaders/providers.py: _specialty_npis`<br>`loaders/providers.py: load_cta_density_frames` |
+| `Rndrng_Prvdr_State_Abrvtn` | VARCHAR | Practice state postal code; defines the state of each service. Territories and invalid codes are excluded (config.EXCLUDED_AREAS). | `loaders/claims.py: load_detail`<br>`loaders/claims.py: load_ica_detail`<br>`loaders/providers.py: _specialty_npis`<br>`loaders/providers.py: load_cta_density_frames` |
 | `Rndrng_Prvdr_State_FIPS` | VARCHAR | State FIPS code (text, keeps leading zeros). | — |
 | `Rndrng_Prvdr_Zip5` | VARCHAR | Practice 5-digit ZIP (text, keeps leading zeros). | — |
 | `Rndrng_Prvdr_RUCA` | VARCHAR | Rural-Urban Commuting Area code of the practice ZIP, stored as text. Cast to a number: ≤ 3.0 = Urban, > 3.0 = Rural, missing = Unknown. | `db/build.py: report_claims`<br>`loaders/claims.py: load_detail` |
@@ -108,12 +108,12 @@ erDiagram
 | `Rndrng_Prvdr_Cntry` | VARCHAR | Practice country; provider-density analyses keep 'US' only. | `analysis/tables.py: specialty_distribution` |
 | `Rndrng_Prvdr_Type` | VARCHAR | Provider specialty as derived by CMS. Grouped into radiology (config.RAD_TYPES) and cardiology (config.CARD_TYPES). | `analysis/tables.py: specialty_distribution`<br>`loaders/claims.py: verify_specialty_strings`<br>`loaders/providers.py: _specialty_npis`<br>`loaders/providers.py: national_physician_counts` |
 | `Rndrng_Prvdr_Mdcr_Prtcptg_Ind` | VARCHAR | Medicare participating provider (Y/N). | — |
-| `HCPCS_Cd` | VARCHAR | Procedure code. Defines the five modalities (config.MODALITY_CASE): Echo, SPECT, Cardiac CTA (75574), Cardiac MRI, Cardiac PET. | `db/build.py: report_claims`<br>`loaders/claims.py: load_detail` |
+| `HCPCS_Cd` | VARCHAR | Procedure code. Defines the five modalities (config.MODALITY_CASE): Echo, SPECT, Cardiac CTA (75574), Cardiac MRI, Cardiac PET. | `db/build.py: report_claims`<br>`loaders/claims.py: load_detail`<br>`loaders/claims.py: load_ica_detail` |
 | `HCPCS_Desc` | VARCHAR | Procedure description. | — |
 | `HCPCS_Drug_Ind` | VARCHAR | Whether the code is a drug (Y/N). | — |
-| `Place_Of_Srvc` | VARCHAR | F = facility, O = office (non-facility). Used for the setting segments in Figure 2. | `loaders/claims.py: load_detail` |
+| `Place_Of_Srvc` | VARCHAR | F = facility, O = office (non-facility). Used for the setting segments in Figure 2. | `loaders/claims.py: load_detail`<br>`loaders/claims.py: load_ica_detail` |
 | `Tot_Benes` | BIGINT | Distinct beneficiaries who received the service from this provider. | — |
-| `Tot_Srvcs` | DOUBLE | Number of services billed — the volume measure behind every rate and count model. | `analysis/rates.py: compute_state_rates`<br>`analysis/tables.py: specialty_distribution`<br>`loaders/claims.py: aggregate_segments`<br>`loaders/claims.py: load_detail`<br>`loaders/providers.py: load_cta_density_frames` |
+| `Tot_Srvcs` | DOUBLE | Number of services billed — the volume measure behind every rate and count model. | `analysis/rates.py: compute_state_rates`<br>`analysis/tables.py: specialty_distribution`<br>`loaders/claims.py: aggregate_segments`<br>`loaders/claims.py: ica_trend`<br>`loaders/claims.py: load_detail`<br>…and 2 more |
 | `Tot_Bene_Day_Srvcs` | BIGINT | Distinct beneficiary-days of service (carried in the detail extract, not modeled). | `loaders/claims.py: load_detail` |
 | `Avg_Sbmtd_Chrg` | DOUBLE | Average submitted charge per service. | — |
 | `Avg_Mdcr_Alowd_Amt` | DOUBLE | Average Medicare allowed amount per service. | — |
@@ -129,8 +129,8 @@ erDiagram
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `year` | BIGINT | Enrollment year (2018 or 2023). | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 19 more |
-| `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>`analysis/rates.py: rate_deltas`<br>`analysis/rates.py: state_summary_table`<br>`app/restore.py: restore_to`<br>…and 19 more |
+| `year` | BIGINT | Enrollment year (2018 or 2023). | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 22 more |
+| `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>`analysis/rates.py: rate_deltas`<br>`analysis/rates.py: state_summary_table`<br>`app/restore.py: restore_to`<br>…and 23 more |
 | `ffs` | BIGINT | Original Medicare (fee-for-service) enrollees — the denominator of every state rate. | `db/build.py: load_state_enrollment`<br>`loaders/enrollment.py: _finish`<br>`loaders/enrollment.py: load_state_ffs`<br>`loaders/enrollment.py: parse_enrollment_2018`<br>`loaders/enrollment.py: parse_enrollment_2023` |
 
 ### `gv_puf` (table)
