@@ -49,6 +49,13 @@ quantitative analysis.
   or unsafe, say so before doing anything else.
 - When a question is outside what the data or literature can answer, say so and propose what would answer it.
 
+## Study and pending items
+- The goal is a published research paper. Study design, definitions, models, known data limitations and manuscript
+  rules: @docs/STUDY.md. Check every analysis and every claim against its "Known limitations".
+- Open decisions for the user: @docs/PENDING.md. When work raises a question only the user can settle, add it there
+  (dated, with the numbers needed to decide) as well as saying it in chat. When one is settled, move it to Resolved with
+  the date, the decision and the commit. Keep `docs/STUDY.md` in step with `config.py` when a definition changes.
+
 ## Layout
 - `src/cardiac_imaging/` — all logic. Each directory has a generated README.md with a flowchart.
 - `notebooks/main.ipynb` — thin driver only: imports from `src/`, config, run. No business logic in cells.
