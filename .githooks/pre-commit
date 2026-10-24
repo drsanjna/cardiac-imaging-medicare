@@ -1,0 +1,8 @@
+#!/bin/sh
+# Regenerate READMEs before each commit and stage them, so docs ship in the same commit as the code.
+ROOT="$(git rev-parse --show-toplevel)"
+python3 "$ROOT/scripts/update_readmes.py" >/dev/null || {
+  echo "pre-commit: README generation failed (commit continues; the GitHub Action will retry)." >&2
+  exit 0
+}
+git -C "$ROOT" ls-files -m -o --exclude-standard -- 'README.md' '*/README.md' | xargs -r git -C "$ROOT" add --
