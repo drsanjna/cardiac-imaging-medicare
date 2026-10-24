@@ -14,8 +14,12 @@ def _path(env_var, default):
     return p if p.is_absolute() else REPO_ROOT / p
 
 
-OUTPUT_DIR = _path('CARDIAC_OUTPUT_DIR', 'outputs')
+OUTPUT_DIR = _path('CARDIAC_OUTPUT_DIR', 'outputs')   # only for runs made with record=False
 LOG_DIR = _path('CARDIAC_LOG_DIR', 'logs')
+# One folder per run (figures, tables, console.log, manifest.json, gallery.html, all_figures.pdf).
+# Kept outside the iCloud-synced Desktop by default; the repo gets a `runs` link to it.
+RUNS_DIR = _path('CARDIAC_RUNS_DIR', Path.home() / 'Downloads' / 'cms_runs')
+SAVE_TIFF = os.environ.get('CARDIAC_SAVE_TIFF', '1') != '0'   # submission TIFFs (slow, large)
 
 # Raw inputs (read only by scripts/convert_cms_to_parquet.py and scripts/build_database.py)
 PARQUET_DIR   = _path('CMS_PARQUET_DIR', Path.home() / 'Downloads' / 'cms_parquet')

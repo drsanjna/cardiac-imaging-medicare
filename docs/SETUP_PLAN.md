@@ -62,8 +62,20 @@ the enrollment workbooks (`~/Downloads/Data`) and the GV PUF. All paths can be c
 ```bash
 papermill notebooks/main.ipynb runs/out.ipynb
 ```
-Or open it in JupyterLab. Figures are written to `outputs/`. Every filter prints a `[filter]` line with counts
-before and after, so no rows disappear silently.
+Or open it in JupyterLab, or run `python -m cardiac_imaging.pipeline` (`--no-tiff` for a quick run, `--label <note>` to tag it).
+Every filter prints a `[filter]` line with counts before and after, so no rows disappear silently.
+
+**Where outputs go:** each run gets its own folder, `~/Downloads/cms_runs/<timestamp>_<commit>/` (linked as `runs/` in the repo):
+
+| File | What |
+|---|---|
+| `gallery.html` | Every chart on one page, grouped Main text / Composite / Supplement. Click a chart for full screen (← → to browse). Also shows headline IRRs, the results tables and step timings, and flags changes vs the previous run. |
+| `all_figures.pdf` | Every chart, one per page, for sharing or printing |
+| `figures/`, `figures/tiff/` | 300-DPI PNGs and submission TIFFs |
+| `tables/*.csv` | Table 1, NB model IRRs, state rates, market share, change summary, filter log |
+| `console.log`, `manifest.json` | Full printed output; commit, timings, status, error |
+
+`runs/index.html` lists every run (newest first) with status, commit and headline IRRs; `runs/latest` points to the newest.
 
 ### 4 · Connect GitHub ⇄ Claude
 - **Local loop (main path):** in Claude Code, say *"run the notebook and fix any errors"*. It follows `CLAUDE.md`:

@@ -10,7 +10,7 @@ data/
 # Outputs
 outputs/
 logs/
-runs/
+runs
 
 # Environments / tooling
 .env

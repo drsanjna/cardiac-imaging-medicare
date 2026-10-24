@@ -1,4 +1,6 @@
-"""Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF, and display them only inside notebooks."""
+"""Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks."""
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
 from .. import config
@@ -17,39 +19,48 @@ def out_path(name):
     return config.OUTPUT_DIR / name
 
 
+def tiff_path(stem):
+    d = config.OUTPUT_DIR / 'tiff'
+    d.mkdir(parents=True, exist_ok=True)
+    return d / f'{stem}.tiff'
+
+
 def save_pub_fig(fig, stem, tiff_dpi):
     """Save a matplotlib figure as working PNG (300 DPI) + submission TIFF (LZW), then show/close it."""
-    stem = out_path(stem)
-    fig.savefig(f'{stem}.png', bbox_inches='tight', dpi=300)
-    try:
-        fig.savefig(f'{stem}.tiff', bbox_inches='tight', dpi=tiff_dpi,
-                    pil_kwargs={'compression': 'tiff_lzw'})
-        print(f"  Saved: {stem.name}.png (300 DPI) and {stem.name}.tiff ({tiff_dpi} DPI)")
-    except Exception as e:
-        print(f"  Saved: {stem.name}.png (300 DPI); TIFF failed ({e}) — install pillow")
+    fig.savefig(out_path(f'{stem}.png'), bbox_inches='tight', dpi=300)
+    if not config.SAVE_TIFF:
+        print(f"  Saved: {stem}.png (300 DPI); TIFF skipped (CARDIAC_SAVE_TIFF=0)")
+    else:
+        try:
+            fig.savefig(tiff_path(stem), bbox_inches='tight', dpi=tiff_dpi,
+                        pil_kwargs={'compression': 'tiff_lzw'})
+            print(f"  Saved: {stem}.png (300 DPI) and tiff/{stem}.tiff ({tiff_dpi} DPI)")
+        except Exception as e:
+            print(f"  Saved: {stem}.png (300 DPI); TIFF failed ({e}) — install pillow")
     if in_notebook():
         plt.show()
     plt.close(fig)
 
 
 def png_to_tiff(png_path, dpi=config.TIFF_RASTER_DPI):
-    """Convert a plotly PNG export to TIFF with DPI metadata."""
+    """Convert a plotly PNG export to TIFF (in tiff/) with DPI metadata."""
     try:
         from PIL import Image
-        tiff_path = str(png_path).rsplit('.', 1)[0] + '.tiff'
-        Image.open(png_path).save(tiff_path, dpi=(dpi, dpi), compression='tiff_lzw')
-        print(f"  Converted: {tiff_path} ({dpi} DPI)")
+        target = tiff_path(Path(png_path).stem)
+        Image.open(png_path).save(target, dpi=(dpi, dpi), compression='tiff_lzw')
+        print(f"  Converted: tiff/{target.name} ({dpi} DPI)")
     except Exception as e:
         print(f"  TIFF conversion failed for {png_path}: {e}")
 
 
 def save_plotly(fig, filename, width, height, scale=3):
-    """Write a plotly figure to PNG + TIFF; shows it in notebooks."""
+    """Write a plotly figure to PNG (+ TIFF unless disabled); shows it in notebooks."""
     path = out_path(filename)
     try:
         fig.write_image(str(path), width=width, height=height, scale=scale)
         print(f"  Saved: {filename}")
-        png_to_tiff(path, dpi=config.TIFF_RASTER_DPI)
+        if config.SAVE_TIFF:
+            png_to_tiff(path, dpi=config.TIFF_RASTER_DPI)
     except Exception as e:
         print(f"  Could not save {filename}: {e}")
     if in_notebook():

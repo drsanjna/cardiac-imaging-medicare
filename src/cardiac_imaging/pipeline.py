@@ -3,12 +3,14 @@
 Run from a notebook with `pipeline.run_all()` or from a shell with `python -m cardiac_imaging.pipeline`.
 """
 import argparse
+import time
 
 from . import config, errors, style
 from .analysis import nb_models, rates, tables
 from .db.connection import get_connection, require_tables
 from .figures import choropleths, decomposition, density, forest, market_share
 from .loaders import claims, demographics, enrollment, providers
+from .reporting import run_store
 
 MANIFEST = """
 MAIN TEXT
@@ -69,14 +71,18 @@ def step_figure1(ctx):
     decomp_df = rates.decompose(ctx['trend'])
     decomposition.plot_figure1(decomp_df)
     rates.print_change_summary(decomp_df)
+    ctx['tables']['national_volume_rates'] = decomp_df.set_index(['procedure_category', 'year'])
+    ctx['tables']['change_summary'] = rates.change_summary(decomp_df)
     print("Figure 1 complete.\n")
 
 
 def step_figure2(ctx):
     print("Building Figure 2: Market Share...")
     market_share.plot_figure2(rates.market_share_by_segment(ctx['df_agg']))
+    nat_pct = rates.national_market_share(ctx['trend'])
     print("National Market Share (%):")
-    print(rates.national_market_share(ctx['trend']).round(3).to_string())
+    print(nat_pct.round(3).to_string())
+    ctx['tables']['national_market_share'] = nat_pct
     print("Figure 2 complete.\n")
 
 
@@ -88,7 +94,10 @@ def step_state_maps(ctx):
     r23 = rates.compute_state_rates(df[df['year'] == config.END_YEAR], ctx['state_ffs_2023'])
     r18 = rates.compute_state_rates(df[df['year'] == config.BASE_YEAR], ctx['state_ffs_2018'])
     ctx['state_rates_2023'] = r23
-    choropleths.plot_state_maps(r18, r23, rates.rate_deltas(r23, r18))
+    deltas = rates.rate_deltas(r23, r18)
+    choropleths.plot_state_maps(r18, r23, deltas)
+    ctx['tables'].update(state_rates_2018=r18.set_index('state'), state_rates_2023=r23.set_index('state'),
+                         state_rate_change=deltas.set_index('state'))
     choropleths.plot_all_modalities_panel(r23)
     print("Figures 3–7 complete.\n")
 
@@ -100,6 +109,7 @@ def step_state_table(ctx):
     summary = rates.state_summary_table(ctx['state_rates_2023'])
     print(summary.head(20).to_string())
     print(f"\n({len(summary)} states total)")
+    ctx['tables']['state_summary_2023'] = summary
 
 
 def step_density_models(ctx):
@@ -128,10 +138,15 @@ def step_density_models(ctx):
         density.plot_density_fit(fit, title, color, fname, n_phys[key])
         ctx['nb_results'][key] = dict(irr_un=fit['irr_un'], irr_adj=fit['irr_adj'],
                                       n=len(fit['d']), n_physicians=n_phys[key])
+    names = {'all': 'All CTA-billing providers', 'rad': 'Radiologists', 'card': 'Cardiologists'}
+    ctx['tables']['nb_density_models'] = nb_models.results_table(ctx['nb_results'], names)
+    ctx['headline'] = {f'Adjusted IRR — {names[k]}': dict(zip(('irr', 'lo', 'hi', 'p'), map(float, r['irr_adj'])))
+                       for k, r in ctx['nb_results'].items()}
 
 
 def step_table1_forest(ctx):
     table1 = tables.specialty_distribution(ctx['con'])
+    ctx['tables']['table1_specialty_distribution'] = table1
     share_rad, share_card = tables.cta_shares(table1)
     print("\nBuilding Figure 9: Combined density-IRR forest plot...")
     r = ctx['nb_results']
@@ -154,19 +169,35 @@ STEPS = [
 ]
 
 
-def run_all(con=None, database=None, report_errors=True):
-    """Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise."""
+def run_all(con=None, database=None, report_errors=True, record=True, label=None):
+    """Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise.
+
+    record=True saves everything into a new folder under config.RUNS_DIR (figures, tables, console.log,
+    manifest.json, gallery.html, all_figures.pdf) and refreshes the all-runs index.
+    """
     style.apply_rcparams()
-    ctx = {'con': con, 'database': database}
-    for name, fn in STEPS:
-        try:
-            fn(ctx)
-        except Exception as exc:
-            if report_errors:
-                errors.report(exc, name)
-            raise
-    print("\n" + "=" * 80 + "\nALL FIGURES COMPLETE — FINAL NUMBERING\n" + "=" * 80)
-    print(MANIFEST.format(la=config.TIFF_LINEART_DPI, mp=config.TIFF_PANEL_DPI, out=config.OUTPUT_DIR))
+    ctx = {'con': con, 'database': database, 'tables': {}}
+    run = run_store.Run(label) if record else None
+    ctx['run_dir'] = run.dir if run else None
+    error = None
+    try:
+        for name, fn in STEPS:
+            t0 = time.time()
+            try:
+                fn(ctx)
+            except Exception as exc:
+                error = (name, exc)
+                if report_errors:
+                    errors.report(exc, name)
+                raise
+            finally:
+                if run:
+                    run.log_step(name, time.time() - t0, ok=error is None)
+        print("\n" + "=" * 80 + "\nALL FIGURES COMPLETE — FINAL NUMBERING\n" + "=" * 80)
+        print(MANIFEST.format(la=config.TIFF_LINEART_DPI, mp=config.TIFF_PANEL_DPI, out=config.OUTPUT_DIR))
+    finally:
+        if run:
+            run.finish(ctx, error)
     return ctx
 
 
@@ -174,8 +205,13 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--db', default=None, help=f"Database file or md:<name> (default {config.DATABASE})")
     p.add_argument('--no-report', action='store_true', help="Don't write error logs or open GitHub issues")
+    p.add_argument('--label', help="Short note appended to the run folder name, e.g. 'after-RUCA-fix'")
+    p.add_argument('--no-tiff', action='store_true', help="Skip submission TIFFs (much faster, smaller run folder)")
+    p.add_argument('--no-record', action='store_true', help=f"Write figures to {config.OUTPUT_DIR} instead of a run folder")
     args = p.parse_args()
-    run_all(database=args.db, report_errors=not args.no_report)
+    if args.no_tiff:
+        config.SAVE_TIFF = False
+    run_all(database=args.db, report_errors=not args.no_report, record=not args.no_record, label=args.label)
 
 
 if __name__ == '__main__':

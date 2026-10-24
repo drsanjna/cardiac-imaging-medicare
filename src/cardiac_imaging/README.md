@@ -22,22 +22,27 @@ flowchart LR
   n_figures_["figures/"]
   n_loaders_["loaders/"]
   n_notebooks_["notebooks/"]
+  n_reporting_["reporting/"]
   n_scripts_["scripts/"]
   n_analysis_ --> n_pipeline_py
   n_audit_py --> n_analysis_
   n_audit_py --> n_loaders_
+  n_audit_py --> n_reporting_
   n_config_py --> n_analysis_
   n_config_py --> n_db_
   n_config_py --> n_errors_py
   n_config_py --> n_figures_
   n_config_py --> n_loaders_
+  n_config_py --> n_notebooks_
   n_config_py --> n_pipeline_py
+  n_config_py --> n_reporting_
   n_config_py --> n_scripts_
   n_db_ --> n_pipeline_py
   n_errors_py --> n_pipeline_py
   n_figures_ --> n_pipeline_py
   n_loaders_ --> n_pipeline_py
   n_pipeline_py --> n_notebooks_
+  n_reporting_ --> n_pipeline_py
   n_style_py --> n_analysis_
   n_style_py --> n_figures_
   n_style_py --> n_pipeline_py
@@ -56,7 +61,7 @@ flowchart LR
 ## Functions
 
 **`audit.py`**
-- `log_filter(label, before, after, unit, dropped_items)` — Print '[filter] label: before → after unit (n dropped)' and return `after`.
+- `log_filter(label, before, after, unit, dropped_items)` — Print '[filter] label: before → after unit (n dropped)', record it in FILTER_LOG, and return `after`.
 
 **`errors.py`**
 - `format_report(exc, step)`
@@ -72,7 +77,7 @@ flowchart LR
 - `step_state_table(ctx)`
 - `step_density_models(ctx)`
 - `step_table1_forest(ctx)`
-- `run_all(con, database, report_errors)` — Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise.
+- `run_all(con, database, report_errors, record, label)` — Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise.
 - `main()`
 
 **`style.py`**

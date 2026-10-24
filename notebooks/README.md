@@ -13,8 +13,10 @@ flowchart LR
   subgraph here["notebooks/"]
     n_main_ipynb["main.ipynb"]
   end
+  n_config_py["config.py"]
   n_db_["db/"]
   n_pipeline_py["pipeline.py"]
+  n_config_py --> n_main_ipynb
   n_db_ --> n_main_ipynb
   n_pipeline_py --> n_main_ipynb
 ```
