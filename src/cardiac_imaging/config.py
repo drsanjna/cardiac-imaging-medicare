@@ -23,6 +23,13 @@ SAVE_TIFF = os.environ.get('CARDIAC_SAVE_TIFF', '1') != '0'   # submission TIFFs
 # Upload each finished run as a GitHub Release on its code-snapshot tag (needs the `gh` CLI, logged in).
 PUBLISH_RUNS = os.environ.get('CARDIAC_PUBLISH_RUNS', '1') != '0'
 
+# Chart discussions (local app): saved on this Mac only; consolidated hypotheses go to docs/hypotheses/.
+CONVERSATIONS_DIR = _path('CARDIAC_CONVERSATIONS_DIR', Path.home() / 'Downloads' / 'cms_conversations')
+CHAT_BACKEND = os.environ.get('CARDIAC_CHAT_BACKEND', 'auto')   # auto | claude-code | api | handoff
+CLAUDE_BIN = os.environ.get('CARDIAC_CLAUDE_BIN', 'claude')      # Claude Code CLI used by the claude-code backend
+CHAT_MODEL = os.environ.get('CARDIAC_CHAT_MODEL', 'claude-opus-5-5')
+APP_PORT = int(os.environ.get('CARDIAC_APP_PORT', '8765'))
+
 # Raw inputs (read only by scripts/convert_cms_to_parquet.py and scripts/build_database.py)
 PARQUET_DIR   = _path('CMS_PARQUET_DIR', Path.home() / 'Downloads' / 'cms_parquet')
 REFERENCE_DIR = _path('CMS_REFERENCE_DIR', Path.home() / 'Downloads' / 'Data')   # enrollment .xlsx

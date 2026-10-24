@@ -18,12 +18,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PKG = 'cardiac_imaging'
 PKG_DIR = ROOT / 'src' / PKG
-EXTRA_DIRS = ['scripts', 'notebooks', '.github/workflows', '.githooks', 'legacy']
+EXTRA_DIRS = ['scripts', 'tests', 'notebooks', '.github/workflows', '.githooks', 'legacy']
 DIR_PURPOSE = {  # directories without an __init__.py docstring
-    'scripts': 'Command-line tools: CSV → Parquet conversion, database build, README generation, git hook install.',
+    'scripts': 'Command-line tools: CSV → Parquet, database build, run history, README/docstring checks, work log, hypotheses.',
+    'tests': 'Test suite (pytest): synthetic-data tests for every layer + real-data regression tests that pin published numbers.',
     'notebooks': 'Thin Jupyter driver: imports from src/, runs the pipeline. Run headless with papermill.',
-    '.github/workflows': 'GitHub Actions: keep READMEs in sync on push; Claude fixes code for @claude / notebook-error issues.',
-    '.githooks': 'Local git hooks: regenerate READMEs before each commit.',
+    '.github/workflows': 'GitHub Actions: tests + docstring rule + READMEs + work log on every push; Claude fixes @claude issues.',
+    '.githooks': 'Local git hooks: before each commit — every function documented, READMEs regenerated, quick tests pass.',
     'legacy': 'The original single-file analysis script, kept unchanged for reference. Not imported by anything.',
 }
 ROOT_HIDDEN = {'config.py', 'style.py', 'audit.py'}   # feed every layer; drawn as one box on the root chart
@@ -34,6 +35,7 @@ DEFAULT_MANUAL = '<!-- BEGIN MANUAL -->\n<!-- END MANUAL -->'
 
 # ── code inspection ──────────────────────────────────────────────────────────
 def first_line(text):
+    """First line of a docstring (empty string if none)."""
     return (text or '').strip().split('\n')[0].strip()
 
 
@@ -44,12 +46,19 @@ def module_name(path):
 
 
 def describe_py(path):
+    """Parse a .py file: (module purpose, [(signature, doc, private?)...], AST)."""
     tree = ast.parse(path.read_text())
     funcs = []
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and not node.name.startswith('_'):
-            args = [a.arg for a in node.args.args] if isinstance(node, ast.FunctionDef) else []
-            funcs.append((f"{node.name}({', '.join(args)})", first_line(ast.get_docstring(node))))
+
+    def visit(nodes, prefix=''):
+        for node in nodes:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                args = [a.arg for a in node.args.args if a.arg != 'self'] if not isinstance(node, ast.ClassDef) else []
+                sig = f"{prefix}{node.name}({', '.join(args)})" if not isinstance(node, ast.ClassDef) else f"class {node.name}"
+                funcs.append((sig, first_line(ast.get_docstring(node)), node.name.startswith('_')))
+                if isinstance(node, ast.ClassDef):
+                    visit(node.body, prefix=f'{node.name}.')
+    visit(tree.body)
     return first_line(ast.get_docstring(tree)), funcs, tree
 
 
@@ -94,6 +103,7 @@ def describe_other(path):
 
 
 def notebook_imports(path, known):
+    """Known modules imported by a notebook's code cells (magics skipped)."""
     code = []
     for cell in json.loads(path.read_text()).get('cells', []):
         if cell['cell_type'] == 'code':
@@ -106,7 +116,7 @@ def notebook_imports(path, known):
 
 def scan():
     """Files with descriptions, the import graph (edges), and 'runs' references from non-Python files."""
-    py_files = sorted(PKG_DIR.rglob('*.py')) + sorted((ROOT / 'scripts').glob('*.py'))
+    py_files = sorted(PKG_DIR.rglob('*.py')) + sorted((ROOT / 'scripts').glob('*.py')) + sorted((ROOT / 'tests').glob('*.py'))
     files, mod_to_path, trees = {}, {}, {}
     for p in py_files:
         purpose, funcs, tree = describe_py(p)
@@ -118,6 +128,8 @@ def scan():
     known = set(mod_to_path)
     edges = set()   # (provider, consumer): consumer imports provider
     for rel, (tree, mod, is_init) in trees.items():
+        if rel.startswith('tests/'):   # tests import everything; drawing those edges would bury the system map
+            continue
         for dep in resolve_imports(tree, mod, is_init, known):
             if not mod_to_path[dep].endswith('__init__.py'):
                 edges.add((mod_to_path[dep], rel))
@@ -139,6 +151,7 @@ def scan():
 
 # ── rendering ────────────────────────────────────────────────────────────────
 def node_id(label):
+    """Mermaid-safe node id for a label."""
     return 'n_' + re.sub(r'\W', '_', label)
 
 
@@ -153,6 +166,7 @@ def group_of(path, focus_dir):
 
 
 def collapse(pairs, focus_dir, only_touching=True):
+    """Map file-level edges to the boxes drawn for focus_dir, dropping self-edges."""
     out = set()
     for a, b in pairs:
         if not only_touching or focus_dir in (str(Path(a).parent), str(Path(b).parent)):
@@ -163,6 +177,7 @@ def collapse(pairs, focus_dir, only_touching=True):
 
 
 def mermaid(focus_dir, files, edges, runs):
+    """Mermaid flowchart for one directory: its files plus collapsed neighbours."""
     in_dir = [f for f in files if str(Path(f).parent) == focus_dir and not f.endswith('__init__.py')]
     pairs, run_pairs = collapse(edges, focus_dir), collapse(runs, focus_dir)
     if not in_dir and not pairs and not run_pairs:
@@ -179,10 +194,12 @@ def mermaid(focus_dir, files, edges, runs):
 
 
 def rel_link(from_dir, to_path):
+    """Relative link from one directory to a repo path."""
     return os.path.relpath(ROOT / to_path, ROOT / from_dir).replace(os.sep, '/')
 
 
 def files_table(d, files):
+    """Markdown table of the files in a directory and what each does."""
     rows = ['| File | What it does |', '|---|---|']
     for f in sorted(files):
         if str(Path(f).parent) == d and not f.endswith('__init__.py'):
@@ -191,25 +208,30 @@ def files_table(d, files):
 
 
 def api_section(d, files):
+    """Markdown list of every function in a directory with its one-line explanation."""
     out = []
     for f in sorted(files):
         if str(Path(f).parent) == d and files[f]['funcs']:
             out.append(f"**`{Path(f).name}`**")
-            out += [f"- `{sig}`" + (f" — {doc}" if doc else '') for sig, doc in files[f]['funcs']]
+            out += [f"- `{sig}`" + (' *(internal)*' if private else '') + (f" — {doc}" if doc else ' — **undocumented**')
+                    for sig, doc, private in files[f]['funcs']]
             out.append('')
     return '\n'.join(out).strip()
 
 
 def dir_purpose(d, files):
+    """A directory's one-line purpose (its __init__ docstring or DIR_PURPOSE)."""
     return (files.get(f'{d}/__init__.py', {}).get('purpose') or DIR_PURPOSE.get(d, '')).strip()
 
 
 def code_dirs(files):
+    """Directories that get a README, in display order."""
     dirs = sorted({str(Path(f).parent) for f in files if f.startswith('src/')})
     return dirs + [d for d in EXTRA_DIRS if any(str(Path(f).parent) == d for f in files)]
 
 
 def render_dir(d, files, edges, runs):
+    """README lines for one directory."""
     parts = [f'# `{d}/`', '', f'> {dir_purpose(d, files)}', '',
              f'[← Project README]({rel_link(d, "README.md")})', '']
     chart = mermaid(d, files, edges, runs)
@@ -218,13 +240,70 @@ def render_dir(d, files, edges, runs):
                   'Solid `A --> B` = B imports A (A feeds B). Dotted = A runs B. '
                   'Other directories are collapsed to one box.', '', chart, '']
     parts += ['## Files', '', files_table(d, files), '']
+    if d == f'src/{PKG}/db':
+        parts += data_model_section()
     api = api_section(d, files)
     if api:
-        parts += ['## Functions', '', api, '']
+        parts += ['## Functions', '', 'Every function and class in this directory, including internal helpers.', '', api, '']
     return parts
 
 
+def load_schema():
+    """Load db/schema.py by file path (standard library only, so the generator needs no installs)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('_schema', PKG_DIR / 'db' / 'schema.py')
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def column_usage():
+    """{column name: ['loaders/claims.py: load_detail', ...]} — functions whose source mentions the column."""
+    usage = {}
+    for p in sorted(PKG_DIR.rglob('*.py')):
+        if p.name == 'schema.py':
+            continue
+        src = p.read_text()
+        for node in ast.walk(ast.parse(src)):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                seg = ast.get_source_segment(src, node) or ''
+                for name in re.findall(r'\b[A-Za-z_][A-Za-z0-9_]*\b', seg):
+                    usage.setdefault(name, set()).add(f"{p.relative_to(PKG_DIR).as_posix()}: {node.name}")
+    return usage
+
+
+def data_model_section():
+    """README lines describing every table, column meaning and which functions use each column."""
+    schema = load_schema()
+    usage = column_usage()
+    er = ['```mermaid', 'erDiagram']
+    for t in schema.TABLES:
+        er.append(f'  {t["name"]} {{')
+        er += [f'    {typ} {col}' for col, typ, _, used in t['columns'] if used]
+        er.append('  }')
+    er += [f'  {a} }}o--|| {b} : "{keys}"' for a, b, keys, _ in schema.RELATIONSHIPS]
+    er.append('```')
+    out = ['## Data model', '',
+           'Defined in [`schema.py`](schema.py) — the build script and the tests check the real database against it. '
+           'The diagram shows only the columns the analysis uses.', '', '\n'.join(er), '']
+    out += ['**Joins**', ''] + [f'- `{a}` → `{b}` on `{k}`: {m}' for a, b, k, m in schema.RELATIONSHIPS] + ['']
+    for t in schema.TABLES:
+        out += [f'### `{t["name"]}` ({t["kind"].lower()})', '', f'- **One row =** {t["grain"]}',
+                f'- **Source:** {t["source"]}', f'- **Built by:** {t["built_by"]}', f'- **Size:** {t["size"]}', '']
+        if not t['all_columns_listed']:
+            out += ['Only the columns the analysis reads are listed; every other raw column is kept as VARCHAR.', '']
+        out += ['| Column | Type | Meaning | Used in |', '|---|---|---|---|']
+        for col, typ, meaning, used in t['columns']:
+            where = sorted(usage.get(col, ()))
+            shown = '<br>'.join(f'`{w}`' for w in where[:5]) + (f'<br>…and {len(where) - 5} more' if len(where) > 5 else '')
+            used_in = shown if (used and where) else ('—' if not used else 'config / SQL')
+            out.append(f'| `{col}` | {typ} | {meaning} | {used_in} |')
+        out.append('')
+    return out
+
+
 def render_root(files, edges, runs):
+    """README lines for the repository root (system map, quick start, directory index)."""
     pkg = f'src/{PKG}'
     pairs = {p for p in collapse(edges, '__root__', only_touching=False) if not ROOT_HIDDEN & set(p)}
     run_pairs = collapse(runs, '__root__', only_touching=False)
@@ -264,7 +343,10 @@ def render_root(files, edges, runs):
         '```bash\nsource ~/jupyter-env/bin/activate && pip install -e ".[notebook]"\n```',
         '```bash\npython scripts/convert_cms_to_parquet.py\n```',
         '```bash\npython scripts/build_database.py\n```',
-        '```bash\npython -m cardiac_imaging.pipeline\n```', '',
+        '```bash\npython -m cardiac_imaging.pipeline\n```',
+        '```bash\npython -m cardiac_imaging.app\n```', '',
+        'The app (last command) opens the results history: each run\'s time, a plain-English summary, what changed, '
+        'and one-click **Restore**; galleries let you zoom into every chart and **discuss a hypothesis** with Claude.', '',
         'Each run gets its own folder in `~/Downloads/cms_runs/` (linked as `runs/` here): figures (PNG + TIFF), '
         'result tables (CSV), `console.log`, `manifest.json`, a `gallery.html` of every chart and `all_figures.pdf`. '
         '`runs/index.html` lists every run with its headline IRRs. Use `--no-tiff` for quick runs, `--label` to tag one.', '',
@@ -276,6 +358,12 @@ def render_root(files, edges, runs):
         '2. Claude reads the traceback, fixes `src/` (never the notebook JSON), reruns until it passes.',
         '3. Claude runs `python scripts/update_readmes.py` and commits code + READMEs together, then pushes.',
         '4. Optional: with `CARDIAC_GITHUB_TOKEN` set, a failure also opens a `notebook-error` issue that the Claude GitHub Action answers with a fix PR.', '',
+        '## Safety nets', '',
+        '- **Tests:** `pytest` (synthetic data, ~30 s) runs before every commit and on every push; '
+        '`pytest -m real_data` pins the published numbers on the real data.',
+        '- **Docs:** every function must have a docstring (pre-commit + CI); READMEs are regenerated from them.',
+        '- **Work log:** each push to `main` appends an English summary to [`docs/WORK_LOG.md`](docs/WORK_LOG.md).',
+        '- **Hypotheses:** `python scripts/consolidate_hypotheses.py` writes [`docs/hypotheses/`](docs/hypotheses/HYPOTHESES.md).', '',
         '## READMEs are generated', '',
         'Every `README.md` is rebuilt from docstrings and imports by [`scripts/update_readmes.py`](scripts/update_readmes.py) '
         '— on every commit (git hook) and every push (GitHub Action). '
@@ -285,6 +373,7 @@ def render_root(files, edges, runs):
 
 
 def with_manual(parts, old_text):
+    """Append the preserved MANUAL block and the generated-file footer."""
     m = MANUAL_RE.search(old_text or '')
     parts += ['## Notes', '', m.group(0) if m else DEFAULT_MANUAL, '',
               '<!-- Generated by scripts/update_readmes.py — edit docstrings, not this file. -->']
@@ -305,6 +394,7 @@ def build():
 
 
 def main():
+    """Regenerate READMEs, or with --check report which are stale."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--check', action='store_true', help='exit 1 if any README is out of date; write nothing')
     args = ap.parse_args()

@@ -1,0 +1,54 @@
+# On every push/PR: docstring rule + tests; on push: refresh READMEs; on main: append an English work-log entry.
+name: post-push
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['README.md', '**/README.md', 'docs/WORK_LOG.md']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: post-push-${{ github.ref }}
+  cancel-in-progress: false   # never drop a work-log entry
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: pip install -e ".[test]" -q
+      - name: Every function documented
+        run: python scripts/check_docs.py
+      - name: Tests (synthetic data; real-data tests run locally)
+        run: python -m pytest -m "not real_data" --cov --cov-report=term --cov-fail-under=85 --junitxml=pytest.xml
+      - name: Regenerate READMEs
+        if: always() && github.event_name == 'push'
+        run: python scripts/update_readmes.py
+      - name: Write work-log entry
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          python scripts/work_log.py --before "${{ github.event.before }}" --after "${{ github.sha }}" --junit pytest.xml
+          python scripts/work_log.py --before "${{ github.event.before }}" --after "${{ github.sha }}" --junit pytest.xml --print >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit docs if changed
+        if: always() && github.event_name == 'push'
+        run: |
+          if [ -n "$(git status --porcelain -- README.md '*/README.md' docs/WORK_LOG.md)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add README.md '*/README.md' docs/WORK_LOG.md 2>/dev/null || git add README.md '*/README.md'
+            git commit -m "docs: READMEs + work log [skip ci]"
+            git push
+          else
+            echo "Nothing to commit."
+          fi

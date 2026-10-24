@@ -18,6 +18,7 @@ ADV_COLORS = [COLOR_CTA, COLOR_MRI, COLOR_PET]
 
 
 def plot_figure2(market_data):
+    """Draw and save Figure 2 (stacked market share per setting with advanced-modality insets)."""
     fig = plt.figure(figsize=(18, 14))
     outer_gs = gridspec.GridSpec(2, 2, hspace=0.35, wspace=0.3,
                                  left=0.06, right=0.94, top=0.90, bottom=0.06)

@@ -13,6 +13,7 @@ ISSUE_LABEL = 'notebook-error'
 
 
 def format_report(exc, step):
+    """Markdown error report: failing step, exception, commit, time, Python version and traceback."""
     tb = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
     return (
         f"## Pipeline step failed: `{step}`\n\n"
@@ -25,6 +26,7 @@ def format_report(exc, step):
 
 
 def _github(method, url, token, payload=None):
+    """Call the GitHub REST API with a token and return the decoded JSON."""
     req = urllib.request.Request(
         url, method=method, data=json.dumps(payload).encode() if payload else None,
         headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json'})

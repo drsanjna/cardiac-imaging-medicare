@@ -20,12 +20,14 @@ flowchart LR
     n_market_share_py["market_share.py"]
   end
   n_analysis_["analysis/"]
+  n_app_["app/"]
   n_config_py["config.py"]
   n_pipeline_py["pipeline.py"]
   n_reporting_["reporting/"]
   n_style_py["style.py"]
   n_analysis_ --> n_density_py
   n_analysis_ --> n_market_share_py
+  n_catalog_py --> n_app_
   n_catalog_py --> n_reporting_
   n_choropleths_py --> n_pipeline_py
   n_config_py --> n_decomposition_py
@@ -64,29 +66,34 @@ flowchart LR
 
 ## Functions
 
+Every function and class in this directory, including internal helpers.
+
+**`catalog.py`**
+- `_src(kind)` *(internal)* — {'sources': [...], 'tables': [...]} for one chart kind.
+
 **`choropleths.py`**
 - `plot_state_maps(state_rates_2018, state_rates_2023, delta_df)` — One 3-panel map figure per modality, numbered 3–7 in PROC_ORDER.
 - `plot_all_modalities_panel(state_rates_2023)` — Unnumbered composite of 2023 state rates for all five modalities (optional Central Illustration).
 
 **`decomposition.py`**
-- `plot_figure1(decomp_df)`
+- `plot_figure1(decomp_df)` — Draw and save Figure 1 (volume, FFS enrollment and rate per modality, 3 × 5 panels).
 
 **`density.py`**
 - `plot_density_fit(fit, title, color, fname, n_physicians, tiff_dpi)` — Single panel: scatter + both NB fits + inline text box with unadjusted and adjusted IRR, CI, p.
 
 **`export.py`**
-- `in_notebook()`
-- `out_path(name)`
-- `tiff_path(stem)`
+- `in_notebook()` — True when running inside a Jupyter kernel (figures are then shown inline).
+- `out_path(name)` — Path for an output file in OUTPUT_DIR (created if needed).
+- `tiff_path(stem)` — Path for a submission TIFF in OUTPUT_DIR/tiff (created if needed).
 - `save_pub_fig(fig, stem, tiff_dpi)` — Save a matplotlib figure as working PNG (300 DPI) + submission TIFF (LZW), then show/close it.
 - `png_to_tiff(png_path, dpi)` — Convert a plotly PNG export to TIFF (in tiff/) with DPI metadata.
-- `save_plotly(fig, filename, width, height, scale)` — Write a plotly figure to PNG (+ TIFF unless disabled); shows it in notebooks.
+- `save_plotly(fig, filename, width, height, scale)` — Write a plotly figure to PNG (+ TIFF unless disabled) and an interactive HTML copy; shows it in notebooks.
 
 **`forest.py`**
 - `plot_forest(rows)` — rows: [(label, share_note, result_dict(irr_un, irr_adj, n_physicians), color), ...].
 
 **`market_share.py`**
-- `plot_figure2(market_data)`
+- `plot_figure2(market_data)` — Draw and save Figure 2 (stacked market share per setting with advanced-modality insets).
 
 ## Notes
 

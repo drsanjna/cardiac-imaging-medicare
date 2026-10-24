@@ -19,6 +19,7 @@ flowchart LR
     n_style_py["style.py"]
   end
   n_analysis_["analysis/"]
+  n_app_["app/"]
   n_db_["db/"]
   n_figures_["figures/"]
   n_loaders_["loaders/"]
@@ -30,6 +31,7 @@ flowchart LR
   n_audit_py --> n_loaders_
   n_audit_py --> n_reporting_
   n_config_py --> n_analysis_
+  n_config_py --> n_app_
   n_config_py --> n_db_
   n_config_py --> n_errors_py
   n_config_py --> n_figures_
@@ -42,6 +44,7 @@ flowchart LR
   n_db_ --> n_pipeline_py
   n_errors_py --> n_pipeline_py
   n_figures_ --> n_pipeline_py
+  n_gitinfo_py --> n_app_
   n_gitinfo_py --> n_errors_py
   n_gitinfo_py --> n_reporting_
   n_gitinfo_py --> n_scripts_
@@ -66,11 +69,17 @@ flowchart LR
 
 ## Functions
 
+Every function and class in this directory, including internal helpers.
+
 **`audit.py`**
 - `log_filter(label, before, after, unit, dropped_items)` — Print '[filter] label: before → after unit (n dropped)', record it in FILTER_LOG, and return `after`.
 
+**`config.py`**
+- `_path(env_var, default)` *(internal)* — Env-var path, resolved against the repo root when relative.
+
 **`errors.py`**
-- `format_report(exc, step)`
+- `format_report(exc, step)` — Markdown error report: failing step, exception, commit, time, Python version and traceback.
+- `_github(method, url, token, payload)` *(internal)* — Call the GitHub REST API with a token and return the decoded JSON.
 - `open_issue(title, body)` — Open (or comment on an existing open) issue labeled notebook-error. Needs CARDIAC_GITHUB_TOKEN.
 - `report(exc, step)` — Write logs/last_error.md and, unless CARDIAC_REPORT_ERRORS=0, open a GitHub issue.
 
@@ -82,16 +91,16 @@ flowchart LR
 - `ensure_tag(tag, sha, message)` — Create annotated tag `tag` → sha if it doesn't exist (keeps the snapshot commit from being garbage-collected).
 
 **`pipeline.py`**
-- `step_connect(ctx)`
-- `step_load_claims(ctx)`
-- `step_figure1(ctx)`
-- `step_figure2(ctx)`
-- `step_state_maps(ctx)`
-- `step_state_table(ctx)`
-- `step_density_models(ctx)`
-- `step_table1_forest(ctx)`
+- `step_connect(ctx)` — Open the read-only database, check required tables, and record claim rows per year.
+- `step_load_claims(ctx)` — Verify specialty strings, load cardiac claim detail, and build segment aggregates + national trend.
+- `step_figure1(ctx)` — Figure 1 and the 2018 → 2023 change summary.
+- `step_figure2(ctx)` — Figure 2 and the national market share table.
+- `step_state_maps(ctx)` — State rates for 2018 and 2023, Figures 3–7 and the all-modality panel.
+- `step_state_table(ctx)` — Print and save the 2023 state rate table.
+- `step_density_models(ctx)` — Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs.
+- `step_table1_forest(ctx)` — Table 1 (specialty shares by modality) and the Figure 9 forest plot.
 - `run_all(con, database, report_errors, record, label)` — Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise.
-- `main()`
+- `main()` — Command-line entry point: parse options and run the pipeline.
 
 **`style.py`**
 - `apply_rcparams()` — Set matplotlib defaults used by every figure.

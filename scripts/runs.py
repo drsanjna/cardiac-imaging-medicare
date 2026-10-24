@@ -5,11 +5,12 @@
     python scripts/runs.py publish RUN_ID [--assume-commit SHA --note "..."]   # older runs without a snapshot
     python scripts/runs.py fetch RUN_ID | --all         # download outputs from GitHub into the runs folder
     python scripts/runs.py index                        # rebuild runs/index.html
+    python scripts/runs.py refresh                      # recompute summaries/changes for every run; update GitHub notes
 """
 import argparse
 
 from cardiac_imaging import config, gitinfo
-from cardiac_imaging.reporting import gallery, index, publish
+from cardiac_imaging.reporting import gallery, index, insights, publish
 from cardiac_imaging.reporting.run_store import data_fingerprint, list_runs, read_manifest, tag_for, write_manifest
 
 
@@ -34,7 +35,20 @@ def backfill_code(run_dir, sha, note):
     print(f"  Backfilled code for {m['run_id']} → {sha[:7]} (approximate)")
 
 
+def refresh_all():
+    """Recompute findings, English summary and comparison for every local run (oldest first); sync GitHub notes."""
+    runs = list(reversed(list_runs()))
+    for i, m in enumerate(runs):
+        d = config.RUNS_DIR / m['run_id']
+        insights.annotate(d, m, runs[i - 1] if i else None)
+        write_manifest(d, m)
+        gallery.build(d)
+        synced = publish.update_release_notes(d)
+        print(f"  {m['run_id']}: summary updated{' + GitHub notes' if synced else ''}")
+
+
 def main():
+    """Parse the subcommand (list, publish, fetch, index) and run it."""
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest='cmd', required=True)
     sub.add_parser('list', help='local and GitHub runs')
@@ -47,6 +61,7 @@ def main():
     fetch.add_argument('run_ids', nargs='*')
     fetch.add_argument('--all', action='store_true', help='every GitHub run missing locally')
     sub.add_parser('index', help='rebuild index.html')
+    sub.add_parser('refresh', help='recompute summaries + what-changed for all local runs and update their GitHub notes')
     args = p.parse_args()
 
     if args.cmd == 'list':
@@ -64,6 +79,8 @@ def main():
             if args.assume_commit:
                 backfill_code(d, args.assume_commit, args.note)
             publish.publish_run(d)
+    elif args.cmd == 'refresh':
+        refresh_all()
     elif args.cmd == 'fetch':
         ids = args.run_ids
         if args.all:

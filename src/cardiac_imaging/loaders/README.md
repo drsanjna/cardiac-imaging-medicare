@@ -45,6 +45,8 @@ flowchart LR
 
 ## Functions
 
+Every function and class in this directory, including internal helpers.
+
 **`claims.py`**
 - `verify_specialty_strings(con)` — Every specialty string must exist verbatim in the PUF.
 - `load_detail(con)` — One row per provider × HCPCS × year for the 5 cardiac modalities (territories excluded).
@@ -52,14 +54,19 @@ flowchart LR
 - `national_trend(df_agg)` — Total services by year × modality.
 
 **`demographics.py`**
+- `_num(s)` *(internal)* — Parse CMS numeric text ('12.3%', '1,234', '*') to floats; suppressed values become NaN.
 - `load_gv_demographics(con, year)` — DataFrame(state, mean_age, pct_female) for 50 states + DC in `year`.
 
 **`enrollment.py`**
+- `_finish(df, ffs_col, year)` *(internal)* — Drop note/total rows, map state names to codes, drop territories, return (year, state, ffs).
 - `parse_enrollment_2023(raw)` — Raw 2023 CMS workbook (header=None, skiprows=4) → DataFrame(year, state, ffs).
 - `parse_enrollment_2018(raw)` — Raw 2018 CMS workbook (header=None, skiprows=4) → DataFrame(year, state, ffs).
 - `load_state_ffs(con, year)` — {state: FFS enrollment} for one year, from ENROLLMENT_TABLE.
 
 **`providers.py`**
+- `_specialty_npis(con, types, count_col)` *(internal)* — Unique CTA-billing NPIs per state for one specialty group, 2023.
+- `_with_enrollment(df, state_ffs, label)` *(internal)* — Attach FFS enrollment to a state frame and log states dropped for lacking it.
+- `_specialty_frame(vol, npis, count_col, density_col, state_ffs, demo, label)` *(internal)* — State CTA volume + specialty NPI density + demographics; keeps states with ≥1 specialty biller.
 - `load_cta_density_frames(con, state_ffs, demo)` — State-level CTA volume + NPI density + demographics, keyed 'all', 'rad', 'card'.
 - `national_physician_counts(con)` — COUNT(DISTINCT NPI) across all states combined — multi-state billers counted once.
 - `report_states_without_billers(state_ffs, frames)` — Print which of the 50 states + DC had zero CTA billers of each specialty.

@@ -1,6 +1,6 @@
 # `.githooks/`
 
-> Local git hooks: regenerate READMEs before each commit.
+> Local git hooks: before each commit — every function documented, READMEs regenerated, quick tests pass.
 
 [← Project README](../README.md)
 
@@ -21,7 +21,7 @@ flowchart LR
 
 | File | What it does |
 |---|---|
-| [`pre-commit`](pre-commit) | Regenerate READMEs before each commit and stage them, so docs ship in the same commit as the code. |
+| [`pre-commit`](pre-commit) | Pre-submit checks: every function documented, READMEs regenerated and staged, quick tests pass. |
 
 ## Notes
 

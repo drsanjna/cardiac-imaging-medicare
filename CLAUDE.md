@@ -28,6 +28,24 @@
   Release on that tag. To investigate an old result: `git checkout run-<run id>`; `python scripts/runs.py fetch <run id>`.
 - New figures: add an entry to `figures/catalog.py` so the gallery and PDF label them.
 
+## Tests (required)
+- Every new function or behaviour gets tests in `tests/` in the same commit — no exceptions. Extend
+  `tests/synthetic.py` when a new filter or table needs data to exercise it.
+- `pytest -m "not real_data"` (~30 s, synthetic) runs in the pre-commit hook and CI (coverage must stay ≥ 85%).
+- Before pushing anything that touches analysis code, run `pytest -m real_data`: it pins the published IRRs,
+  Table 1 shares, model sizes and change summary on the real data. A changed number is a bug unless the user approved it.
+- Never weaken or delete a test to make it pass; fix the code, or ask.
+
+## Commits and pushes
+- Commit messages: a one-line subject, then `- ` bullets in plain English saying what changed, why, and the impact.
+  The post-push workflow turns them into `docs/WORK_LOG.md`, so write them for a reader, not for git.
+
+## Chart discussions and hypotheses
+- The app (`python -m cardiac_imaging.app`) lets the user discuss a chart; the context is the chart's generating code
+  (from `figures/catalog.py` `sources`, read at the run's snapshot), its tables and the data model.
+- `python scripts/consolidate_hypotheses.py` refreshes `docs/hypotheses/` from those discussions and Claude Code
+  sessions. Only short statements go to the (public) repo.
+
 ## Rules
 - Every module gets a one-line module docstring and every public function/class a one-line docstring (they feed the READMEs).
 - Analysis definitions (HCPCS codes, specialty lists, excluded territories, enrollment, year range) live only in `config.py`. Changing them needs the user's explicit approval — never change one to make an error go away.

@@ -14,6 +14,7 @@ MARKER = 'cardiac-run-summary:'   # release notes carry <!-- cardiac-run-summary
 
 
 def _gh(*args, capture=False):
+    """Run a `gh` CLI command against this repo (optionally returning its output)."""
     gh = shutil.which('gh')
     if not gh:
         raise RuntimeError("GitHub CLI `gh` not found (brew install gh && gh auth login).")
@@ -26,7 +27,7 @@ def _gh(*args, capture=False):
 def summary(m):
     """The subset of a manifest shown in index.html (also embedded in the release notes)."""
     keep = ('run_id', 'label', 'status', 'started', 'finished', 'seconds', 'code', 'database', 'data', 'versions',
-            'headline', 'error', 'save_tiff', 'bytes', 'published')
+            'headline', 'error', 'save_tiff', 'bytes', 'published', 'summary', 'comparison', 'findings')
     s = {k: m.get(k) for k in keep}
     s['figures'] = len(m.get('figures', []))
     s['steps_ok'] = sum(1 for x in m.get('steps', []) if x['status'] == 'ok')
@@ -35,6 +36,7 @@ def summary(m):
 
 
 def release_notes(m):
+    """Markdown release notes for a run: summary table, headline IRRs, restore command, embedded run record."""
     c, d = m['code'], m.get('data', {})
     repo = f"https://github.com/{c.get('repo')}"
     rows = [
@@ -49,13 +51,18 @@ def release_notes(m):
         ('Versions', ', '.join(f'{k} {v}' for k, v in m.get('versions', {}).items())),
         ('Figures', f"{len(m.get('figures', []))}" + ('' if m.get('save_tiff') else ' (no TIFFs)')),
     ]
-    lines = [f"Pipeline run **{m['run_id']}**", '', '| | |', '|---|---|'] + [f'| {k} | {v} |' for k, v in rows]
+    cmp_ = m.get('comparison') or {}
+    lines = [f"Pipeline run **{m['run_id']}**", '', m.get('summary', ''), '']
+    if cmp_.get('changes'):
+        lines += ['**What changed** (vs ' + (f"`{cmp_['previous']}`" if cmp_.get('previous') else 'nothing') + ')', '']
+        lines += [f'- {x}' for x in cmp_['changes']] + ['', '**Impact**', ''] + [f'- {x}' for x in cmp_.get('impact', [])] + ['']
+    lines += ['<details><summary>Technical details</summary>', '', '| | |', '|---|---|'] + [f'| {k} | {v} |' for k, v in rows]
     if m.get('headline'):
         lines += ['', '| Headline | IRR | 95% CI |', '|---|---|---|']
         lines += [f"| {k} | {h['irr']:.3f} | {h['lo']:.3f}–{h['hi']:.3f} |" for k, h in m['headline'].items()]
     if not c.get('exact'):
         lines += ['', f"> **Note:** {c.get('note', 'The exact code for this run was not captured.')}"]
-    lines += ['', '**Restore this code:**', '```bash', f"git fetch origin tag {c['tag']} && git checkout {c['tag']}", '```',
+    lines += ['', '</details>', '', '**Restore this code:**', '```bash', f"git fetch origin tag {c['tag']} && git checkout {c['tag']}", '```',
               '**Open the outputs:** download `run_*.zip`, unzip into `~/Downloads/cms_runs/`, open `gallery.html` '
               f"(or `python scripts/runs.py fetch {m['run_id']}`).",
               '', f"<!-- {MARKER}{base64.b64encode(json.dumps(summary(m), default=str).encode()).decode()} -->"]
@@ -72,6 +79,11 @@ def _zip(run_dir, out, include_tiff):
                 z.write(p, Path(run_dir.name) / rel)
 
 
+def _push_tag(tag):
+    """Push one tag (and the snapshot commit it points to) to GitHub."""
+    subprocess.run(['git', 'push', '-q', 'origin', f'refs/tags/{tag}'], check=True, cwd=config.REPO_ROOT)
+
+
 def publish_run(run_dir, force=False):
     """Push the run's tag and create its GitHub Release with the outputs attached; records `published` in the manifest."""
     from . import gallery
@@ -84,7 +96,7 @@ def publish_run(run_dir, force=False):
     if not c.get('snapshot'):
         raise RuntimeError(f"Run {m['run_id']} has no code snapshot; backfill it first (scripts/runs.py publish --assume-commit).")
     gitinfo.ensure_tag(c['tag'], c['snapshot'], f"Code used for run {m['run_id']}")
-    subprocess.run(['git', 'push', '-q', 'origin', f"refs/tags/{c['tag']}"], check=True, cwd=config.REPO_ROOT)
+    _push_tag(c['tag'])
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -113,6 +125,18 @@ def publish_run(run_dir, force=False):
     return m['published']
 
 
+def update_release_notes(run_dir):
+    """Rewrite an existing GitHub release's notes from the run's current manifest (e.g. after refreshing summaries)."""
+    m = read_manifest(run_dir)
+    if not m.get('published'):
+        return False
+    with tempfile.TemporaryDirectory() as tmp:
+        notes = Path(tmp) / 'notes.md'
+        notes.write_text(release_notes(m))
+        _gh('release', 'edit', m['code']['tag'], '--notes-file', str(notes))
+    return True
+
+
 def remote_runs():
     """Run summaries decoded from the GitHub releases' notes (newest first), each with its release URL and time."""
     out = []
@@ -128,6 +152,7 @@ def remote_runs():
 
 
 def _gh_api_releases():
+    """All of the repo's releases from the GitHub API (all pages)."""
     gh = shutil.which('gh')
     if not gh:
         raise RuntimeError("GitHub CLI `gh` not found.")

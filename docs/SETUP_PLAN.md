@@ -103,6 +103,36 @@ outputs from GitHub so its gallery works locally). Set `CARDIAC_PUBLISH_RUNS=0` 
 - READMEs are built from docstrings and imports, including the Mermaid flowcharts. Edit docstrings, not READMEs.
   Hand-written notes go between the `BEGIN MANUAL` and `END MANUAL` markers.
 
+## Everyday use (the app)
+
+```bash
+python -m cardiac_imaging.app
+```
+
+Opens `http://localhost:8765` — the results history:
+
+- Each run shows **when** it ran, a **plain-English summary** of the results, and three buttons:
+  **Open charts**, **What changed & impact** (code, data and settings changes since the previous run, and how the
+  headline numbers moved), and **↺ Restore this version** (puts the code back exactly as it was for that run; your
+  current code is saved first, **Undo** brings it back, **Push to GitHub** shares it). Technical details stay in each
+  run's record locally and on GitHub, not on the main page.
+- **Charts:** click any chart to zoom (scroll/pinch, drag, double-click, `+` `−` `0`); maps also open as interactive
+  HTML. **💬 Discuss a hypothesis** opens a chat that starts from the exact code that drew the chart (at that run's
+  snapshot), its tables and the data model. Set the outcome (supported / not supported / inconclusive) when done.
+  Live chat needs Claude Code (`brew install --cask claude-code`, run `claude` once to log in) or an Anthropic API key;
+  without either you get a ready-made prompt to paste into Claude Code.
+- `python scripts/consolidate_hypotheses.py` turns those discussions (plus hypotheses raised in Claude Code sessions)
+  into `docs/hypotheses/HYPOTHESES.md`.
+
+## Safety nets
+
+| Net | When | What it does |
+|---|---|---|
+| Pre-commit hook | every commit | every function has a docstring; READMEs regenerated (function lists, flowcharts, data model); quick tests pass |
+| `post-push` workflow | every push / PR | same checks on GitHub (coverage ≥ 85%); on `main` appends an English entry to `docs/WORK_LOG.md` |
+| `pytest -m real_data` | before pushing analysis changes | pins the published IRRs, Table 1 shares, model sizes, change summary and row counts |
+| Code snapshots | every run | `run-<id>` tags let you restore any run's exact code from the app |
+
 ## Open items for you
 1. **Disk is ~96–98% full.** macOS is offloading this iCloud-synced Desktop folder, which made reads hang during setup.
    Move the repo out of Desktop (e.g. `~/code/`) and/or free space.

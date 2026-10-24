@@ -7,11 +7,12 @@ import argparse
 from pathlib import Path
 
 from cardiac_imaging import config
-from cardiac_imaging.db import build
+from cardiac_imaging.db import build, schema
 from cardiac_imaging.db.connection import get_connection
 
 
 def main():
+    """Parse arguments, build/refresh cms.duckdb tables, and validate them against the data model."""
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--db', default=config.DATABASE, help=f"Database file (default {config.DATABASE})")
     p.add_argument('--claims', action='store_true', help="Rebuild the claims view from Parquet even if it exists")
@@ -35,7 +36,11 @@ def main():
                                 d / 'original medicare enrollment 2023.xlsx')
     build.load_gv_puf(con, Path(args.gv).expanduser())
     con.execute("CHECKPOINT")
-    print("Database ready.")
+    problems = schema.validate(con)
+    if problems:
+        raise SystemExit("Database does not match the data model (src/cardiac_imaging/db/schema.py):\n  "
+                         + "\n  ".join(problems))
+    print("Database ready (matches the data model in db/schema.py).")
 
 
 if __name__ == '__main__':

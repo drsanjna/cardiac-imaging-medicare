@@ -1,8 +1,21 @@
 #!/bin/sh
-# Regenerate READMEs before each commit and stage them, so docs ship in the same commit as the code.
+# Pre-submit checks: every function documented, READMEs regenerated and staged, quick tests pass.
 ROOT="$(git rev-parse --show-toplevel)"
-python3 "$ROOT/scripts/update_readmes.py" >/dev/null || {
-  echo "pre-commit: README generation failed (commit continues; the GitHub Action will retry)." >&2
-  exit 0
-}
+PY="${CARDIAC_PYTHON:-$HOME/jupyter-env/bin/python}"
+[ -x "$PY" ] || PY="$(command -v python3)"
+
+# 1. Every module/function/class needs a docstring — it is that function's README explanation.
+python3 "$ROOT/scripts/check_docs.py" || { echo "pre-commit: add the missing docstrings above, then commit again." >&2; exit 1; }
+
+# 2. Regenerate READMEs (function list, flowcharts, data model) and stage them with the code.
+python3 "$ROOT/scripts/update_readmes.py" >/dev/null || { echo "pre-commit: README generation failed." >&2; exit 1; }
 git -C "$ROOT" ls-files -m -o --exclude-standard -- 'README.md' '*/README.md' | xargs -r git -C "$ROOT" add --
+
+# 3. Quick test suite (synthetic data, ~seconds). Skip with SKIP_TESTS=1 only in an emergency; CI runs them anyway.
+if [ "${SKIP_TESTS:-0}" != "1" ] && "$PY" -c "import pytest" 2>/dev/null; then
+  (cd "$ROOT" && env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE -u GIT_PREFIX -u GIT_OBJECT_DIRECTORY \
+      "$PY" -m pytest -q -x -m "not slow and not real_data" -p no:cacheprovider --no-cov) \
+    || { echo "pre-commit: tests failed — fix them (or the code) before committing." >&2; exit 1; }
+else
+  echo "pre-commit: pytest not available to $PY — tests skipped (CI will run them)." >&2
+fi

@@ -46,6 +46,7 @@ def density_partial_curve(res, x_grid, ncoef, per=1000):
 
 
 def vif_table(Xz_df):
+    """Variance inflation factor for each (z-scored) covariate; > 5 signals collinearity."""
     Xc = sm.add_constant(Xz_df.values)
     return {col: variance_inflation_factor(Xc, i + 1)
             for i, col in enumerate(Xz_df.columns)}

@@ -1,6 +1,6 @@
 # `.github/workflows/`
 
-> GitHub Actions: keep READMEs in sync on push; Claude fixes code for @claude / notebook-error issues.
+> GitHub Actions: tests + docstring rule + READMEs + work log on every push; Claude fixes @claude issues.
 
 [← Project README](../../README.md)
 
@@ -12,10 +12,10 @@ Solid `A --> B` = B imports A (A feeds B). Dotted = A runs B. Other directories 
 flowchart LR
   subgraph here[".github/workflows/"]
     n_claude_yml["claude.yml"]
-    n_readme_sync_yml["readme-sync.yml"]
+    n_post_push_yml["post-push.yml"]
   end
   n_scripts_["scripts/"]
-  n_readme_sync_yml -. runs .-> n_scripts_
+  n_post_push_yml -. runs .-> n_scripts_
 ```
 
 ## Files
@@ -23,7 +23,7 @@ flowchart LR
 | File | What it does |
 |---|---|
 | [`claude.yml`](claude.yml) | Claude — Claude fixes code when an issue/comment mentions @claude or an issue gets the notebook-error label. |
-| [`readme-sync.yml`](readme-sync.yml) | readme-sync — On every push, rebuild all README.md files from the code and commit them back if they changed. |
+| [`post-push.yml`](post-push.yml) | post-push — On every push/PR: docstring rule + tests; on push: refresh READMEs; on main: append an English work-log entry. |
 
 ## Notes
 

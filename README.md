@@ -28,22 +28,27 @@ flowchart LR
   end
   n__githooks_[".githooks/"]
   n__github_workflows_[".github/workflows/"]
+  n_app_["app/"]
   n_notebooks_["notebooks/"]
   n_scripts_["scripts/"]
   n_analysis_ --> n_figures_
   n_analysis_ --> n_pipeline_py
+  n_db_ --> n_app_
   n_db_ --> n_notebooks_
   n_db_ --> n_pipeline_py
   n_db_ --> n_scripts_
   n_errors_py --> n_pipeline_py
+  n_figures_ --> n_app_
   n_figures_ --> n_pipeline_py
   n_figures_ --> n_reporting_
+  n_gitinfo_py --> n_app_
   n_gitinfo_py --> n_errors_py
   n_gitinfo_py --> n_reporting_
   n_gitinfo_py --> n_scripts_
   n_loaders_ --> n_db_
   n_loaders_ --> n_pipeline_py
   n_pipeline_py --> n_notebooks_
+  n_reporting_ --> n_app_
   n_reporting_ --> n_pipeline_py
   n_reporting_ --> n_scripts_
   n__githooks_ -. runs .-> n_scripts_
@@ -72,6 +77,11 @@ python scripts/build_database.py
 ```bash
 python -m cardiac_imaging.pipeline
 ```
+```bash
+python -m cardiac_imaging.app
+```
+
+The app (last command) opens the results history: each run's time, a plain-English summary, what changed, and one-click **Restore**; galleries let you zoom into every chart and **discuss a hypothesis** with Claude.
 
 Each run gets its own folder in `~/Downloads/cms_runs/` (linked as `runs/` here): figures (PNG + TIFF), result tables (CSV), `console.log`, `manifest.json`, a `gallery.html` of every chart and `all_figures.pdf`. `runs/index.html` lists every run with its headline IRRs. Use `--no-tiff` for quick runs, `--label` to tag one.
 
@@ -83,14 +93,16 @@ Paths default to `~/Downloads`; override with the variables in [`.env.example`](
 |---|---|
 | [`src/cardiac_imaging/`](src/cardiac_imaging/README.md) | Cardiac imaging utilization in Medicare FFS, 2018–2023: data, models, figures. |
 | [`src/cardiac_imaging/analysis/`](src/cardiac_imaging/analysis/README.md) | Analysis: utilization rates, market share, Table 1, and negative binomial density models. |
+| [`src/cardiac_imaging/app/`](src/cardiac_imaging/app/README.md) | Local app (python -m cardiac_imaging.app): serves the run history with one-click restore/undo and chart discussions. |
 | [`src/cardiac_imaging/db/`](src/cardiac_imaging/db/README.md) | Database layer: open the local DuckDB file (read-only for analysis) and build its tables from Parquet + reference files. |
 | [`src/cardiac_imaging/figures/`](src/cardiac_imaging/figures/README.md) | Figures: every publication figure (1–9, S1–S2, state panel) plus PNG/TIFF export helpers. |
 | [`src/cardiac_imaging/loaders/`](src/cardiac_imaging/loaders/README.md) | Loaders: pull analysis-ready DataFrames out of the database (claims, enrollment, demographics, providers). |
 | [`src/cardiac_imaging/reporting/`](src/cardiac_imaging/reporting/README.md) | Reporting: one folder per run (figures, tables, log, manifest), a chart gallery + PDF per run, and an index of all runs. |
-| [`scripts/`](scripts/README.md) | Command-line tools: CSV → Parquet conversion, database build, README generation, git hook install. |
+| [`scripts/`](scripts/README.md) | Command-line tools: CSV → Parquet, database build, run history, README/docstring checks, work log, hypotheses. |
+| [`tests/`](tests/README.md) | Test suite (pytest): synthetic-data tests for every layer + real-data regression tests that pin published numbers. |
 | [`notebooks/`](notebooks/README.md) | Thin Jupyter driver: imports from src/, runs the pipeline. Run headless with papermill. |
-| [`.github/workflows/`](.github/workflows/README.md) | GitHub Actions: keep READMEs in sync on push; Claude fixes code for @claude / notebook-error issues. |
-| [`.githooks/`](.githooks/README.md) | Local git hooks: regenerate READMEs before each commit. |
+| [`.github/workflows/`](.github/workflows/README.md) | GitHub Actions: tests + docstring rule + READMEs + work log on every push; Claude fixes @claude issues. |
+| [`.githooks/`](.githooks/README.md) | Local git hooks: before each commit — every function documented, READMEs regenerated, quick tests pass. |
 | [`legacy/`](legacy/README.md) | The original single-file analysis script, kept unchanged for reference. Not imported by anything. |
 
 ## How errors reach Claude
@@ -99,6 +111,13 @@ Paths default to `~/Downloads`; override with the variables in [`.env.example`](
 2. Claude reads the traceback, fixes `src/` (never the notebook JSON), reruns until it passes.
 3. Claude runs `python scripts/update_readmes.py` and commits code + READMEs together, then pushes.
 4. Optional: with `CARDIAC_GITHUB_TOKEN` set, a failure also opens a `notebook-error` issue that the Claude GitHub Action answers with a fix PR.
+
+## Safety nets
+
+- **Tests:** `pytest` (synthetic data, ~30 s) runs before every commit and on every push; `pytest -m real_data` pins the published numbers on the real data.
+- **Docs:** every function must have a docstring (pre-commit + CI); READMEs are regenerated from them.
+- **Work log:** each push to `main` appends an English summary to [`docs/WORK_LOG.md`](docs/WORK_LOG.md).
+- **Hypotheses:** `python scripts/consolidate_hypotheses.py` writes [`docs/hypotheses/`](docs/hypotheses/HYPOTHESES.md).
 
 ## READMEs are generated
 

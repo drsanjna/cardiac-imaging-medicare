@@ -43,11 +43,13 @@ flowchart LR
 
 ## Functions
 
+Every function and class in this directory, including internal helpers.
+
 **`nb_models.py`**
 - `fit_nb_design(X, counts, offset)` — Fit NB2 with Poisson start values; returns (result, alpha, Poisson dispersion).
 - `irr_at(res, idx)` — (IRR, CI low, CI high, p) for coefficient idx.
 - `density_partial_curve(res, x_grid, ncoef, per)` — Predicted rate per `per` beneficiaries across x_grid, other covariates at their mean (0 when z-scored).
-- `vif_table(Xz_df)`
+- `vif_table(Xz_df)` — Variance inflation factor for each (z-scored) covariate; > 5 signals collinearity.
 - `fit_density_models(df, density_col, density_label)` — Fit unadjusted and age/sex-adjusted NB2 models for one density measure.
 - `print_model_report(fit, title, n_physicians, year)` — Console table of adjusted-model IRRs plus unadjusted vs adjusted density IRR.
 - `results_table(results, names)` — One row per density model: states, physicians, unadjusted and adjusted IRR with 95% CI and p.

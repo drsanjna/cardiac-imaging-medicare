@@ -7,6 +7,7 @@ from ..audit import log_filter
 
 
 def _num(s):
+    """Parse CMS numeric text ('12.3%', '1,234', '*') to floats; suppressed values become NaN."""
     s = (s.astype(str).str.replace('%', '', regex=False)
                       .str.replace(',', '', regex=False).str.strip())
     return pd.to_numeric(s.replace({'*': np.nan, '.': np.nan, '': np.nan}),
