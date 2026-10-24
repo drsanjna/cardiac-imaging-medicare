@@ -2,6 +2,33 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-24 12:11 UTC — 1 commit (`40d1fc7..feff14e`)
+
+### What was done
+
+- **Discuss: live chat via the Claude app's Claude Code, Markdown replies, hand-off to the Claude app** (`feff14e`)
+  - Live chat works without installing anything: when `claude` isn't on PATH the app uses the Claude Code copy bundled with the Claude desktop app, checks its login, and otherwise shows the exact one-time `auth login` command (no restart needed afterwards).
+  - Fixed a hang: CLI calls inherited the server's open stdin and waited until the timeout (20 s on every page load, and every chat message); they now get stdin=/dev/null.
+  - Chat messages render Markdown (headings, bold/italic, inline and fenced code, nested lists, links, quotes, tables, rules) via a new escape-first renderer, app/markdown.py — raw HTML and javascript: links can't execute.
+  - "Continue in Claude app" button hands a discussion to the Claude desktop app (`claude --desktop --resume`, run under a pseudo-terminal) so it stays in the session sidebar; later panel messages continue on a fork so the two never interleave.
+  - 22 new tests (122 total, 92% coverage): renderer elements and injection cases, CLI discovery/login, stdin handling, hand-off and fork behaviour, server endpoints.
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: app | 4 | 275 | 17 |
+| code: reporting | 1 | 29 | 5 |
+| tests | 3 | 244 | 4 |
+
+### Impact on the code
+
+- New functions (35): `src/cardiac_imaging/app/chat.py: _open_desktop`, `src/cardiac_imaging/app/chat.py: _version_key`, `src/cardiac_imaging/app/chat.py: claude_binary`, `src/cardiac_imaging/app/chat.py: claude_logged_in`, `src/cardiac_imaging/app/chat.py: open_in_claude_app`, `src/cardiac_imaging/app/chat.py: setup_hint`, `src/cardiac_imaging/app/chat.py: with_html`, `src/cardiac_imaging/app/markdown.py: _cells`, `src/cardiac_imaging/app/markdown.py: _emphasis`, `src/cardiac_imaging/app/markdown.py: _inline`, `src/cardiac_imaging/app/markdown.py: _list_html`, `src/cardiac_imaging/app/markdown.py: render`, `tests/test_app.py: _claude_code_conv`, `tests/test_app.py: test_claude_binary_prefers_path_then_newest_bundled`, `tests/test_app.py: test_claude_code_backend_unavailable_when_logged_out`, `tests/test_app.py: test_claude_logged_in_reads_auth_status`, `tests/test_app.py: test_cli_calls_never_inherit_stdin`, `tests/test_app.py: test_open_desktop_uses_pty_and_no_stdin`, `tests/test_app.py: test_open_in_claude_app_errors`, `tests/test_app.py: test_open_in_claude_app_hands_off_and_follow_ups_fork`, `tests/test_app.py: test_server_open_in_app_endpoint`, `tests/test_app.py: test_setup_hint_when_bundled_cli_not_logged_in`, `tests/test_markdown.py: test_blockquote_and_rule`, `tests/test_markdown.py: test_code_block_is_escaped_and_tagged`, `tests/test_markdown.py: test_empty_and_none` …
+
+### Tests
+
+✅ 122 passed, 0 failed, 0 skipped.
+
 ## 2026-10-24 10:53 UTC — 1 commit (`ca9e052..b878a1b`)
 
 ### What was done
