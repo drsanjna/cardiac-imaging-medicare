@@ -1,0 +1,21 @@
+# Data never goes in git
+*.csv
+*.parquet
+*.xlsx
+*.zip
+*.duckdb
+*.duckdb.wal
+data/
+
+# Outputs
+outputs/
+logs/
+runs/
+
+# Environments / tooling
+.env
+.venv
+.venv.nosync/
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
