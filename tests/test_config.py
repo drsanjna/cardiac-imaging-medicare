@@ -38,6 +38,20 @@ def test_modality_sql_maps_every_cardiac_code():
     assert config.CTA_CODE in codes
 
 
+def test_pet_codes_are_perfusion_pet_with_and_without_ct():
+    """Cardiac PET = 78491, 78492, 78430, 78431 (Advanced); add-on 78434 and metabolic/combined codes are not counted."""
+    import duckdb
+    codes = ['78491', '78492', '78430', '78431', '78432', '78433', '78429', '78459', '78434']
+    rows = duckdb.sql(f"""SELECT HCPCS_Cd, {config.MODALITY_CASE} AS modality, {config.MODALITY_TYPE_CASE} AS grp,
+                                 {config.CARDIAC_HCPCS_WHERE} AS kept
+                          FROM (SELECT unnest({codes}) AS HCPCS_Cd)""").fetchall()
+    got = {c: (m, g, k) for c, m, g, k in rows}
+    for c in ('78491', '78492', '78430', '78431'):
+        assert got[c] == ('Cardiac PET', 'Advanced', True)
+    for c in ('78432', '78433', '78429', '78459', '78434'):
+        assert got[c] == (None, None, False)
+
+
 def test_relative_env_paths_resolve_inside_repo(monkeypatch):
     """CARDIAC_* relative paths are resolved against the repo root."""
     monkeypatch.setenv('CARDIAC_OUTPUT_DIR', 'some/out')
