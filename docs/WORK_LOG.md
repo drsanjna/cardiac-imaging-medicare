@@ -2,6 +2,40 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-25 15:31 UTC — 2 commits (`5b9da6e..bb6724d`)
+
+### What was done
+
+- **Add TAVR to Figure 1 and as a new state map (Figure 11)** (`122c1e6`)
+  - TAVR (CPT 33361–33366) is a second comparator procedure next to ICA: a Figure 1 column and its own state map, same layout as Figures 3–7. Kept out of the imaging definitions; imaging numbers are unchanged.
+  - ICA and TAVR now share one code path (config.COMPARATORS, load_comparators, step_comparator_maps).
+  - TAVR is usually billed by two co-surgeons (49% cardiology / 49% cardiac-thoracic surgery every year), so services ≈ 2 × procedures; stated on both figures and in STUDY.md.
+  - Comparator maps no longer treat a state with no base-year rows as zero: Wyoming has no TAVR rows in 2018 (none or suppressed) and is shown grey with no change, instead of a false increase.
+  - TAVR nationally: 64,891 → 92,986 services (+43.3%); rate per 1,000 FFS beneficiaries 1.71 → 2.76 (+61.6%).
+  - Tests for comparators, missing-state deltas and the map footnote; real-data pin gains the TAVR row. Figures: run 2026-10-24_175530_edf94e1-dirty_tavr-figure1-and-map.
+- **Merge remote-tracking branch 'origin/main'** (`bb6724d`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: analysis | 2 | 10 | 4 |
+| code: core | 4 | 33 | 24 |
+| code: db | 1 | 7 | 7 |
+| code: figures | 4 | 51 | 19 |
+| code: loaders | 2 | 22 | 12 |
+| docs | 1 | 7 | 2 |
+| tests | 8 | 50 | 21 |
+
+### Impact on the code
+
+- New functions (8): `src/cardiac_imaging/figures/choropleths.py: plot_comparator_state_maps`, `src/cardiac_imaging/loaders/claims.py: comparator_trend`, `src/cardiac_imaging/loaders/claims.py: load_comparator_detail`, `src/cardiac_imaging/loaders/claims.py: load_comparators`, `src/cardiac_imaging/pipeline.py: step_comparator_maps`, `tests/test_analysis.py: test_comparator_map_notes_states_without_base_year`, `tests/test_analysis.py: test_rate_deltas_can_keep_missing_states_missing`, `tests/test_loaders.py: test_load_comparators_and_trend`
+- Removed functions (5): `src/cardiac_imaging/figures/choropleths.py: plot_ica_state_maps`, `src/cardiac_imaging/loaders/claims.py: ica_trend`, `src/cardiac_imaging/loaders/claims.py: load_ica_detail`, `src/cardiac_imaging/pipeline.py: step_ica_map`, `tests/test_loaders.py: test_load_ica_detail_and_trend`
+
+### Tests
+
+✅ 152 passed, 0 failed, 0 skipped.
+
 ## 2026-10-24 21:38 UTC — 4 commits (`b29719a..edf94e1`)
 
 ### What was done
