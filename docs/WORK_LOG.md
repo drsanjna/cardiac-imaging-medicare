@@ -2,6 +2,35 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-26 15:52 UTC — 3 commits (`4c05f61..b189d71`)
+
+### What was done
+
+- **Remove Figure S3 (density sensitivity forest plot)** (`6a9f67a`)
+  - Removed at the user's request: the forest plot was hard to read. Figures S4-S6 show the same sensitivity analysis as scatter plots. The density_sensitivity_workforce table is kept (run page, Results).
+  - STUDY.md outputs table now lists Figures S4-S6. Run 2026-10-26_113538_14c3944-dirty_remove-figure-S3.
+- **Renumber supplement: workforce figures S4-S6 become S3-S5** (`65eb0f3`)
+  - After removing the S3 forest plot, the workforce density figures are renumbered so the supplement runs S1-S5 without a gap: S3 = 2023 density, S4 = 2018 density, S5 = change-on-change 2018-2023.
+  - File names, titles, catalog labels, pipeline, tests and STUDY.md updated. Run 2026-10-26_114718_6a9f67a-dirty_renumber-supplement.
+- **Merge remote-tracking branch 'origin/main'** (`b189d71`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: core | 1 | 6 | 8 |
+| code: figures | 4 | 8 | 73 |
+| docs | 1 | 5 | 4 |
+| tests | 6 | 10 | 10 |
+
+### Impact on the code
+
+- Removed functions (1): `src/cardiac_imaging/figures/forest.py: plot_sensitivity_forest`
+
+### Tests
+
+✅ 158 passed, 0 failed, 0 skipped.
+
 ## 2026-10-26 15:29 UTC — 3 commits (`7295757..14c3944`)
 
 ### What was done
