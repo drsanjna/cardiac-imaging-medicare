@@ -11,6 +11,8 @@ from . import run_store
 # Tables shown on the page, in order; every other CSV in tables/ is listed as a download.
 SHOWN_TABLES = [
     ('nb_density_models', 'Density models — IRR per +1 NPI per 100,000 FFS beneficiaries (Figures 8, 9, S1, S2)'),
+    ('density_sensitivity_workforce', 'Sensitivity — density models with the whole radiology/cardiology workforce as '
+                                      'exposure vs CTA billers (original); compare the per +1 SD IRRs'),
     ('table1_specialty_distribution', 'Table 1 — Provider specialty distribution by modality, 2023'),
     ('change_summary', '2018 → 2023 change in volume, enrollment and rate (%)'),
     ('national_market_share', 'National market share by modality (%)'),

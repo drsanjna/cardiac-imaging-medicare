@@ -83,6 +83,7 @@ def test_gallery_html(pipeline_run):
     assert html.count('data-discuss=') == 15 and 'id="lb-in"' in html and 'id="lb-fit"' in html
     assert 'id="discuss"' in html and 'Restore this code' in html and 'Rows per year' in html
     assert 'Interactive' in html
+    assert 'Sensitivity — density models with the whole radiology/cardiology workforce' in html   # shown, not just a CSV link
 
 
 def test_gallery_layout_summary_top_development_bottom(pipeline_run):
