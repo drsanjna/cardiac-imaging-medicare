@@ -108,6 +108,11 @@ def print_model_report(fit, title, n_physicians, year):
     print("=" * 76)
 
 
+def irr_per_sd(irr, sd):
+    """Rescale a per-unit IRR (point, CI low, CI high, p) to a per-1-SD IRR, so different exposures compare."""
+    return irr[0] ** sd, irr[1] ** sd, irr[2] ** sd, irr[3]
+
+
 def results_table(results, names):
     """One row per density model: states, physicians, unadjusted and adjusted IRR with 95% CI and p."""
     rows = []

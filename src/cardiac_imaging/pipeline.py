@@ -35,6 +35,7 @@ SUPPLEMENT
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S2: Cardiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
+  Table:     Sensitivity — same models with the whole radiology/cardiology workforce as exposure
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -165,6 +166,7 @@ def step_density_models(ctx):
     ctx['nb_results'] = {}
     for key, col, label, title, color, fname in specs:
         fit = nb_models.fit_density_models(frames[key], col, label)
+        ctx.setdefault('density_fits', {})[key] = fit   # reused by the workforce sensitivity step
         nb_models.print_model_report(fit, title, n_phys[key], config.END_YEAR)
         density.plot_density_fit(fit, title, color, fname, n_phys[key])
         ctx['nb_results'][key] = dict(irr_un=fit['irr_un'], irr_adj=fit['irr_adj'],
@@ -173,6 +175,33 @@ def step_density_models(ctx):
     ctx['tables']['nb_density_models'] = nb_models.results_table(ctx['nb_results'], names)
     ctx['headline'] = {f'Adjusted IRR — {names[k]}': dict(zip(('irr', 'lo', 'hi', 'p'), map(float, r['irr_adj'])))
                        for k, r in ctx['nb_results'].items()}
+
+
+def step_workforce_sensitivity(ctx):
+    """Sensitivity (post hoc, reviewer R2): Figure 8/S1/S2 models with all radiologists/cardiologists as exposure."""
+    print("Sensitivity: density models with the whole radiology/cardiology workforce as exposure...")
+    con, state_ffs = ctx['con'], ctx['state_ffs_2023']
+    demo = demographics.load_gv_demographics(con, config.GV_YEAR)
+    frames = providers.load_workforce_density_frames(con, state_ffs, demo)
+    n_phys = providers.national_workforce_counts(con)
+    labels = {'all': ('wf_npis_per_100k', 'Radiologists + cardiologists (any Part B) per 100,000 FFS'),
+              'rad': ('wf_rad_npis_per_100k', 'Radiologists (any Part B) per 100,000 FFS'),
+              'card': ('wf_card_npis_per_100k', 'Cardiologists (any Part B) per 100,000 FFS')}
+    names = {'all': 'All CTA-billing providers', 'rad': 'Radiologists', 'card': 'Cardiologists'}
+    rows = []
+    for key, (col, label) in labels.items():
+        fit = nb_models.fit_density_models(frames[key], col, label)
+        nb_models.print_model_report(fit, f'SENSITIVITY — {label}', n_phys[key], config.END_YEAR)
+        orig = ctx['density_fits'][key]
+        for exposure, f, n in [('CTA billers (original)', orig, ctx['nb_results'][key]['n_physicians']),
+                               ('Whole specialty workforce (sensitivity)', fit, n_phys[key])]:
+            sd = float(f['d'][f['density_col']].std(ddof=0))
+            irr, per_sd = f['irr_adj'], nb_models.irr_per_sd(f['irr_adj'], sd)
+            rows.append({'model': names[key], 'exposure': exposure, 'states': len(f['d']), 'physicians': n,
+                         'density mean': float(f['d'][f['density_col']].mean()), 'density SD': sd,
+                         'IRR adj per +1 per 100k': irr[0], 'CI low': irr[1], 'CI high': irr[2], 'p': irr[3],
+                         'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
+    ctx['tables']['density_sensitivity_workforce'] = pd.DataFrame(rows).set_index(['model', 'exposure'])
 
 
 def step_table1_forest(ctx):
@@ -198,6 +227,7 @@ STEPS = [
     ('figures10_11_comparator_maps', step_comparator_maps),
     ('state_summary_table', step_state_table),
     ('density_models_fig8_S1_S2', step_density_models),
+    ('density_sensitivity_workforce', step_workforce_sensitivity),
     ('table1_and_figure9_forest', step_table1_forest),
 ]
 

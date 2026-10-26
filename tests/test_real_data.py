@@ -18,6 +18,8 @@ pytestmark = [pytest.mark.real_data,
 GOLDEN_IRR = {'All CTA-billing providers': (1.1878, 1.1459, 1.2312),
               'Radiologists': (1.2307, 1.1475, 1.3198),
               'Cardiologists': (1.1572, 1.0775, 1.2428)}
+# Sensitivity (R2 circularity): adjusted IRR per +1 radiologist/cardiologist (any Part B) per 100,000 FFS, 2023.
+GOLDEN_WORKFORCE_IRR = {'All CTA-billing providers': 1.0049, 'Radiologists': 1.0067, 'Cardiologists': 1.0133}
 GOLDEN_ROWS = {2018: 9_961_865, 2019: 10_140_228, 2020: 9_449_361, 2021: 9_886_177, 2022: 9_755_427, 2023: 9_660_647}
 
 
@@ -78,3 +80,10 @@ def test_manifest_records_real_rows(real_run):
     """The run records all 58,853,705 claim rows."""
     m = json.loads((real_run['run_dir'] / 'manifest.json').read_text())
     assert m['data']['claims_rows_total'] == sum(GOLDEN_ROWS.values())
+
+
+def test_workforce_sensitivity_irrs(real_run):
+    """Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models."""
+    t = real_run['tables']['density_sensitivity_workforce'].xs('Whole specialty workforce (sensitivity)', level='exposure')
+    for model, irr in GOLDEN_WORKFORCE_IRR.items():
+        assert round(t.loc[model, 'IRR adj per +1 per 100k'], 4) == irr and t.loc[model, 'CI low'] > 1

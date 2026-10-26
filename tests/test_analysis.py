@@ -127,6 +127,13 @@ def test_nb_recovers_known_irr():
     assert fit['alpha_adj'] > 0
 
 
+def test_irr_per_sd_rescales_point_and_ci():
+    """Per-SD IRR = per-unit IRR ** SD for the point and both CI bounds; p is unchanged."""
+    out = nb_models.irr_per_sd((1.01, 1.005, 1.02, 0.03), 50)
+    assert out[0] == pytest.approx(1.01 ** 50) and out[1] == pytest.approx(1.005 ** 50)
+    assert out[2] == pytest.approx(1.02 ** 50) and out[3] == 0.03
+
+
 def test_irr_and_partial_curve_properties():
     """CIs bracket the estimate; the partial curve rises with density when IRR > 1 and its band contains it."""
     fit = nb_models.fit_density_models(_nb_data(), 'dens', 'density')

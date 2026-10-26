@@ -52,6 +52,7 @@ Every function and class in this directory, including internal helpers.
 - `vif_table(Xz_df)` — Variance inflation factor for each (z-scored) covariate; > 5 signals collinearity.
 - `fit_density_models(df, density_col, density_label)` — Fit unadjusted and age/sex-adjusted NB2 models for one density measure.
 - `print_model_report(fit, title, n_physicians, year)` — Console table of adjusted-model IRRs plus unadjusted vs adjusted density IRR.
+- `irr_per_sd(irr, sd)` — Rescale a per-unit IRR (point, CI low, CI high, p) to a per-1-SD IRR, so different exposures compare.
 - `results_table(results, names)` — One row per density model: states, physicians, unadjusted and adjusted IRR with 95% CI and p.
 
 **`rates.py`**
