@@ -86,6 +86,9 @@ Every function and class in this directory, including internal helpers.
 - `test_nb_requires_ten_states()` — Fewer than 10 states with demographics is refused.
 - `test_results_table_and_report(capsys)` — results_table has one row per model with adjusted and unadjusted IRRs; the report prints the key lines.
 - `test_comparator_map_notes_states_without_base_year(monkeypatch)` — The map footnote names states with no 2018 rows; they are passed through without a delta.
+- `_wf(states, npis, cta, ffs)` *(internal)* — Minimal workforce frame (as load_workforce_density_frames returns) for change tests.
+- `test_change_frame_computes_state_changes()` — Δ density, Δ rate and % changes per state; states missing from the base year are dropped and logged.
+- `test_change_count_model_recovers_elasticity()` — With CTA ∝ physicians^1.5 and FFS changes unrelated, the count model returns an elasticity near 1.5.
 
 **`test_app.py`**
 - `run_copy(pipeline_run, monkeypatch, isolated)` — A private copy of the synthetic run inside this test's RUNS_DIR (so tests can write conversations etc.).
@@ -221,6 +224,7 @@ Every function and class in this directory, including internal helpers.
 - `test_manifest_records_real_rows(real_run)` — The run records all 58,853,705 claim rows.
 - `test_workforce_sensitivity_irrs(real_run)` — Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models.
 - `test_workforce_density_by_year(real_run)` — Figures S4/S5: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041).
+- `test_workforce_change_models(real_run)` — Figure S6: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant.
 
 **`test_reporting.py`**
 - `test_log_filter_records_and_prints(capsys)` — log_filter returns `after`, records an entry and prints dropped items.

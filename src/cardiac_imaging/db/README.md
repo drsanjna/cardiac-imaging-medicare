@@ -130,7 +130,7 @@ erDiagram
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
 | `year` | BIGINT | Enrollment year (2018 or 2023). | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 27 more |
-| `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>`analysis/rates.py: rate_deltas`<br>`analysis/rates.py: state_summary_table`<br>`app/restore.py: restore_to`<br>…and 24 more |
+| `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/change.py: change_frame`<br>`analysis/change.py: fit_change_models`<br>`analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>`analysis/rates.py: rate_deltas`<br>…and 28 more |
 | `ffs` | BIGINT | Original Medicare (fee-for-service) enrollees — the denominator of every state rate. | `db/build.py: load_state_enrollment`<br>`loaders/enrollment.py: _finish`<br>`loaders/enrollment.py: load_state_ffs`<br>`loaders/enrollment.py: parse_enrollment_2018`<br>`loaders/enrollment.py: parse_enrollment_2023` |
 
 ### `gv_puf` (table)

@@ -11,6 +11,7 @@ Solid `A --> B` = B imports A (A feeds B). Dotted = A runs B. Other directories 
 ```mermaid
 flowchart LR
   subgraph here["src/cardiac_imaging/analysis/"]
+    n_change_py["change.py"]
     n_nb_models_py["nb_models.py"]
     n_rates_py["rates.py"]
     n_tables_py["tables.py"]
@@ -20,8 +21,11 @@ flowchart LR
   n_figures_["figures/"]
   n_pipeline_py["pipeline.py"]
   n_style_py["style.py"]
+  n_audit_py --> n_change_py
   n_audit_py --> n_nb_models_py
   n_audit_py --> n_rates_py
+  n_change_py --> n_figures_
+  n_change_py --> n_pipeline_py
   n_config_py --> n_rates_py
   n_config_py --> n_tables_py
   n_nb_models_py --> n_figures_
@@ -37,6 +41,7 @@ flowchart LR
 
 | File | What it does |
 |---|---|
+| [`change.py`](change.py) | Change-on-change, 2018 → 2023: did states that gained radiologists/cardiologists also gain CTA use? |
 | [`nb_models.py`](nb_models.py) | Multivariable negative binomial (NB2) models of state CTA counts vs physician density, adjusted for age and sex. |
 | [`rates.py`](rates.py) | Utilization rates per 1,000 FFS beneficiaries: national decomposition, market share, state rates and deltas. |
 | [`tables.py`](tables.py) | Table 1: provider specialty distribution by modality — also the source of the forest-plot share labels. |
@@ -44,6 +49,13 @@ flowchart LR
 ## Functions
 
 Every function and class in this directory, including internal helpers.
+
+**`change.py`**
+- `change_frame(wf_end, wf_base, end_year, base_year)` — One row per state with both years' workforce, CTA and FFS values and their changes (states in both years).
+- `_ols(y, X)` *(internal)* — OLS with HC3 robust standard errors.
+- `_coef(res, i)` *(internal)* — (estimate, CI low, CI high, p) for coefficient i of a fitted OLS.
+- `fit_change_models(df, end_year, base_year, exclude)` — Primary rate model (all states and without `exclude`), Spearman ρ, and the count model; returns a dict.
+- `change_results_table(fits)` — Tidy table of the change models (one row per model).
 
 **`nb_models.py`**
 - `fit_nb_design(X, counts, offset)` — Fit NB2 with Poisson start values; returns (result, alpha, Poisson dispersion).
