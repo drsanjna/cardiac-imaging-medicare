@@ -2,6 +2,41 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-26 14:29 UTC — 3 commits (`a5f7aea..748095c`)
+
+### What was done
+
+- **Sensitivity analysis for the provider-density models: whole-workforce exposure** (`124df83`)
+  - Reviewer R2 says Figure 8/S1/S2 are circular: the exposure counts only NPIs that billed CTA, so total CTAs = billers x CTAs per biller links exposure and outcome by construction.
+  - New post hoc sensitivity: same NB models (offset log FFS, age/sex adjusted) with the exposure replaced by all radiologists/cardiologists billing any Part B service in 2023 per 100,000 FFS. Membership no longer depends on CTA.
+  - Result: the association holds. Adjusted IRR per +1 SD of density: all 1.66 (1.49-1.84) original vs 1.37 (1.18-1.61) workforce; radiology 1.44 vs 1.31; cardiology 1.32 vs 1.44. Unchanged without DC and Minnesota.
+  - New table density_sensitivity_workforce (per +1 per 100k and per +1 SD); tests; real-data pins for the new IRRs; STUDY.md. Run 2026-10-26_093645_bb6724d-dirty_workforce-density-sensitivity.
+- **Add Supplemental Figure S3: density sensitivity forest plot** (`5027b71`)
+  - New forest plot comparing adjusted density IRRs (per +1 SD) for the original CTA-biller exposure and the whole radiology/cardiology workforce exposure, for all providers, radiologists and cardiologists.
+  - Makes the response to R2's circularity concern visible as its own figure: all three IRRs stay above 1.
+  - Catalog entry, pipeline wiring, figure counts in tests, STUDY.md. Run 2026-10-26_102439_124df83-dirty_figure-S3-sensitivity.
+- **Merge remote-tracking branch 'origin/main'** (`748095c`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: analysis | 2 | 6 | 0 |
+| code: core | 2 | 33 | 0 |
+| code: db | 1 | 5 | 5 |
+| code: figures | 3 | 67 | 2 |
+| code: loaders | 2 | 53 | 2 |
+| docs | 1 | 5 | 0 |
+| tests | 7 | 51 | 4 |
+
+### Impact on the code
+
+- New functions (9): `src/cardiac_imaging/analysis/nb_models.py: irr_per_sd`, `src/cardiac_imaging/figures/forest.py: plot_sensitivity_forest`, `src/cardiac_imaging/loaders/providers.py: load_workforce_density_frames`, `src/cardiac_imaging/loaders/providers.py: national_workforce_counts`, `src/cardiac_imaging/pipeline.py: step_workforce_sensitivity`, `tests/test_analysis.py: test_irr_per_sd_rescales_point_and_ci`, `tests/test_loaders.py: test_national_workforce_counts`, `tests/test_loaders.py: test_workforce_density_frames_count_whole_specialties`, `tests/test_real_data.py: test_workforce_sensitivity_irrs`
+
+### Tests
+
+✅ 155 passed, 0 failed, 0 skipped.
+
 ## 2026-10-25 15:31 UTC — 2 commits (`5b9da6e..bb6724d`)
 
 ### What was done
