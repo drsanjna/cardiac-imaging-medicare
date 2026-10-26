@@ -182,6 +182,7 @@ Every function and class in this directory, including internal helpers.
 - `test_num_parses_cms_text()` — Percent signs, thousands separators and suppression markers are handled.
 - `test_cta_density_frames(con)` — Density frames drop states lacking enrollment (AA) or specialty billers (AK/SD, DE/WY) and carry demographics.
 - `test_workforce_density_frames_count_whole_specialties(con)` — Workforce exposure counts every radiologist/cardiologist billing anything (not just CTA), excludes other
+- `test_workforce_density_frames_for_2018(con)` — year=2018 uses 2018 claims for both the workforce and the CTA outcome (Figure S5).
 - `test_national_workforce_counts(con)` — National workforce counts: each NPI once; radiologists + cardiologists add up to the combined count.
 - `test_national_counts_deduplicate_multistate_npis(con)` — National unique NPI counts never exceed the sum of per-state counts; specialty counts ≤ all.
 - `test_states_without_billers(con, capsys)` — Missing-biller report lists exactly the synthetic gaps.

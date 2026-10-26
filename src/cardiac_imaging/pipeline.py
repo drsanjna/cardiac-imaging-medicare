@@ -36,6 +36,8 @@ SUPPLEMENT
   Figure S2: Cardiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S3: Sensitivity — original vs whole radiology/cardiology workforce exposure (forest plot)
+  Figure S4: Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 (same layout as S2)
+  Figure S5: Same as S4 for 2018
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -188,10 +190,11 @@ def step_workforce_sensitivity(ctx):
               'rad': ('wf_rad_npis_per_100k', 'Radiologists (any Part B) per 100,000 FFS'),
               'card': ('wf_card_npis_per_100k', 'Cardiologists (any Part B) per 100,000 FFS')}
     names = {'all': 'All CTA-billing providers', 'rad': 'Radiologists', 'card': 'Cardiologists'}
-    rows = []
+    rows, wf_fits = [], {}
     for key, (col, label) in labels.items():
         fit = nb_models.fit_density_models(frames[key], col, label)
         nb_models.print_model_report(fit, f'SENSITIVITY — {label}', n_phys[key], config.END_YEAR)
+        wf_fits[key] = fit
         orig = ctx['density_fits'][key]
         for exposure, f, n in [('CTA billers (original)', orig, ctx['nb_results'][key]['n_physicians']),
                                ('Whole specialty workforce (sensitivity)', fit, n_phys[key])]:
@@ -204,6 +207,29 @@ def step_workforce_sensitivity(ctx):
     table = pd.DataFrame(rows).set_index(['model', 'exposure'])
     ctx['tables']['density_sensitivity_workforce'] = table
     forest.plot_sensitivity_forest(table)
+
+    # Figures S4 (2023) and S5 (2018): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
+    col, label = labels['all']
+    by_year = {config.END_YEAR: (wf_fits['all'], n_phys['all'])}
+    ffs18 = ctx['state_ffs_2018'] if 'state_ffs_2018' in ctx else enrollment.load_state_ffs(con, config.BASE_YEAR)
+    frames18 = providers.load_workforce_density_frames(con, ffs18, demographics.load_gv_demographics(con, config.BASE_YEAR),
+                                                       year=config.BASE_YEAR)
+    fit18 = nb_models.fit_density_models(frames18['all'], col, label)
+    by_year[config.BASE_YEAR] = (fit18, providers.national_workforce_counts(con, config.BASE_YEAR)['all'])
+    rows = []
+    for year, num in [(config.END_YEAR, 'S4'), (config.BASE_YEAR, 'S5')]:
+        fit, n = by_year[year]
+        density.plot_density_fit(
+            fit, f'Supplemental Figure {num}. Radiologist + Cardiologist Density vs CTA Rate — Multivariable NB, {year}',
+            style.PURPLE, f'figure{num}_workforce_density_{year}', n)
+        sd = float(fit['d'][col].std(ddof=0))
+        irr, per_sd = fit['irr_adj'], nb_models.irr_per_sd(fit['irr_adj'], sd)
+        rows.append({'year': year, 'states': len(fit['d']), 'physicians': n,
+                     'density mean': float(fit['d'][col].mean()), 'density SD': sd,
+                     'CTA rate per 1,000 (mean of states)': float(fit['d']['rate_per_1000'].mean()),
+                     'IRR adj per +1 per 100k': irr[0], 'CI low': irr[1], 'CI high': irr[2], 'p': irr[3],
+                     'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
+    ctx['tables']['workforce_density_by_year'] = pd.DataFrame(rows).set_index('year')
 
 
 def step_table1_forest(ctx):

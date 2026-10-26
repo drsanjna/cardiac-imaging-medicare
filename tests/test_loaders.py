@@ -151,6 +151,16 @@ def test_workforce_density_frames_count_whole_specialties(con):
         assert (wf[k][col] > 0).all() and wf[k]['mean_age'].notna().all()
 
 
+def test_workforce_density_frames_for_2018(con):
+    """year=2018 uses 2018 claims for both the workforce and the CTA outcome (Figure S5)."""
+    ffs, demo = enrollment.load_state_ffs(con, 2018), demographics.load_gv_demographics(con, 2018)
+    wf = providers.load_workforce_density_frames(con, ffs, demo, year=2018)
+    cta18 = con.execute(f"""SELECT SUM(Tot_Srvcs) FROM {config.CLAIMS_TABLE} WHERE year=2018 AND HCPCS_Cd='75574'
+        AND Rndrng_Prvdr_State_Abrvtn IN (SELECT DISTINCT state FROM {config.ENROLLMENT_TABLE} WHERE year=2018)""").fetchone()[0]
+    assert wf['all']['total_services'].sum() == pytest.approx(cta18) and wf['all']['mean_age'].notna().all()
+    assert providers.national_workforce_counts(con, 2018)['all'] > 0
+
+
 def test_national_workforce_counts(con):
     """National workforce counts: each NPI once; radiologists + cardiologists add up to the combined count."""
     n = providers.national_workforce_counts(con)

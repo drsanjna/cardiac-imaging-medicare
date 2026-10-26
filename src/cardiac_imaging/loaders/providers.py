@@ -62,19 +62,23 @@ def load_cta_density_frames(con, state_ffs, demo):
     return {'all': df_all, 'rad': df_rad, 'card': df_card}
 
 
-_WORKFORCE_WHERE = f"year={config.END_YEAR} AND Rndrng_Prvdr_Cntry='US' {config.EXCL_SQL}"
+def _workforce_where(year):
+    """Claim rows of `year` from US providers in the 50 states + DC."""
+    return f"year={int(year)} AND Rndrng_Prvdr_Cntry='US' {config.EXCL_SQL}"
 
 
-def load_workforce_density_frames(con, state_ffs, demo):
+def load_workforce_density_frames(con, state_ffs, demo, year=config.END_YEAR):
     """Sensitivity analysis: state CTA volume vs density of ALL radiologists/cardiologists billing any Part B service.
 
     Answers the circularity concern about the main models: there the exposure counts only NPIs that billed CTA, so
     total CTAs = billers × CTAs per biller couples exposure and outcome by construction. Here membership does not
     depend on billing CTA. Same keys/columns as load_cta_density_frames, with workforce counts as the exposure.
+    `year` selects both the CTA outcome and the workforce (state_ffs and demo must be for the same year).
     """
+    cta_where = f"{_workforce_where(year)} AND HCPCS_Cd='{config.CTA_CODE}'"
     cta = con.execute(f"""
         SELECT Rndrng_Prvdr_State_Abrvtn AS state, SUM(Tot_Srvcs) AS total_services
-        FROM {config.CLAIMS_TABLE} WHERE {_CTA_WHERE} GROUP BY state
+        FROM {config.CLAIMS_TABLE} WHERE {cta_where} GROUP BY state
     """).fetchdf()
     wf = con.execute(f"""
         SELECT Rndrng_Prvdr_State_Abrvtn AS state,
@@ -82,12 +86,12 @@ def load_workforce_density_frames(con, state_ffs, demo):
                COUNT(DISTINCT Rndrng_NPI) FILTER (WHERE Rndrng_Prvdr_Type IN {config.RAD_TYPES}) AS wf_rad_npis,
                COUNT(DISTINCT Rndrng_NPI) FILTER (WHERE Rndrng_Prvdr_Type IN {config.CARD_TYPES}) AS wf_card_npis
         FROM {config.CLAIMS_TABLE}
-        WHERE {_WORKFORCE_WHERE} AND Rndrng_Prvdr_Type IN {config.RAD_TYPES + config.CARD_TYPES}
+        WHERE {_workforce_where(year)} AND Rndrng_Prvdr_Type IN {config.RAD_TYPES + config.CARD_TYPES}
         GROUP BY state
     """).fetchdf()
     base = wf.merge(cta, on='state', how='left')
     base['total_services'] = base['total_services'].fillna(0)   # a state with workforce but no CTA has 0 CTAs
-    base = _with_enrollment(base, state_ffs, 'workforce sensitivity')
+    base = _with_enrollment(base, state_ffs, f'workforce sensitivity {year}')
     base['rate_per_1000'] = base['total_services'] / base['ffs_enrollment'] * 1_000
     frames = {}
     for key, count_col, density_col in [('all', 'wf_unique_npis', 'wf_npis_per_100k'),
@@ -96,17 +100,17 @@ def load_workforce_density_frames(con, state_ffs, demo):
         df = base.copy()
         df[density_col] = df[count_col] / df['ffs_enrollment'] * 100_000
         kept = df[df[count_col] > 0]
-        log_filter(f'workforce {key}: states with ≥1 physician', len(df), len(kept), unit='states',
+        log_filter(f'workforce {key} {year}: states with ≥1 physician', len(df), len(kept), unit='states',
                    dropped_items=set(df['state']) - set(kept['state']))
         frames[key] = kept.merge(demo, on='state', how='left')
     return frames
 
 
-def national_workforce_counts(con):
-    """Unique radiologists / cardiologists / both billing any Part B service nationally in 2023 (each NPI once)."""
+def national_workforce_counts(con, year=config.END_YEAR):
+    """Unique radiologists / cardiologists / both billing any Part B service nationally in `year` (each NPI once)."""
     q = lambda types: con.execute(   # noqa: E731
         f"SELECT COUNT(DISTINCT Rndrng_NPI) FROM {config.CLAIMS_TABLE} "
-        f"WHERE {_WORKFORCE_WHERE} AND Rndrng_Prvdr_Type IN {types}").fetchall()[0][0]
+        f"WHERE {_workforce_where(year)} AND Rndrng_Prvdr_Type IN {types}").fetchall()[0][0]
     return {'all': q(config.RAD_TYPES + config.CARD_TYPES), 'rad': q(config.RAD_TYPES), 'card': q(config.CARD_TYPES)}
 
 
