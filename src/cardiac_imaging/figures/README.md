@@ -12,6 +12,7 @@ Solid `A --> B` = B imports A (A feeds B). Dotted = A runs B. Other directories 
 flowchart LR
   subgraph here["src/cardiac_imaging/figures/"]
     n_catalog_py["catalog.py"]
+    n_change_py["change.py"]
     n_choropleths_py["choropleths.py"]
     n_decomposition_py["decomposition.py"]
     n_density_py["density.py"]
@@ -25,11 +26,14 @@ flowchart LR
   n_pipeline_py["pipeline.py"]
   n_reporting_["reporting/"]
   n_style_py["style.py"]
+  n_analysis_ --> n_change_py
   n_analysis_ --> n_density_py
   n_analysis_ --> n_market_share_py
   n_catalog_py --> n_app_
   n_catalog_py --> n_reporting_
+  n_change_py --> n_pipeline_py
   n_choropleths_py --> n_pipeline_py
+  n_config_py --> n_change_py
   n_config_py --> n_choropleths_py
   n_config_py --> n_decomposition_py
   n_config_py --> n_density_py
@@ -38,6 +42,7 @@ flowchart LR
   n_config_py --> n_market_share_py
   n_decomposition_py --> n_pipeline_py
   n_density_py --> n_pipeline_py
+  n_export_py --> n_change_py
   n_export_py --> n_choropleths_py
   n_export_py --> n_decomposition_py
   n_export_py --> n_density_py
@@ -46,6 +51,7 @@ flowchart LR
   n_forest_py --> n_pipeline_py
   n_market_share_py --> n_pipeline_py
   n_style_py --> n_catalog_py
+  n_style_py --> n_change_py
   n_style_py --> n_choropleths_py
   n_style_py --> n_decomposition_py
   n_style_py --> n_density_py
@@ -58,6 +64,7 @@ flowchart LR
 | File | What it does |
 |---|---|
 | [`catalog.py`](catalog.py) | Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF). |
+| [`change.py`](change.py) | Figure S6: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023. |
 | [`choropleths.py`](choropleths.py) | Figures 3–7, 10, 11: state choropleths per modality and comparator procedure (2018 / 2023 / change), plus a 2023 panel. |
 | [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR). |
 | [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
@@ -71,6 +78,10 @@ Every function and class in this directory, including internal helpers.
 
 **`catalog.py`**
 - `_src(kind)` *(internal)* — {'sources': [...], 'tables': [...]} for one chart kind.
+
+**`change.py`**
+- `_p(p)` *(internal)* — 'p<0.001' or 'p=0.012'.
+- `plot_change_on_change(df, fits, end_year, base_year, fname)` — Scatter of Δ density vs Δ CTA rate per state, OLS line with 95% CI band, model results in a box below the plot.
 
 **`choropleths.py`**
 - `map_stem(proc, fig_num)` — File stem of a state-map figure, e.g. figure4_spect_state_maps.

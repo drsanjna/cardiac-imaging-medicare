@@ -29,7 +29,8 @@ def test_run_saves_tables_and_records(pipeline_run):
     d = pipeline_run['run_dir']
     m = json.loads((d / 'manifest.json').read_text())
     for t in ('change_summary', 'national_market_share', 'nb_density_models', 'table1_specialty_distribution',
-              'state_summary_2023', 'filter_log', 'ica_state_rates', 'tavr_state_rates', 'density_sensitivity_workforce', 'workforce_density_by_year'):
+              'state_summary_2023', 'filter_log', 'ica_state_rates', 'tavr_state_rates', 'density_sensitivity_workforce', 'workforce_density_by_year',
+              'workforce_cta_change_by_state', 'workforce_cta_change_models'):
         assert (d / 'tables' / f'{t}.csv').exists(), t
     import pandas as pd
     assert {'Invasive Coronary Angiography', 'TAVR'} <= set(pd.read_csv(d / 'tables' / 'change_summary.csv')['modality'])

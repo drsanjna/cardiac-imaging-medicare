@@ -30,6 +30,10 @@ _SRC = {
                    'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
                    'analysis.nb_models:density_partial_curve', 'loaders.demographics:load_gv_demographics'],
                   ['workforce_density_by_year', 'density_sensitivity_workforce']),
+    'change': (['figures.change:plot_change_on_change', 'analysis.change:change_frame',
+                'analysis.change:fit_change_models', 'analysis.change:change_results_table',
+                'loaders.providers:load_workforce_density_frames', 'pipeline:step_workforce_sensitivity'],
+               ['workforce_cta_change_by_state', 'workforce_cta_change_models']),
     'panel': (['figures.choropleths:plot_all_modalities_panel', 'analysis.rates:compute_state_rates',
                'loaders.enrollment:load_state_ffs', 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
               ['state_rates_2023', 'state_summary_2023']),
@@ -105,6 +109,12 @@ FIGURES = [
                    'Unadjusted and age/sex-adjusted NB fits (post hoc, responds to the circularity concern).',
            **_src('workforce'))
       for num, year in [('S4', 2023), ('S5', 2018)]],
+    dict(stem='figureS6_workforce_change_vs_cta_change', label='Figure S6', section='Supplement',
+         title='Change in radiologist + cardiologist density vs change in CTA rate, 2018→2023',
+         caption='Each state: change in radiologists + cardiologists (any Part B) per 100,000 FFS beneficiaries vs '
+                 'change in CTA rate per 1,000, 2018→2023. OLS fits (robust SE) with and without DC and MN; the box '
+                 'also gives a count model that holds the change in FFS enrollment fixed (both axes share the FFS '
+                 'denominator). Post hoc.', **_src('change')),
 ]
 
 SECTIONS = ['Main text', 'Composite', 'Supplement']

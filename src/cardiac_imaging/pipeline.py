@@ -8,8 +8,9 @@ import time
 import pandas as pd
 
 from . import config, errors, style
-from .analysis import nb_models, rates, tables
+from .analysis import change, nb_models, rates, tables
 from .db.connection import get_connection, require_tables
+from .figures import change as change_fig
 from .figures import choropleths, decomposition, density, forest, market_share
 from .loaders import claims, demographics, enrollment, providers
 from .reporting import run_store
@@ -38,6 +39,7 @@ SUPPLEMENT
   Figure S3: Sensitivity — original vs whole radiology/cardiology workforce exposure (forest plot)
   Figure S4: Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 (same layout as S2)
   Figure S5: Same as S4 for 2018
+  Figure S6: Change in radiologist + cardiologist density vs change in CTA rate by state, 2018→2023
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -230,6 +232,13 @@ def step_workforce_sensitivity(ctx):
                      'IRR adj per +1 per 100k': irr[0], 'CI low': irr[1], 'CI high': irr[2], 'p': irr[3],
                      'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
     ctx['tables']['workforce_density_by_year'] = pd.DataFrame(rows).set_index('year')
+
+    # Figure S6: did states that gained physicians also gain CTA use? (change-on-change, 2018 → 2023)
+    chg = change.change_frame(frames['all'], frames18['all'], config.END_YEAR, config.BASE_YEAR)
+    fits = change.fit_change_models(chg, config.END_YEAR, config.BASE_YEAR)
+    change_fig.plot_change_on_change(chg, fits, config.END_YEAR, config.BASE_YEAR)
+    ctx['tables']['workforce_cta_change_by_state'] = chg.set_index('state')
+    ctx['tables']['workforce_cta_change_models'] = change.change_results_table(fits)
 
 
 def step_table1_forest(ctx):

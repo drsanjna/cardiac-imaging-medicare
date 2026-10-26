@@ -69,6 +69,10 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
   `density_sensitivity_workforce`, Figure S3. Caveat: measures the whole specialty, not trained CCTA readers.
   Figures S4 (2023) and S5 (2018) plot this exposure (radiologists + cardiologists) against the CTA rate in Figure S2's
   layout; table `workforce_density_by_year`. Two cross-sections, not a test of change within states.
+  Figure S6: change-on-change by state, 2018→2023 (Δ density vs Δ CTA rate, OLS with HC3 SEs, with/without DC and MN).
+  Both axes share the FFS denominator, which fell ~11% (median state) as MA grew, so Δ density mostly reflects the
+  shrinking denominator (median physician count +3.7%). The count model Δlog CTA ~ Δlog physicians + Δlog FFS removes
+  that and is the one to interpret. Tables `workforce_cta_change_by_state`, `workforce_cta_change_models`.
 
 ## Outputs → manuscript
 | Output | Content |

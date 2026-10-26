@@ -172,3 +172,40 @@ def test_comparator_map_notes_states_without_base_year(monkeypatch):
     r18 = r23.iloc[:1]
     choropleths.plot_comparator_state_maps('TAVR', 11, 'TAVR note.', r18, r23, rates.rate_deltas(r23, r18, False))
     assert seen['note'].startswith('TAVR note.') and 'No 2018 rows for WY' in seen['note']
+
+
+def _wf(states, npis, cta, ffs):
+    """Minimal workforce frame (as load_workforce_density_frames returns) for change tests."""
+    d = pd.DataFrame(dict(state=states, wf_unique_npis=npis, total_services=cta, ffs_enrollment=ffs))
+    d['wf_npis_per_100k'] = d['wf_unique_npis'] / d['ffs_enrollment'] * 1e5
+    d['rate_per_1000'] = d['total_services'] / d['ffs_enrollment'] * 1e3
+    return d
+
+
+def test_change_frame_computes_state_changes():
+    """Δ density, Δ rate and % changes per state; states missing from the base year are dropped and logged."""
+    from cardiac_imaging.analysis import change
+    audit.FILTER_LOG.clear()
+    end = _wf(['AA', 'BB', 'CC'], [120, 90, 50], [300, 100, 80], [100_000, 80_000, 60_000])
+    base = _wf(['AA', 'BB'], [100, 90], [200, 100], [100_000, 100_000])
+    df = change.change_frame(end, base, 2023, 2018).set_index('state')
+    assert list(df.index) == ['BB', 'AA']                                      # sorted by Δ density, CC dropped
+    assert df.loc['AA', 'd_density'] == pytest.approx(20) and df.loc['AA', 'd_rate'] == pytest.approx(1.0)
+    assert df.loc['BB', 'pct_physicians'] == pytest.approx(0) and df.loc['BB', 'pct_ffs'] == pytest.approx(-20)
+    assert any('present in both years' in f['filter'] and f['dropped'] == 1 for f in audit.FILTER_LOG)
+
+
+def test_change_count_model_recovers_elasticity():
+    """With CTA ∝ physicians^1.5 and FFS changes unrelated, the count model returns an elasticity near 1.5."""
+    from cardiac_imaging.analysis import change
+    rng = np.random.default_rng(3)
+    n = 40
+    states = [f'S{i}' for i in range(n)]
+    npi18 = rng.integers(200, 2000, n); g = rng.uniform(0.8, 1.3, n); ffs18 = rng.integers(100_000, 900_000, n)
+    cta18 = npi18 * 2.0
+    end = _wf(states, (npi18 * g).round(), cta18 * g ** 1.5 * rng.lognormal(0, 0.02, n), ffs18 * rng.uniform(0.8, 1.1, n))
+    base = _wf(states, npi18, cta18, ffs18)
+    fits = change.fit_change_models(change.change_frame(end, base, 2023, 2018), 2023, 2018)
+    assert fits['count model']['elasticity'][0] == pytest.approx(1.5, abs=0.1)
+    t = change.change_results_table(fits)
+    assert len(t) == 3 and t['states'].iloc[0] == n
