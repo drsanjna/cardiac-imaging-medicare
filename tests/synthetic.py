@@ -66,7 +66,7 @@ def gv_frame():
                  BENE_AVG_AGE='72.0', BENE_FEML_PCT='0.55', EXTRA_COL='x')]
     for i, st in enumerate(STATES):
         desc = NAME[st] if i % 3 == 0 else (st if i % 3 == 1 else '')
-        for year in ('2022', '2023'):
+        for year in ('2018', '2022', '2023'):   # 2018 feeds Figure S5
             rows.append(dict(YEAR=year, BENE_GEO_LVL='State', BENE_GEO_DESC=desc, BENE_GEO_CD=f'{ABBR2FIPS[st]}.0',
                              BENE_AGE_LVL='All', BENE_AVG_AGE=f'{70 + (i % 9) * 0.4:.1f}', BENE_FEML_PCT=f'{0.50 + (i % 7) * 0.01:.2f}',
                              EXTRA_COL='x'))

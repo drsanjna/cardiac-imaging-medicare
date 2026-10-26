@@ -67,6 +67,8 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
   radiologists / cardiologists billing any Part B service in 2023 per 100,000 FFS beneficiaries, so the exposure is not
   selected by billing CTA. Reported per +1 per 100,000 and per +1 SD (comparable across exposures). Table
   `density_sensitivity_workforce`, Figure S3. Caveat: measures the whole specialty, not trained CCTA readers.
+  Figures S4 (2023) and S5 (2018) plot this exposure (radiologists + cardiologists) against the CTA rate in Figure S2's
+  layout; table `workforce_density_by_year`. Two cross-sections, not a test of change within states.
 
 ## Outputs → manuscript
 | Output | Content |

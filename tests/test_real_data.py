@@ -87,3 +87,10 @@ def test_workforce_sensitivity_irrs(real_run):
     t = real_run['tables']['density_sensitivity_workforce'].xs('Whole specialty workforce (sensitivity)', level='exposure')
     for model, irr in GOLDEN_WORKFORCE_IRR.items():
         assert round(t.loc[model, 'IRR adj per +1 per 100k'], 4) == irr and t.loc[model, 'CI low'] > 1
+
+
+def test_workforce_density_by_year(real_run):
+    """Figures S4/S5: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041)."""
+    t = real_run['tables']['workforce_density_by_year']
+    assert round(t.loc[2023, 'IRR adj per +1 per 100k'], 4) == 1.0049 and t.loc[2023, 'physicians'] == 60976
+    assert round(t.loc[2018, 'IRR adj per +1 per 100k'], 4) == 1.0041 and t.loc[2018, 'physicians'] == 57343

@@ -26,6 +26,10 @@ _SRC = {
                      'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
                      'analysis.nb_models:irr_per_sd'],
                     ['density_sensitivity_workforce']),
+    'workforce': (['figures.density:plot_density_fit', 'pipeline:step_workforce_sensitivity',
+                   'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
+                   'analysis.nb_models:density_partial_curve', 'loaders.demographics:load_gv_demographics'],
+                  ['workforce_density_by_year', 'density_sensitivity_workforce']),
     'panel': (['figures.choropleths:plot_all_modalities_panel', 'analysis.rates:compute_state_rates',
                'loaders.enrollment:load_state_ffs', 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
               ['state_rates_2023', 'state_summary_2023']),
@@ -94,6 +98,13 @@ FIGURES = [
          title='Sensitivity: physician density exposure',
          caption='Adjusted density IRRs per +1 SD, original CTA-biller exposure vs all radiologists/cardiologists '
                  'billing any Part B service (post hoc, responds to the circularity concern).', **_src('sensitivity')),
+    *[dict(stem=f'figure{num}_workforce_density_{year}', label=f'Figure {num}', section='Supplement',
+           title=f'Radiologist + cardiologist density vs CTA rate, {year}',
+           caption=f'Same layout as Figure S2. x-axis: unique radiologists + cardiologists billing any Part B service in '
+                   f'{year} per 100,000 FFS beneficiaries (not selected by CTA billing); y-axis: {year} CTA rate. '
+                   'Unadjusted and age/sex-adjusted NB fits (post hoc, responds to the circularity concern).',
+           **_src('workforce'))
+      for num, year in [('S4', 2023), ('S5', 2018)]],
 ]
 
 SECTIONS = ['Main text', 'Composite', 'Supplement']
