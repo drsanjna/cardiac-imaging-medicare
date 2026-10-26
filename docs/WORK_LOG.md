@@ -2,6 +2,25 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-26 14:49 UTC — 2 commits (`a72bbab..5275a66`)
+
+### What was done
+
+- **Show the workforce sensitivity table on the run page** (`fc91686`)
+  - The density sensitivity table was only listed as a CSV download, so it could not be viewed on the run page. It now appears under Results, right after the original density models.
+- **Merge remote-tracking branch 'origin/main'** (`5275a66`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: reporting | 1 | 2 | 0 |
+| tests | 1 | 1 | 0 |
+
+### Tests
+
+✅ 155 passed, 0 failed, 0 skipped.
+
 ## 2026-10-26 14:29 UTC — 3 commits (`a5f7aea..748095c`)
 
 ### What was done
