@@ -64,7 +64,7 @@ flowchart LR
 | File | What it does |
 |---|---|
 | [`catalog.py`](catalog.py) | Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF). |
-| [`change.py`](change.py) | Figure S6: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023. |
+| [`change.py`](change.py) | Figure S5: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023. |
 | [`choropleths.py`](choropleths.py) | Figures 3–7, 10, 11: state choropleths per modality and comparator procedure (2018 / 2023 / change), plus a 2023 panel. |
 | [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR). |
 | [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |

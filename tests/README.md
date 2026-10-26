@@ -185,7 +185,7 @@ Every function and class in this directory, including internal helpers.
 - `test_num_parses_cms_text()` — Percent signs, thousands separators and suppression markers are handled.
 - `test_cta_density_frames(con)` — Density frames drop states lacking enrollment (AA) or specialty billers (AK/SD, DE/WY) and carry demographics.
 - `test_workforce_density_frames_count_whole_specialties(con)` — Workforce exposure counts every radiologist/cardiologist billing anything (not just CTA), excludes other
-- `test_workforce_density_frames_for_2018(con)` — year=2018 uses 2018 claims for both the workforce and the CTA outcome (Figure S5).
+- `test_workforce_density_frames_for_2018(con)` — year=2018 uses 2018 claims for both the workforce and the CTA outcome (Figure S4).
 - `test_national_workforce_counts(con)` — National workforce counts: each NPI once; radiologists + cardiologists add up to the combined count.
 - `test_national_counts_deduplicate_multistate_npis(con)` — National unique NPI counts never exceed the sum of per-state counts; specialty counts ≤ all.
 - `test_states_without_billers(con, capsys)` — Missing-biller report lists exactly the synthetic gaps.
@@ -223,8 +223,8 @@ Every function and class in this directory, including internal helpers.
 - `test_change_summary_unchanged(real_run)` — 2018→2023 rate change per modality (PET = 78491/78492/78430/78431 since 2026-10-24; was −34.4 without PET/CT).
 - `test_manifest_records_real_rows(real_run)` — The run records all 58,853,705 claim rows.
 - `test_workforce_sensitivity_irrs(real_run)` — Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models.
-- `test_workforce_density_by_year(real_run)` — Figures S4/S5: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041).
-- `test_workforce_change_models(real_run)` — Figure S6: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant.
+- `test_workforce_density_by_year(real_run)` — Figures S3/S4: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041).
+- `test_workforce_change_models(real_run)` — Figure S5: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant.
 
 **`test_reporting.py`**
 - `test_log_filter_records_and_prints(capsys)` — log_filter returns `after`, records an entry and prints dropped items.

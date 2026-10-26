@@ -100,8 +100,8 @@ FIGURES = [
                    f'{year} per 100,000 FFS beneficiaries (not selected by CTA billing); y-axis: {year} CTA rate. '
                    'Unadjusted and age/sex-adjusted NB fits (post hoc, responds to the circularity concern).',
            **_src('workforce'))
-      for num, year in [('S4', 2023), ('S5', 2018)]],
-    dict(stem='figureS6_workforce_change_vs_cta_change', label='Figure S6', section='Supplement',
+      for num, year in [('S3', 2023), ('S4', 2018)]],
+    dict(stem='figureS5_workforce_change_vs_cta_change', label='Figure S5', section='Supplement',
          title='Change in radiologist + cardiologist density vs change in CTA rate, 2018→2023',
          caption='Each state: change in radiologists + cardiologists (any Part B) per 100,000 FFS beneficiaries vs '
                  'change in CTA rate per 1,000, 2018→2023. OLS fits (robust SE) with and without DC and MN; the box '

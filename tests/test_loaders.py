@@ -152,7 +152,7 @@ def test_workforce_density_frames_count_whole_specialties(con):
 
 
 def test_workforce_density_frames_for_2018(con):
-    """year=2018 uses 2018 claims for both the workforce and the CTA outcome (Figure S5)."""
+    """year=2018 uses 2018 claims for both the workforce and the CTA outcome (Figure S4)."""
     ffs, demo = enrollment.load_state_ffs(con, 2018), demographics.load_gv_demographics(con, 2018)
     wf = providers.load_workforce_density_frames(con, ffs, demo, year=2018)
     cta18 = con.execute(f"""SELECT SUM(Tot_Srvcs) FROM {config.CLAIMS_TABLE} WHERE year=2018 AND HCPCS_Cd='75574'

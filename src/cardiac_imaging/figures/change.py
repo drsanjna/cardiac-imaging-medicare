@@ -1,4 +1,4 @@
-"""Figure S6: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023."""
+"""Figure S5: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023."""
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -13,7 +13,7 @@ def _p(p):
     return 'p<0.001' if p < 0.001 else f'p={p:.3f}'
 
 
-def plot_change_on_change(df, fits, end_year, base_year, fname='figureS6_workforce_change_vs_cta_change'):
+def plot_change_on_change(df, fits, end_year, base_year, fname='figureS5_workforce_change_vs_cta_change'):
     """Scatter of Δ density vs Δ CTA rate per state, OLS line with 95% CI band, model results in a box below the plot."""
     x, y = df['d_density'].values, df['d_rate'].values
     fig, ax = plt.subplots(figsize=(10.5, 7.0))
@@ -52,7 +52,7 @@ def plot_change_on_change(df, fits, end_year, base_year, fname='figureS6_workfor
     ax.legend(fontsize=10, framealpha=0.9, loc='upper left')
     ax.tick_params(labelsize=10)
     ax.grid(True, alpha=0.2, linewidth=0.5)
-    ax.set_title(f'Supplemental Figure S6. Change in Radiologist + Cardiologist Density vs Change in CTA Rate, '
+    ax.set_title(f'Supplemental Figure S5. Change in Radiologist + Cardiologist Density vs Change in CTA Rate, '
                  f'{base_year}→{end_year}', fontsize=13, fontweight='bold', pad=12)
     plt.tight_layout()
     save_pub_fig(fig, fname, config.TIFF_LINEART_DPI)
