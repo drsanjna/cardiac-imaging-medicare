@@ -132,6 +132,31 @@ def test_cta_density_frames(con):
         assert np.allclose(f['rate_per_1000'], f['total_services'] / f['ffs_enrollment'] * 1000)
 
 
+def test_workforce_density_frames_count_whole_specialties(con):
+    """Workforce exposure counts every radiologist/cardiologist billing anything (not just CTA), excludes other
+    specialties, and keeps the same CTA outcome as the main models."""
+    ffs = enrollment.load_state_ffs(con, 2023)
+    demo = demographics.load_gv_demographics(con, 2023)
+    wf = providers.load_workforce_density_frames(con, ffs, demo)
+    main = providers.load_cta_density_frames(con, ffs, demo)
+    assert len(wf['all']) == 51 and 'AA' not in set(wf['all']['state'])
+    assert not set(wf['rad']['state']) & synthetic.NO_RAD and not set(wf['card']['state']) & synthetic.NO_CARD
+    direct = con.execute(f"""SELECT Rndrng_Prvdr_State_Abrvtn s, COUNT(DISTINCT Rndrng_NPI) n FROM {config.CLAIMS_TABLE}
+        WHERE year=2023 AND Rndrng_Prvdr_Type IN {config.RAD_TYPES + config.CARD_TYPES} GROUP BY s""").fetchdf()
+    got = wf['all'].set_index('state')['wf_unique_npis']
+    assert all(got[s] == n for s, n in zip(direct['s'], direct['n']) if s in got.index)   # Internal Medicine excluded
+    m = main['all'].set_index('state')['total_services']
+    assert np.allclose(wf['all'].set_index('state').loc[m.index, 'total_services'], m)     # same outcome as Figure 8
+    for k, col in [('all', 'wf_npis_per_100k'), ('rad', 'wf_rad_npis_per_100k'), ('card', 'wf_card_npis_per_100k')]:
+        assert (wf[k][col] > 0).all() and wf[k]['mean_age'].notna().all()
+
+
+def test_national_workforce_counts(con):
+    """National workforce counts: each NPI once; radiologists + cardiologists add up to the combined count."""
+    n = providers.national_workforce_counts(con)
+    assert n['rad'] > 0 and n['card'] > 0 and n['rad'] + n['card'] == n['all']
+
+
 def test_national_counts_deduplicate_multistate_npis(con):
     """National unique NPI counts never exceed the sum of per-state counts; specialty counts ≤ all."""
     n = providers.national_physician_counts(con)

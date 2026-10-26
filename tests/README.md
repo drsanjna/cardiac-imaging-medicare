@@ -81,6 +81,7 @@ Every function and class in this directory, including internal helpers.
 - `test_table1_shares(con)` — Specialty shares sum to 100 per modality; CTA shares come straight from Table 1.
 - `_nb_data(n, irr, seed)` *(internal)* — Simulated state data with a known density IRR (NB2).
 - `test_nb_recovers_known_irr()` — The adjusted density IRR is close to the simulated truth and its CI contains it.
+- `test_irr_per_sd_rescales_point_and_ci()` — Per-SD IRR = per-unit IRR ** SD for the point and both CI bounds; p is unchanged.
 - `test_irr_and_partial_curve_properties()` — CIs bracket the estimate; the partial curve rises with density when IRR > 1 and its band contains it.
 - `test_nb_requires_ten_states()` — Fewer than 10 states with demographics is refused.
 - `test_results_table_and_report(capsys)` — results_table has one row per model with adjusted and unadjusted IRRs; the report prints the key lines.
@@ -180,6 +181,8 @@ Every function and class in this directory, including internal helpers.
 - `test_gv_missing_year(con)` — Asking for a year not in the file fails with the available years.
 - `test_num_parses_cms_text()` — Percent signs, thousands separators and suppression markers are handled.
 - `test_cta_density_frames(con)` — Density frames drop states lacking enrollment (AA) or specialty billers (AK/SD, DE/WY) and carry demographics.
+- `test_workforce_density_frames_count_whole_specialties(con)` — Workforce exposure counts every radiologist/cardiologist billing anything (not just CTA), excludes other
+- `test_national_workforce_counts(con)` — National workforce counts: each NPI once; radiologists + cardiologists add up to the combined count.
 - `test_national_counts_deduplicate_multistate_npis(con)` — National unique NPI counts never exceed the sum of per-state counts; specialty counts ≤ all.
 - `test_states_without_billers(con, capsys)` — Missing-biller report lists exactly the synthetic gaps.
 
@@ -215,6 +218,7 @@ Every function and class in this directory, including internal helpers.
 - `test_physician_counts_and_states(real_run)` — Model sizes: 51 / 49 / 46 states; 2,847 / 1,616 / 1,140 unique physicians.
 - `test_change_summary_unchanged(real_run)` — 2018→2023 rate change per modality (PET = 78491/78492/78430/78431 since 2026-10-24; was −34.4 without PET/CT).
 - `test_manifest_records_real_rows(real_run)` — The run records all 58,853,705 claim rows.
+- `test_workforce_sensitivity_irrs(real_run)` — Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models.
 
 **`test_reporting.py`**
 - `test_log_filter_records_and_prints(capsys)` — log_filter returns `after`, records an entry and prints dropped items.

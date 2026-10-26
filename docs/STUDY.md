@@ -63,6 +63,10 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 - Covariates: state mean beneficiary age and % female (z-scored). Unadjusted and adjusted IRRs both reported; VIFs
   checked (> 5 flags collinearity).
 - Specialty models keep only states with ≥ 1 specialty CTA biller (logged in `filter_log`).
+- **Sensitivity (post hoc, reviewer R2 circularity):** the same three models with the exposure replaced by all
+  radiologists / cardiologists billing any Part B service in 2023 per 100,000 FFS beneficiaries, so the exposure is not
+  selected by billing CTA. Reported per +1 per 100,000 and per +1 SD (comparable across exposures). Table
+  `density_sensitivity_workforce`. Caveat: measures the whole specialty, not trained CCTA readers.
 
 ## Outputs → manuscript
 | Output | Content |

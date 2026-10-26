@@ -101,6 +101,7 @@ Every function and class in this directory, including internal helpers.
 - `step_comparator_maps(ctx)` — Figures 10–11: state rates for 2018 and 2023 and the change, for each comparator procedure (ICA, TAVR).
 - `step_state_table(ctx)` — Print and save the 2023 state rate table.
 - `step_density_models(ctx)` — Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs.
+- `step_workforce_sensitivity(ctx)` — Sensitivity (post hoc, reviewer R2): Figure 8/S1/S2 models with all radiologists/cardiologists as exposure.
 - `step_table1_forest(ctx)` — Table 1 (specialty shares by modality) and the Figure 9 forest plot.
 - `run_all(con, database, report_errors, record, label)` — Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise.
 - `main()` — Command-line entry point: parse options and run the pipeline.

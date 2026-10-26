@@ -41,7 +41,7 @@ flowchart LR
 | [`claims.py`](claims.py) | Claims-level cardiac imaging data: specialty guard, procedure-level detail, segment aggregates. |
 | [`demographics.py`](demographics.py) | State mean age and % female from the CMS Geographic Variation PUF (model covariates). |
 | [`enrollment.py`](enrollment.py) | State-level Original Medicare (FFS) enrollment: parse CMS workbooks at upload, read back as {state: ffs}. |
-| [`providers.py`](providers.py) | CTA-billing physician density by state (all / radiology / cardiology) and national NPI counts, 2023. |
+| [`providers.py`](providers.py) | Physician density by state (all / radiology / cardiology), 2023: CTA billers (main models) and the whole |
 
 ## Functions
 
@@ -71,6 +71,8 @@ Every function and class in this directory, including internal helpers.
 - `_with_enrollment(df, state_ffs, label)` *(internal)* — Attach FFS enrollment to a state frame and log states dropped for lacking it.
 - `_specialty_frame(vol, npis, count_col, density_col, state_ffs, demo, label)` *(internal)* — State CTA volume + specialty NPI density + demographics; keeps states with ≥1 specialty biller.
 - `load_cta_density_frames(con, state_ffs, demo)` — State-level CTA volume + NPI density + demographics, keyed 'all', 'rad', 'card'.
+- `load_workforce_density_frames(con, state_ffs, demo)` — Sensitivity analysis: state CTA volume vs density of ALL radiologists/cardiologists billing any Part B service.
+- `national_workforce_counts(con)` — Unique radiologists / cardiologists / both billing any Part B service nationally in 2023 (each NPI once).
 - `national_physician_counts(con)` — COUNT(DISTINCT NPI) across all states combined — multi-state billers counted once.
 - `report_states_without_billers(state_ffs, frames)` — Print which of the 50 states + DC had zero CTA billers of each specialty.
 
