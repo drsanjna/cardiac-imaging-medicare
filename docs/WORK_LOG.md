@@ -2,6 +2,41 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-10-26 15:29 UTC — 3 commits (`7295757..14c3944`)
+
+### What was done
+
+- **Add Figures S4 and S5: radiologist + cardiologist density vs CTA rate, 2023 and 2018** (`f181cdf`)
+  - Same layout as Figure S2, with the x-axis replaced by all unique radiologists + cardiologists billing any Part B service per 100,000 FFS beneficiaries (not selected by CTA billing). S4 is 2023, S5 is 2018, each with that year's claims, state FFS enrollment and age/sex covariates.
+  - 2023: adjusted IRR 1.005 per +1 per 100k (1.37 per SD, 1.18-1.61), 60,976 physicians. 2018: 1.004 (1.24 per SD, 1.02-1.51, p=0.03), 57,343 physicians. Two cross-sections, not a within-state change.
+  - The workforce loader takes a year; new table workforce_density_by_year; synthetic data gains 2018 covariates; tests and real-data pins. Run 2026-10-26_110728_5275a66-dirty_workforce-density-2018-2023.
+- **Add Figure S6: change in workforce density vs change in CTA rate by state, 2018→2023** (`fef605d`)
+  - Change-on-change test of whether states that gained radiologists/cardiologists also gained CTA use: Δ CTA rate per 1,000 FFS vs Δ physicians per 100,000 FFS, OLS with robust (HC3) SEs, with and without DC and MN.
+  - Result as plotted: slope 0.038 (0.013-0.063), p=0.003; Spearman 0.51. But both axes share the FFS denominator, which fell ~11% in the median state while physician counts rose only ~4%, so the density change mostly reflects the shrinking denominator.
+  - Count model that removes this (Δlog CTA ~ Δlog physicians + Δlog FFS): elasticity 1.10 (-2.18 to 4.37), p=0.51, so the change data neither support nor rule out workforce growth driving CTA growth. Shown on the figure.
+  - New analysis.change module, figures.change, tables workforce_cta_change_by_state / _models; tests (including a synthetic recovery test) and real-data pins. Run 2026-10-26_112125_f181cdf-dirty_workforce-change-2018-2023.
+- **Merge remote-tracking branch 'origin/main'** (`14c3944`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: analysis | 2 | 91 | 0 |
+| code: core | 1 | 37 | 2 |
+| code: db | 1 | 5 | 5 |
+| code: figures | 3 | 90 | 0 |
+| code: loaders | 2 | 16 | 11 |
+| docs | 1 | 6 | 0 |
+| tests | 8 | 75 | 5 |
+
+### Impact on the code
+
+- New functions (14): `src/cardiac_imaging/analysis/change.py: _coef`, `src/cardiac_imaging/analysis/change.py: _ols`, `src/cardiac_imaging/analysis/change.py: change_frame`, `src/cardiac_imaging/analysis/change.py: change_results_table`, `src/cardiac_imaging/analysis/change.py: fit_change_models`, `src/cardiac_imaging/figures/change.py: _p`, `src/cardiac_imaging/figures/change.py: plot_change_on_change`, `src/cardiac_imaging/loaders/providers.py: _workforce_where`, `tests/test_analysis.py: _wf`, `tests/test_analysis.py: test_change_count_model_recovers_elasticity`, `tests/test_analysis.py: test_change_frame_computes_state_changes`, `tests/test_loaders.py: test_workforce_density_frames_for_2018`, `tests/test_real_data.py: test_workforce_change_models`, `tests/test_real_data.py: test_workforce_density_by_year`
+
+### Tests
+
+✅ 158 passed, 0 failed, 0 skipped.
+
 ## 2026-10-26 14:49 UTC — 2 commits (`a72bbab..5275a66`)
 
 ### What was done
