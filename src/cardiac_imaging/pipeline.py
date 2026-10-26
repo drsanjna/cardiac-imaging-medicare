@@ -35,7 +35,7 @@ SUPPLEMENT
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S2: Cardiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Table:     Sensitivity — same models with the whole radiology/cardiology workforce as exposure
+  Figure S3: Sensitivity — original vs whole radiology/cardiology workforce exposure (forest plot)
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -201,7 +201,9 @@ def step_workforce_sensitivity(ctx):
                          'density mean': float(f['d'][f['density_col']].mean()), 'density SD': sd,
                          'IRR adj per +1 per 100k': irr[0], 'CI low': irr[1], 'CI high': irr[2], 'p': irr[3],
                          'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
-    ctx['tables']['density_sensitivity_workforce'] = pd.DataFrame(rows).set_index(['model', 'exposure'])
+    table = pd.DataFrame(rows).set_index(['model', 'exposure'])
+    ctx['tables']['density_sensitivity_workforce'] = table
+    forest.plot_sensitivity_forest(table)
 
 
 def step_table1_forest(ctx):

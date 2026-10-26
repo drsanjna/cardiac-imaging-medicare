@@ -62,7 +62,7 @@ flowchart LR
 | [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR). |
 | [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
 | [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks. |
-| [`forest.py`](forest.py) | Figure 9 (final): forest plot of density IRRs before/after demographic adjustment, by interpreting specialty. |
+| [`forest.py`](forest.py) | Figure 9: density IRRs before/after adjustment by specialty; Figure S3: original vs whole-workforce exposure. |
 | [`market_share.py`](market_share.py) | Figure 2: modality market share by rural/urban × office/facility, with advanced-modality zoom insets. |
 
 ## Functions
@@ -95,6 +95,7 @@ Every function and class in this directory, including internal helpers.
 
 **`forest.py`**
 - `plot_forest(rows)` — rows: [(label, share_note, result_dict(irr_un, irr_adj, n_physicians), color), ...].
+- `plot_sensitivity_forest(table)` — Figure S3: adjusted per-SD density IRRs, original CTA-biller vs whole-workforce exposure, per specialty group.
 
 **`market_share.py`**
 - `plot_figure2(market_data)` — Draw and save Figure 2 (stacked market share per setting with advanced-modality insets).
