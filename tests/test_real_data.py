@@ -94,3 +94,11 @@ def test_workforce_density_by_year(real_run):
     t = real_run['tables']['workforce_density_by_year']
     assert round(t.loc[2023, 'IRR adj per +1 per 100k'], 4) == 1.0049 and t.loc[2023, 'physicians'] == 60976
     assert round(t.loc[2018, 'IRR adj per +1 per 100k'], 4) == 1.0041 and t.loc[2018, 'physicians'] == 57343
+
+
+def test_workforce_change_models(real_run):
+    """Figure S6: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant."""
+    t = real_run['tables']['workforce_cta_change_models']
+    assert round(t.loc['Δ rate ~ Δ density (all states)', 'estimate'], 4) == 0.0380
+    c = t.loc['Δlog CTA ~ Δlog physicians + Δlog FFS']
+    assert round(c['estimate'], 2) == 1.10 and c['CI low'] < 0 < c['CI high']
