@@ -22,10 +22,6 @@ _SRC = {
                   'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
                   'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
                  ['tavr_state_rates']),
-    'sensitivity': (['figures.forest:plot_sensitivity_forest', 'pipeline:step_workforce_sensitivity',
-                     'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
-                     'analysis.nb_models:irr_per_sd'],
-                    ['density_sensitivity_workforce']),
     'workforce': (['figures.density:plot_density_fit', 'pipeline:step_workforce_sensitivity',
                    'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
                    'analysis.nb_models:density_partial_curve', 'loaders.demographics:load_gv_demographics'],
@@ -98,10 +94,6 @@ FIGURES = [
     dict(stem='figureS2_nb_card_density', label='Figure S2', section='Supplement',
          title='Cardiologist density vs CTA rate',
          caption='Same model as Figure 8, using cardiologist NPIs per 100,000 FFS beneficiaries.', **_src('density')),
-    dict(stem='figureS3_density_sensitivity_forest', label='Figure S3', section='Supplement',
-         title='Sensitivity: physician density exposure',
-         caption='Adjusted density IRRs per +1 SD, original CTA-biller exposure vs all radiologists/cardiologists '
-                 'billing any Part B service (post hoc, responds to the circularity concern).', **_src('sensitivity')),
     *[dict(stem=f'figure{num}_workforce_density_{year}', label=f'Figure {num}', section='Supplement',
            title=f'Radiologist + cardiologist density vs CTA rate, {year}',
            caption=f'Same layout as Figure S2. x-axis: unique radiologists + cardiologists billing any Part B service in '

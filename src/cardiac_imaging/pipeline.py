@@ -36,7 +36,6 @@ SUPPLEMENT
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S2: Cardiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Figure S3: Sensitivity — original vs whole radiology/cardiology workforce exposure (forest plot)
   Figure S4: Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 (same layout as S2)
   Figure S5: Same as S4 for 2018
   Figure S6: Change in radiologist + cardiologist density vs change in CTA rate by state, 2018→2023
@@ -208,7 +207,6 @@ def step_workforce_sensitivity(ctx):
                          'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
     table = pd.DataFrame(rows).set_index(['model', 'exposure'])
     ctx['tables']['density_sensitivity_workforce'] = table
-    forest.plot_sensitivity_forest(table)
 
     # Figures S4 (2023) and S5 (2018): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
     col, label = labels['all']
