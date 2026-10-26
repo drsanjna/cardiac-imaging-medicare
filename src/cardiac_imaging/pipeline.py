@@ -36,9 +36,9 @@ SUPPLEMENT
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S2: Cardiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Figure S4: Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 (same layout as S2)
-  Figure S5: Same as S4 for 2018
-  Figure S6: Change in radiologist + cardiologist density vs change in CTA rate by state, 2018→2023
+  Figure S3: Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 (same layout as S2)
+  Figure S4: Same as S3 for 2018
+  Figure S5: Change in radiologist + cardiologist density vs change in CTA rate by state, 2018→2023
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -208,7 +208,7 @@ def step_workforce_sensitivity(ctx):
     table = pd.DataFrame(rows).set_index(['model', 'exposure'])
     ctx['tables']['density_sensitivity_workforce'] = table
 
-    # Figures S4 (2023) and S5 (2018): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
+    # Figures S3 (2023) and S4 (2018): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
     col, label = labels['all']
     by_year = {config.END_YEAR: (wf_fits['all'], n_phys['all'])}
     ffs18 = ctx['state_ffs_2018'] if 'state_ffs_2018' in ctx else enrollment.load_state_ffs(con, config.BASE_YEAR)
@@ -217,7 +217,7 @@ def step_workforce_sensitivity(ctx):
     fit18 = nb_models.fit_density_models(frames18['all'], col, label)
     by_year[config.BASE_YEAR] = (fit18, providers.national_workforce_counts(con, config.BASE_YEAR)['all'])
     rows = []
-    for year, num in [(config.END_YEAR, 'S4'), (config.BASE_YEAR, 'S5')]:
+    for year, num in [(config.END_YEAR, 'S3'), (config.BASE_YEAR, 'S4')]:
         fit, n = by_year[year]
         density.plot_density_fit(
             fit, f'Supplemental Figure {num}. Radiologist + Cardiologist Density vs CTA Rate — Multivariable NB, {year}',
@@ -231,7 +231,7 @@ def step_workforce_sensitivity(ctx):
                      'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
     ctx['tables']['workforce_density_by_year'] = pd.DataFrame(rows).set_index('year')
 
-    # Figure S6: did states that gained physicians also gain CTA use? (change-on-change, 2018 → 2023)
+    # Figure S5: did states that gained physicians also gain CTA use? (change-on-change, 2018 → 2023)
     chg = change.change_frame(frames['all'], frames18['all'], config.END_YEAR, config.BASE_YEAR)
     fits = change.fit_change_models(chg, config.END_YEAR, config.BASE_YEAR)
     change_fig.plot_change_on_change(chg, fits, config.END_YEAR, config.BASE_YEAR)

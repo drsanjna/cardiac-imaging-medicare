@@ -90,14 +90,14 @@ def test_workforce_sensitivity_irrs(real_run):
 
 
 def test_workforce_density_by_year(real_run):
-    """Figures S4/S5: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041)."""
+    """Figures S3/S4: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041)."""
     t = real_run['tables']['workforce_density_by_year']
     assert round(t.loc[2023, 'IRR adj per +1 per 100k'], 4) == 1.0049 and t.loc[2023, 'physicians'] == 60976
     assert round(t.loc[2018, 'IRR adj per +1 per 100k'], 4) == 1.0041 and t.loc[2018, 'physicians'] == 57343
 
 
 def test_workforce_change_models(real_run):
-    """Figure S6: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant."""
+    """Figure S5: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant."""
     t = real_run['tables']['workforce_cta_change_models']
     assert round(t.loc['Δ rate ~ Δ density (all states)', 'estimate'], 4) == 0.0380
     c = t.loc['Δlog CTA ~ Δlog physicians + Δlog FFS']
