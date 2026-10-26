@@ -33,6 +33,11 @@ If the gap is people without Part B, who cannot generate Part B claims, the pape
 about 4.3% relative to 2018, uniformly across modalities. Confirm the cause from both data dictionaries, then
 decide whether to switch denominators or report the alternative as a sensitivity analysis. Changing the
 denominator changes pinned `real_data` numbers.
+- *Update 2026-10-24 (cause confirmed):* both workbooks count Original Medicare "Part A **and/or** Part B" enrollees
+  (person-year), so people without Part B are in the denominator. CMS table **MDCR ENROLL AB 13** (in the "Original
+  Medicare Enrollment" zip, tables 9–14) gives per-state **Part B Total** and **Part A and Part B Total** columns for
+  each year. US 2023: A and/or B 33,694,472; Part B 28,516,856; A and B 28,209,170. US 2024: 33,229,645; 27,875,552;
+  27,567,891. From 2024 CMS excludes Part B immunosuppressive-drug-only (PBID) beneficiaries from Part B counts.
 
 ### 8. Approve and lock the H1 (MA-selection) analysis plan
 *Added 2026-10-24.* Draft: [hypotheses/H1_ma_selection.md](hypotheses/H1_ma_selection.md). Needs: a review,

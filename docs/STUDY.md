@@ -66,7 +66,7 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 - **Sensitivity (post hoc, reviewer R2 circularity):** the same three models with the exposure replaced by all
   radiologists / cardiologists billing any Part B service in 2023 per 100,000 FFS beneficiaries, so the exposure is not
   selected by billing CTA. Reported per +1 per 100,000 and per +1 SD (comparable across exposures). Table
-  `density_sensitivity_workforce`. Caveat: measures the whole specialty, not trained CCTA readers.
+  `density_sensitivity_workforce`, Figure S3. Caveat: measures the whole specialty, not trained CCTA readers.
 
 ## Outputs → manuscript
 | Output | Content |
@@ -80,6 +80,7 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 | Figure 11 | TAVR state rate maps 2018 / 2023 / change |
 | Table 1 | Specialty distribution (Cardiology / Radiology / Other) by modality |
 | Figures S1–S2 | Radiologist and cardiologist density models |
+| Figure S3 | Sensitivity: original vs whole-workforce density exposure (post hoc) |
 | Composite | 2023 state rates, all modalities (candidate Central Illustration) |
 
 ## Known limitations — check every claim against these
