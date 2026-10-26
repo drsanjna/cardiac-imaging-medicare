@@ -22,6 +22,10 @@ _SRC = {
                   'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
                   'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
                  ['tavr_state_rates']),
+    'sensitivity': (['figures.forest:plot_sensitivity_forest', 'pipeline:step_workforce_sensitivity',
+                     'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
+                     'analysis.nb_models:irr_per_sd'],
+                    ['density_sensitivity_workforce']),
     'panel': (['figures.choropleths:plot_all_modalities_panel', 'analysis.rates:compute_state_rates',
                'loaders.enrollment:load_state_ffs', 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
               ['state_rates_2023', 'state_summary_2023']),
@@ -86,6 +90,10 @@ FIGURES = [
     dict(stem='figureS2_nb_card_density', label='Figure S2', section='Supplement',
          title='Cardiologist density vs CTA rate',
          caption='Same model as Figure 8, using cardiologist NPIs per 100,000 FFS beneficiaries.', **_src('density')),
+    dict(stem='figureS3_density_sensitivity_forest', label='Figure S3', section='Supplement',
+         title='Sensitivity: physician density exposure',
+         caption='Adjusted density IRRs per +1 SD, original CTA-biller exposure vs all radiologists/cardiologists '
+                 'billing any Part B service (post hoc, responds to the circularity concern).', **_src('sensitivity')),
 ]
 
 SECTIONS = ['Main text', 'Composite', 'Supplement']

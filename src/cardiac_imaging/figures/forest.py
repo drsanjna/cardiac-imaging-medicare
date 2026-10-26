@@ -1,4 +1,4 @@
-"""Figure 9 (final): forest plot of density IRRs before/after demographic adjustment, by interpreting specialty."""
+"""Figure 9: density IRRs before/after adjustment by specialty; Figure S3: original vs whole-workforce exposure."""
 import textwrap
 
 import matplotlib.pyplot as plt
@@ -89,3 +89,59 @@ def plot_forest(rows):
 
     plt.tight_layout()
     save_pub_fig(fig, 'figure9_density_irr_forest', config.TIFF_LINEART_DPI)
+
+
+SENS_CAPTION = (
+    'Post hoc sensitivity analysis (reviewer concern: exposure and outcome from the same CTA claims). '
+    'Adjusted NB2 models (offset log FFS enrollment; z-scored mean age and % female), 2023. Original exposure = '
+    'unique CTA-billing NPIs per 100,000 FFS beneficiaries; workforce exposure = all unique radiologists / '
+    'cardiologists billing any Part B service per 100,000 FFS beneficiaries, not selected by CTA billing. '
+    'IRRs are per +1 SD of each density so the two exposures are comparable. Horizontal bars = 95% CIs.'
+)
+
+
+def plot_sensitivity_forest(table):
+    """Figure S3: adjusted per-SD density IRRs, original CTA-biller vs whole-workforce exposure, per specialty group.
+
+    `table` is the density_sensitivity_workforce table (index: model, exposure).
+    """
+    colors = {'CTA billers (original)': GRAY, 'Whole specialty workforce (sensitivity)': '#1d3557'}
+    models = list(dict.fromkeys(table.index.get_level_values('model')))
+    fig, ax = plt.subplots(figsize=(11.5, 5.8))
+    fig.patch.set_facecolor('white')
+    for i, model in enumerate(models):
+        for j, (exposure, color) in enumerate(colors.items()):
+            r = table.loc[(model, exposure)]
+            yy = i + (-0.17 if j == 0 else 0.17)
+            ax.plot([r['CI low (SD)'], r['CI high (SD)']], [yy, yy], color=color, lw=2.4, solid_capstyle='round')
+            ax.scatter([r['IRR adj per +1 SD']], [yy], color=color, s=95, marker='o' if j == 0 else 's',
+                       zorder=3, edgecolors='white', linewidths=1)
+            pstr = 'p<0.001' if r['p'] < 0.001 else f"p={r['p']:.3f}"
+            ax.text(2.25, yy, f"{r['IRR adj per +1 SD']:.2f} ({r['CI low (SD)']:.2f}–{r['CI high (SD)']:.2f})  {pstr}",
+                    va='center', ha='left', fontsize=10, fontfamily='monospace', color='#333333')
+    ax.axvline(1.0, color='#777777', lw=1.2, ls='--')
+    ax.set_yticks(range(len(models)))
+    ax.set_yticklabels([m.replace('All CTA-billing providers', 'All providers') for m in models], fontsize=11)
+    ax.invert_yaxis()
+    ax.set_xscale('log')
+    xticks = [0.9, 1.0, 1.25, 1.5, 1.75, 2.0]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([f'{t:g}' for t in xticks], fontsize=10)
+    ax.xaxis.set_minor_locator(mticker.NullLocator())
+    ax.set_xlim(0.9, 4.2)
+    ax.set_xlabel('Adjusted density IRR (per +1 SD of density)', fontsize=12, fontweight='bold')
+    ax.legend(handles=[Line2D([0], [0], marker='o', color=GRAY, lw=2.4, markersize=9, markeredgecolor='white',
+                              label='CTA-billing NPIs (original, Fig 8/S1/S2)'),
+                       Line2D([0], [0], marker='s', color='#1d3557', lw=2.4, markersize=9, markeredgecolor='white',
+                              label='All radiologists/cardiologists (sensitivity)')],
+              loc='lower center', bbox_to_anchor=(0.5, 1.0), ncol=2, fontsize=9.5, frameon=False)
+    ax.grid(True, axis='x', alpha=0.2, linewidth=0.5)
+    ax.spines[['top', 'right']].set_visible(False)
+    ax.set_title('Supplemental Figure S3. Sensitivity Analysis: CTA Utilization vs Physician Density (2023)\n'
+                 'Original CTA-Biller Exposure vs Whole-Specialty Workforce Exposure',
+                 fontsize=13, fontweight='bold', pad=34)
+    fig.text(0.5, -0.06, textwrap.fill(SENS_CAPTION, width=112), ha='center', va='top', fontsize=9,
+             color='#555555', linespacing=1.4,
+             bbox=dict(boxstyle='round,pad=0.7', facecolor='#f7f7f7', edgecolor='#cccccc', linewidth=0.8))
+    plt.tight_layout()
+    save_pub_fig(fig, 'figureS3_density_sensitivity_forest', config.TIFF_LINEART_DPI)
