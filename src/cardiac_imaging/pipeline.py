@@ -17,7 +17,7 @@ from .reporting import run_store
 
 MANIFEST = """
 MAIN TEXT
-  Figure 1:  Volume / enrollment / rate decomposition (5 modalities + ICA + TAVR × 3 metrics)
+  Figure 1:  Volume / enrollment / rate decomposition (5 modalities + ICA + TAVR + CACS × 3 metrics)
   Figure 2:  Market share — stacked area with advanced-modality zoom insets
   Figure 3:  Echo        — state rates, 2018 / 2023 / change
   Figure 4:  SPECT       — state rates, 2018 / 2023 / change
@@ -29,6 +29,7 @@ MAIN TEXT
   Figure 9:  Combined forest plot — density IRRs before/after adjustment (FINAL)
   Figure 10: Invasive coronary angiography — state rates, 2018 / 2023 / change
   Figure 11: TAVR — state rates, 2018 / 2023 / change
+  Figure 12: Coronary artery calcium score (CACS) — state rates, 2018 / 2023 / change
   (unnumbered composite: all-modality 2023 state panel)
 
 SUPPLEMENT
@@ -121,7 +122,7 @@ def step_state_maps(ctx):
 
 
 def step_comparator_maps(ctx):
-    """Figures 10–11: state rates for 2018 and 2023 and the change, for each comparator procedure (ICA, TAVR)."""
+    """Figures 10–12: state rates for 2018 and 2023 and the change, for each comparator procedure (ICA, TAVR, CACS)."""
     comp = ctx['df_comp']
     for label, fig_num, note in choropleths.COMPARATOR_MAPS:
         print(f"Building Figure {fig_num}: {label} state map...")
@@ -130,10 +131,10 @@ def step_comparator_maps(ctx):
         r18 = rates.compute_state_rates(sub[sub['year'] == config.BASE_YEAR], ctx['state_ffs_2018'])
         deltas = rates.rate_deltas(r23, r18, missing_as_zero=False)
         choropleths.plot_comparator_state_maps(label, fig_num, note, r18, r23, deltas)
-        key = {config.ICA_LABEL: 'ica', config.TAVR_LABEL: 'tavr'}[label]
+        key = {config.ICA_LABEL: 'ica', config.TAVR_LABEL: 'tavr', config.CACS_LABEL: 'cacs'}[label]
         ctx['tables'][f'{key}_state_rates'] = (deltas.set_index('state').drop(columns='procedure_category')
                                                .sort_values('rate_per_1000_2023', ascending=False))
-    print("Figures 10–11 complete.\n")
+    print("Figures 10–12 complete.\n")
 
 def step_state_table(ctx):
     """Print and save the 2023 state rate table."""

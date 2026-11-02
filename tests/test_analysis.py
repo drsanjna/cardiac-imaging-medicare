@@ -167,11 +167,12 @@ def test_comparator_map_notes_states_without_base_year(monkeypatch):
     """The map footnote names states with no 2018 rows; they are passed through without a delta."""
     from cardiac_imaging.figures import choropleths
     seen = {}
-    monkeypatch.setattr(choropleths, 'plot_one_state_map', lambda proc, n, r18, r23, d, note='': seen.update(note=note))
+    monkeypatch.setattr(choropleths, 'plot_one_state_map', lambda proc, n, r18, r23, d, note='', **kw: seen.update(note=note))
     r23 = pd.DataFrame(dict(state=['AA', 'WY'], procedure_category='TAVR', rate_per_1000=[2.0, 3.0]))
     r18 = r23.iloc[:1]
     choropleths.plot_comparator_state_maps('TAVR', 11, 'TAVR note.', r18, r23, rates.rate_deltas(r23, r18, False))
-    assert seen['note'].startswith('TAVR note.') and 'No 2018 rows for WY' in seen['note']
+    clause_2018 = seen['note'].split('No 2018 rows for ')[1].split(' (')[0]
+    assert seen['note'].startswith('TAVR note.') and 'WY' in clause_2018.split(', ')
 
 
 def _wf(states, npis, cta, ffs):
@@ -209,3 +210,18 @@ def test_change_count_model_recovers_elasticity():
     assert fits['count model']['elasticity'][0] == pytest.approx(1.5, abs=0.1)
     t = change.change_results_table(fits)
     assert len(t) == 3 and t['states'].iloc[0] == n
+
+
+def test_comparator_map_greys_every_panel_without_data(monkeypatch):
+    """With grey_all_missing, states lacking data in a panel (either year) are named in the note and drawn grey."""
+    from cardiac_imaging.figures import choropleths
+    seen = {}
+    monkeypatch.setattr(choropleths, 'save_plotly', lambda fig, *a, **k: seen.update(fig=fig))
+    r23 = pd.DataFrame(dict(state=['AL', 'AK'], procedure_category='CACS', rate_per_1000=[2.0, 3.0]))
+    r18 = pd.DataFrame(dict(state=['AL', 'ME'], procedure_category='CACS', rate_per_1000=[1.0, 1.5]))
+    choropleths.plot_comparator_state_maps('CACS', 12, 'CACS note.', r18, r23, rates.rate_deltas(r23, r18, False))
+    fig = seen['fig']
+    grey = [t for t in fig.data if t.colorscale and t.colorscale[0][1] == choropleths.NO_DATA_GREY]
+    assert len(grey) == 3                                       # one grey layer per panel
+    assert 'ME' in grey[1].locations and 'AK' in grey[0].locations and 'AL' not in grey[2].locations
+    assert 'No 2018 rows for' in fig.layout.annotations[-1].text and 'No 2023 rows for' in fig.layout.annotations[-1].text

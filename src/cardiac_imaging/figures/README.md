@@ -86,8 +86,8 @@ Every function and class in this directory, including internal helpers.
 **`choropleths.py`**
 - `map_stem(proc, fig_num)` — File stem of a state-map figure, e.g. figure4_spect_state_maps.
 - `plot_state_maps(state_rates_2018, state_rates_2023, delta_df)` — One 3-panel map figure per modality, numbered 3–7 in PROC_ORDER.
-- `plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rates_2023, delta_df)` — A comparator's state map (Figures 10–11), same layout as Figures 3–7; states with no 2018 rows are left blank.
-- `plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note)` — Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`.
+- `plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rates_2023, delta_df)` — A comparator's state map (Figures 10–12), same layout as Figures 3–7; a state with no rows in a year is grey.
+- `plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note, grey_all_missing)` — Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`.
 - `plot_all_modalities_panel(state_rates_2023)` — Unnumbered composite of 2023 state rates for all five modalities (optional Central Illustration).
 
 **`decomposition.py`**

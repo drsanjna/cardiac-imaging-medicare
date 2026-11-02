@@ -23,7 +23,7 @@ def test_load_detail_filters_and_classifies(con):
     audit.FILTER_LOG.clear()
     df = claims.load_detail(con)
     assert set(df['procedure_category']) == set(synthetic.CODES) - set(config.COMPARATORS) - {'ICA'}   # comparators load separately
-    assert not set(df['HCPCS_Cd']) & (set(config.ICA_CODES) | set(config.TAVR_CODES))
+    assert not set(df['HCPCS_Cd']) & (set(config.ICA_CODES) | set(config.TAVR_CODES) | set(config.CACS_CODES))
     assert 'PR' not in set(df['state']) and 'AA' in set(df['state'])
     assert set(df['rural_urban']) == {'Urban', 'Rural', 'Unknown'}
     assert set(df['modality_type']) == {'Advanced', 'Traditional'}
@@ -33,16 +33,16 @@ def test_load_detail_filters_and_classifies(con):
 
 
 def test_load_comparators_and_trend(con):
-    """ICA and TAVR rows: only their codes, territories excluded and logged; trend has one row per year × procedure."""
+    """ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure."""
     audit.FILTER_LOG.clear()
     df = claims.load_comparators(con)
-    assert set(df['procedure_category']) == {config.ICA_LABEL, config.TAVR_LABEL} and 'PR' not in set(df['state'])
+    assert set(df['procedure_category']) == set(config.COMPARATORS) and 'PR' not in set(df['state'])
     for label, codes in config.COMPARATORS.items():
         assert set(df.loc[df['procedure_category'] == label, 'HCPCS_Cd']) <= set(codes)
         assert any(f['filter'] == f'{label} rows, excluding territories/invalid states' and f['dropped'] > 0
                    for f in audit.FILTER_LOG)
     trend = claims.comparator_trend(df)
-    assert list(trend.columns) == ['year', 'procedure_category', 'total_services'] and len(trend) == 12
+    assert list(trend.columns) == ['year', 'procedure_category', 'total_services'] and len(trend) == 6 * len(config.COMPARATORS)
     assert trend['total_services'].sum() == df['Tot_Srvcs'].sum()
 
 

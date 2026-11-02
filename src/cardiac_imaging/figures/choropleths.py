@@ -18,7 +18,9 @@ COMPARATOR_MAPS = [
     (config.ICA_LABEL, 10, 'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461.'),
     (config.TAVR_LABEL, 11, 'TAVR = transcatheter aortic valve replacement, CPT 33361–33366. Usually billed by two '
                             'co-surgeons, so services ≈ 2 × procedures.'),
+    (config.CACS_LABEL, 12, 'CACS = coronary artery calcium score, CPT 75571.'),
 ]
+ALL_STATES = sorted(config.STATE_ABBR_MAP.values())   # 50 states + DC
 
 
 def map_stem(proc, fig_num):
@@ -33,15 +35,21 @@ def plot_state_maps(state_rates_2018, state_rates_2023, delta_df):
 
 
 def plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rates_2023, delta_df):
-    """A comparator's state map (Figures 10–11), same layout as Figures 3–7; states with no 2018 rows are left blank."""
-    no_base = sorted(set(state_rates_2023['state']) - set(state_rates_2018['state']))
-    if no_base:
-        note += f" No 2018 rows for {', '.join(no_base)} (none or suppressed): grey, no change shown."
-    plot_one_state_map(label, fig_num, state_rates_2018, state_rates_2023, delta_df, note=note)
+    """A comparator's state map (Figures 10–12), same layout as Figures 3–7; a state with no rows in a year is grey."""
+    for year, rates_ in [(2018, state_rates_2018), (2023, state_rates_2023)]:
+        missing = sorted(set(ALL_STATES) - set(rates_.loc[rates_['procedure_category'] == label, 'state']))
+        if missing:
+            note += f" No {year} rows for {', '.join(missing)} (none or suppressed): grey, no change shown."
+    plot_one_state_map(label, fig_num, state_rates_2018, state_rates_2023, delta_df, note=note,
+                       grey_all_missing=True)
 
 
-def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note=''):
-    """Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`."""
+def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note='', grey_all_missing=False):
+    """Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`.
+
+    States with 2023 rows but none in 2018 are grey on the 2018 and change panels. With grey_all_missing, every
+    state of the 50 + DC without data in a panel is grey there (used for comparators with sparse coverage).
+    """
     p2018 = state_rates_2018[state_rates_2018['procedure_category'] == proc]
     p2023 = state_rates_2023[state_rates_2023['procedure_category'] == proc]
     p_delta = delta_df[delta_df['procedure_category'] == proc].dropna(subset=['rate_delta'])
@@ -84,14 +92,18 @@ def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_
         hovertemplate='<b>%{location}</b><br>Δ Rate: %{z:+.2f}/1K<extra></extra>',
     ), row=1, col=3)
 
-    no_base = sorted(set(p2023['state']) - set(p2018['state']))
-    for col in (1, 3):   # no base-year rows: solid grey (not white, which means "no change" on the delta scale)
-        if no_base:
+    if grey_all_missing:
+        grey = {col: sorted(set(ALL_STATES) - set(p['state'])) for col, p in [(1, p2018), (2, p2023), (3, p_delta)]}
+    else:
+        no_base = sorted(set(p2023['state']) - set(p2018['state']))
+        grey = {1: no_base, 3: no_base}
+    for col, states in grey.items():   # no data: solid grey (not white, which means "no change" on the delta scale)
+        if states:
             fig.add_trace(go.Choropleth(
-                locations=no_base, z=[0] * len(no_base), locationmode='USA-states',
+                locations=states, z=[0] * len(states), locationmode='USA-states',
                 colorscale=[[0, NO_DATA_GREY], [1, NO_DATA_GREY]], showscale=False,
                 marker_line_color='white', marker_line_width=0.5,
-                hovertemplate='<b>%{location}</b><br>No 2018 rows<extra></extra>',
+                hovertemplate='<b>%{location}</b><br>No data<extra></extra>',
             ), row=1, col=col)
 
     fig.update_geos(**_GEOS)

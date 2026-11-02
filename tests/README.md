@@ -89,6 +89,7 @@ Every function and class in this directory, including internal helpers.
 - `_wf(states, npis, cta, ffs)` *(internal)* — Minimal workforce frame (as load_workforce_density_frames returns) for change tests.
 - `test_change_frame_computes_state_changes()` — Δ density, Δ rate and % changes per state; states missing from the base year are dropped and logged.
 - `test_change_count_model_recovers_elasticity()` — With CTA ∝ physicians^1.5 and FFS changes unrelated, the count model returns an elasticity near 1.5.
+- `test_comparator_map_greys_every_panel_without_data(monkeypatch)` — With grey_all_missing, states lacking data in a panel (either year) are named in the note and drawn grey.
 
 **`test_app.py`**
 - `run_copy(pipeline_run, monkeypatch, isolated)` — A private copy of the synthetic run inside this test's RUNS_DIR (so tests can write conversations etc.).
@@ -173,7 +174,7 @@ Every function and class in this directory, including internal helpers.
 **`test_loaders.py`**
 - `test_specialty_guard(con)` — Passes when every specialty string exists; fails loudly when one is missing.
 - `test_load_detail_filters_and_classifies(con)` — Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality.
-- `test_load_comparators_and_trend(con)` — ICA and TAVR rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
+- `test_load_comparators_and_trend(con)` — ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
 - `_raw_2023()` *(internal)* — A tiny raw 2023 enrollment sheet with junk rows and a territory.
