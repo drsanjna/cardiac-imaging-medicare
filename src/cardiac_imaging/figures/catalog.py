@@ -22,6 +22,10 @@ _SRC = {
                   'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
                   'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
                  ['tavr_state_rates']),
+    'cacs_map': (['figures.choropleths:plot_comparator_state_maps', 'figures.choropleths:plot_one_state_map',
+                  'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
+                  'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
+                 ['cacs_state_rates']),
     'workforce': (['figures.density:plot_density_fit', 'pipeline:step_workforce_sensitivity',
                    'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
                    'analysis.nb_models:density_partial_curve', 'loaders.demographics:load_gv_demographics'],
@@ -55,7 +59,8 @@ FIGURES = [
     dict(stem='figure1_decomposition', label='Figure 1', section='Main text',
          title='Volume vs FFS enrollment vs utilization rate',
          caption='Annual procedure volume, national FFS enrollment and rate per 1,000 beneficiaries '
-                 'for each imaging modality, invasive coronary angiography (CPT 93454–93461) and TAVR (CPT 33361–33366), '
+                 'for each imaging modality, invasive coronary angiography (CPT 93454–93461), TAVR (CPT 33361–33366) and '
+                 'coronary artery calcium score (CPT 75571), '
                  '2018–2023. TAVR services ≈ 2 × procedures (co-surgeon billing).', **_src('decomposition')),
     dict(stem='figure2_market_share', label='Figure 2', section='Main text',
          title='Modality market share by setting',
@@ -84,6 +89,11 @@ FIGURES = [
          caption='Transcatheter aortic valve replacement (CPT 33361–33366) services per 1,000 FFS beneficiaries by state '
                  'in 2018 and 2023, and the change. TAVR is usually billed by two co-surgeons, so services ≈ 2 × '
                  'procedures. States with no 2018 rows are grey. Same layout as Figures 3–7.', **_src('tavr_map')),
+    dict(stem='figure12_cacs_state_maps', label='Figure 12', section='Main text',
+         title='Coronary artery calcium score: state rates 2018 / 2023 / change',
+         caption='Coronary artery calcium score (CPT 75571) services per 1,000 FFS beneficiaries by state in 2018 and 2023, '
+                 'and the change. States with no rows in a year (none, or suppressed) are grey. Same layout as Figures 3–7.',
+         **_src('cacs_map')),
     dict(stem='figure_panel_all_modalities_2023', label='Composite', section='Composite',
          title='All modalities, 2023 state rates',
          caption='Unnumbered composite of 2023 state rates for all five modalities (optional Central Illustration).',

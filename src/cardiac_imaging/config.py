@@ -134,7 +134,11 @@ ICA_CODES = ('93454', '93455', '93456', '93457', '93458', '93459', '93460', '934
 # 2026-10-24. Usually billed by two co-surgeons (cardiology + cardiac surgery), so services ≈ 2 × procedures.
 TAVR_LABEL = 'TAVR'
 TAVR_CODES = ('33361', '33362', '33363', '33364', '33365', '33366')
-COMPARATORS = {ICA_LABEL: ICA_CODES, TAVR_LABEL: TAVR_CODES}   # Figure 1 column order = this order
+# Coronary artery calcium score (CT, non-contrast). Added by the user 2026-11-02 as a comparator like ICA/TAVR, so
+# imaging totals stay unchanged. Medicare often treats it as screening; 12 states have no rows in 2018.
+CACS_LABEL = 'CACS'
+CACS_CODES = ('75571',)
+COMPARATORS = {ICA_LABEL: ICA_CODES, TAVR_LABEL: TAVR_CODES, CACS_LABEL: CACS_CODES}   # Figure 1 column order
 
 # ==========================================================================
 # ENROLLMENT: CMS Program Statistics — Original Medicare Enrollment

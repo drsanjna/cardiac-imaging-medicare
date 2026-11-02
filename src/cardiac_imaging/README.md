@@ -98,7 +98,7 @@ Every function and class in this directory, including internal helpers.
 - `step_figure1(ctx)` — Figure 1 and the 2018 → 2023 change summary.
 - `step_figure2(ctx)` — Figure 2 and the national market share table.
 - `step_state_maps(ctx)` — State rates for 2018 and 2023, Figures 3–7 and the all-modality panel.
-- `step_comparator_maps(ctx)` — Figures 10–11: state rates for 2018 and 2023 and the change, for each comparator procedure (ICA, TAVR).
+- `step_comparator_maps(ctx)` — Figures 10–12: state rates for 2018 and 2023 and the change, for each comparator procedure (ICA, TAVR, CACS).
 - `step_state_table(ctx)` — Print and save the 2023 state rate table.
 - `step_density_models(ctx)` — Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs.
 - `step_workforce_sensitivity(ctx)` — Sensitivity (post hoc, reviewer R2): Figure 8/S1/S2 models with all radiologists/cardiologists as exposure.
