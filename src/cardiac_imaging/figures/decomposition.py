@@ -14,7 +14,8 @@ ROW_CONFIG = [
 ]
 
 TITLES = {config.ICA_LABEL: 'Invasive Coronary\nAngiography (ICA)',
-          config.TAVR_LABEL: 'Transcatheter Aortic Valve\nReplacement (TAVR)'}
+          config.TAVR_LABEL: 'Transcatheter Aortic Valve\nReplacement (TAVR)',
+          config.CACS_LABEL: 'Coronary Artery\nCalcium Score (CACS)'}
 
 
 def plot_figure1(decomp_df):
@@ -71,6 +72,6 @@ def plot_figure1(decomp_df):
              'Symbols: circles = annual procedure volume; squares = national FFS enrollment; '
              'diamonds = utilization rate per 1,000 FFS beneficiaries. '
              'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461. '
-             'TAVR = CPT 33361–33366; usually billed by two co-surgeons, so services ≈ 2 × procedures.',
+             'TAVR = CPT 33361–33366; usually billed by two co-surgeons, so services ≈ 2 × procedures. CACS = CPT 75571.',
              fontsize=10, color='#555555')
     save_pub_fig(fig, 'figure1_decomposition', config.TIFF_PANEL_DPI)
