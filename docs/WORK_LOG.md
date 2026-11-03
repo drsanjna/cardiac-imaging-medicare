@@ -2,6 +2,52 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-11-03 02:22 UTC — 4 commits (`2db5206..ca928ef`)
+
+### What was done
+
+- **Add coronary artery calcium score (CACS, 75571) to Figure 1 and as a state map (Figure 12)** (`a538e15`)
+  - CACS is a third comparator next to ICA and TAVR: a Figure 1 column and a 2018 / 2023 / change state map. Kept out of the imaging-modality definitions, so market share, Table 1 and the Advanced totals are unchanged.
+  - CACS nationally: 17,982 -> 75,645 services; rate per 1,000 FFS 0.47 -> 2.25 (+374%). Sparse coverage: 12 states have no rows in 2018 and ME, NH, VT none in 2023 (none or suppressed).
+  - Comparator maps now grey every state without data in a panel (either year), with the states named in a wrapped footnote; imaging maps (Figures 3-7) are unchanged.
+  - Tests (synthetic CACS rows with a state missing in 2023), real-data pin, STUDY.md. Run 2026-11-02_172036_b189d71-dirty_cacs-figure1-and-map.
+- **Add 2024: it replaces 2023 as the end year, with the CMS AB 14 state denominator** (`34b0628`)
+  - The study window is now 2018–2024 (END_YEAR and GV_YEAR = 2024, decided by the user on 2026-11-02). Every figure, map, model, table name and caption takes its years from config, so nothing hard-codes 2023 any more.
+  - 2024 claims: the CMS R26 file (PHY_R26_P05_V10_D24_Prov_Svc.csv, 9,781,673 rows) is converted to Parquet and joins the claims view, now 68,635,378 rows.
+  - 2024 denominator: CMS Program Statistics table MDCR ENROLL AB 14 (US 33,229,645). KFF's 2024 figure is an earlier data vintage, 0.05–0.15% lower in every state; KFF matches the 2018 and 2023 denominators to the person (NV and SC differ by 1 in 2023), so those stay as they were.
+  - One header-based enrollment parser replaces the two per-year ones; build_database.py picks up every 'original medicare enrollment <year>.xlsx' it finds, so state_ffs_enrollment now holds 2018, 2023 and 2024.
+  - Impact on the published numbers (2018→2024, with 2018→2023 in brackets): rate change Echo +6.8% (+4.1%), SPECT −25.6% (−21.0%), CTA +277.9% (+199.4%), MRI +173.6% (+122.9%), PET +81.8% (+55.4%), ICA −15.3% (−14.8%), TAVR +72.3% (+61.6%), CACS +554.1% (+374.4%). Adjusted density IRR: all providers 1.157 (1.188), radiologists 1.230 (1.231), cardiologists 1.080 (1.157; 50 states now, only WY lacks a cardiologist CTA biller). Table 1 CTA: radiology 58.3%, cardiology 37.6%. The real-data pins are updated to these values.
+  - Run 2026-11-02_205457_a538e15-dirty_end-year-2024 (GitHub release verified). Docs: STUDY.md, PENDING.md (Resolved 9), NEW_LAPTOP.md and setup_laptop.sh describe the 2024 files and how to name them.
+- **docs: record the 2024 end-year and denominator decision in PENDING** (`a05fdd8`)
+  - Moves item 9 to Resolved: 2024 replaces 2023 as the end year, with the CMS state denominator.
+  - Records the denominator checks: 2018 and 2023 equal KFF's re-publication in all 51 states; KFF 2024 is 0.05–0.15% lower in every state (an earlier data vintage), and the CMS Monthly Enrollment annual rows equal the AB 14 workbook, so the loader keeps AB 14 as the user confirmed.
+  - Lists the 2018→2024 vs 2018→2023 impact on the headline rates and density IRRs for the reader of the work log.
+- **Merge remote-tracking branch 'origin/main'** (`ca928ef`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: analysis | 3 | 7 | 7 |
+| code: core | 4 | 64 | 54 |
+| code: db | 3 | 21 | 21 |
+| code: figures | 6 | 80 | 49 |
+| code: loaders | 3 | 42 | 25 |
+| code: reporting | 3 | 10 | 7 |
+| docs | 3 | 54 | 24 |
+| repo root | 1 | 2 | 2 |
+| scripts | 4 | 21 | 10 |
+| tests | 8 | 149 | 88 |
+
+### Impact on the code
+
+- New functions (11): `scripts/build_database.py: enrollment_workbooks`, `src/cardiac_imaging/loaders/enrollment.py: enrollment_sheet`, `src/cardiac_imaging/loaders/enrollment.py: find_ffs_column`, `src/cardiac_imaging/loaders/enrollment.py: parse_enrollment`, `tests/test_analysis.py: test_comparator_map_greys_every_panel_without_data`, `tests/test_loaders.py: _raw_ab2`, `tests/test_loaders.py: test_enrollment_sheet_prefers_ab14`, `tests/test_loaders.py: test_parse_enrollment_ab14_layout_with_extra_columns`, `tests/test_loaders.py: test_parse_enrollment_ab2_layout`, `tests/test_loaders.py: test_parse_enrollment_ignores_title_in_first_column`, `tests/test_loaders.py: test_parse_enrollment_without_known_header_fails`
+- Removed functions (5): `src/cardiac_imaging/loaders/enrollment.py: parse_enrollment_2018`, `src/cardiac_imaging/loaders/enrollment.py: parse_enrollment_2023`, `tests/test_loaders.py: _raw_2023`, `tests/test_loaders.py: test_parse_enrollment_2018_with_extra_columns`, `tests/test_loaders.py: test_parse_enrollment_2023`
+
+### Tests
+
+✅ 162 passed, 0 failed, 0 skipped.
+
 ## 2026-10-26 15:52 UTC — 3 commits (`4c05f61..b189d71`)
 
 ### What was done
