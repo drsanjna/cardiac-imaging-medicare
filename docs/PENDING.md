@@ -41,6 +41,20 @@ a commit whose hash is recorded in the plan before any H1 outcome is queried.
 
 ## Resolved
 
+### 9. 2024 data and denominator — resolved 2026-11-02
+*Decision (user):* 2024 replaces 2023 as the end year (`END_YEAR = GV_YEAR = 2024`); the 2024 state denominator is CMS
+Program Statistics table MDCR ENROLL AB 14 (US 33,229,645), not KFF's 2024 figure (33,192,249, an earlier data vintage,
+0.05–0.15% lower in every state). Checks: the 2018 and 2023 state denominators equal KFF's re-publication (2018 all
+51 states; 2023 NV and SC differ by 1 person). *Data:* 2024 claims file `PHY_R26_P05_V10_D24_Prov_Svc.csv` (CMS
+release R26, May 2026; 9,781,673 rows) converted to Parquet; `state_ffs_enrollment` now holds 2018, 2023 and 2024;
+one header-based parser replaces the two per-year ones. *Impact (2018→2024 vs 2018→2023 rate change):* Echo +6.8%
+(was +4.1%), SPECT −25.6% (−21.0%), CTA +277.9% (+199.4%), MRI +173.6% (+122.9%), PET +81.8% (+55.4%), ICA −15.3%
+(−14.8%), TAVR +72.3% (+61.6%), CACS +554.1% (+374.4%). Adjusted density IRR, all providers 1.157 (was 1.188),
+radiologists 1.230 (1.231), cardiologists 1.080 (1.157, now 50 states: WY is the only state without a cardiologist
+CTA biller). Table 1 CTA: radiology 58.3% / cardiology 37.6%. Advanced share of imaging 6.0% in 2024.
+Run `2026-11-02_205457_a538e15-dirty_end-year-2024`. Open: the 2018 claims file predates CMS's November 2025
+re-release of 2013–2022 (see STUDY.md, Known limitations).
+
 ### 1. Cardiac PET code set — resolved 2026-10-24
 *Decision (user):* Cardiac PET = 78491, 78492, 78430, 78431 (myocardial perfusion PET, with or without concurrent CT).
 Not counted: 78432/78433 (perfusion + metabolic, ~900 services/yr), 78429/78459 (metabolic/viability), 78434

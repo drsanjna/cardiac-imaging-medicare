@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .. import gitinfo
+from .. import config, gitinfo
 
 # Findings compared between runs; a change bigger than the tolerance counts as an impact.
 TOLERANCE = {'irr': 0.0005, 'pct': 0.05}
@@ -55,7 +55,7 @@ def english_summary(m):
     if rc:
         up = sorted(((v, k) for k, v in rc.items() if v > 0), reverse=True)
         down = sorted((v, k) for k, v in rc.items() if v < 0)
-        s = 'From 2018 to 2023, use per 1,000 fee-for-service beneficiaries '
+        s = f'From {config.BASE_YEAR} to {config.END_YEAR}, use per 1,000 fee-for-service beneficiaries '
         if up:
             s += 'rose for ' + ', '.join(f'{k} ({_pct(v)})' for v, k in up)
         if down:
@@ -122,7 +122,7 @@ def compare(m, prev):
     for k, v in f.get('rate_change_pct', {}).items():
         pv = pf.get('rate_change_pct', {}).get(k)
         if pv is not None and _changed(v, pv, TOLERANCE['pct']):
-            impact.append(f"{k}: 2018→2023 rate change {_pct(pv)} → {_pct(v)}.")
+            impact.append(f"{k}: {config.BASE_YEAR}→{config.END_YEAR} rate change {_pct(pv)} → {_pct(v)}.")
     figs, pfigs = set(m.get('figures', [])), set(prev.get('figures', []))
     if figs - pfigs:
         impact.append(f"New figures: {', '.join(sorted(figs - pfigs))}.")

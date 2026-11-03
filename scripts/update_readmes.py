@@ -332,7 +332,7 @@ def render_root(files, edges, runs):
     dir_rows = ['| Directory | What it is |', '|---|---|']
     dir_rows += [f'| [`{d}/`]({d}/README.md) | {dir_purpose(d, files)} |' for d in code_dirs(files)]
     return [
-        '# Cardiac Imaging Utilization in Medicare FFS (2018–2023)', '',
+        '# Cardiac Imaging Utilization in Medicare FFS (2018–2024)', '',
         '> State and national trends in Echo, SPECT, cardiac CTA, MRI and PET among Medicare fee-for-service '
         'beneficiaries, plus negative binomial models of CTA use vs imaging-physician density. '
         'Produces Figures 1–9, S1–S2 and Table 1.', '',

@@ -1,4 +1,4 @@
-"""Change-on-change, 2018 → 2023: did states that gained radiologists/cardiologists also gain CTA use?
+"""Change-on-change, BASE_YEAR → END_YEAR: did states that gained radiologists/cardiologists also gain CTA use?
 
 Primary (as plotted): Δ CTA rate per 1,000 FFS ~ Δ workforce per 100,000 FFS, OLS with HC3 robust SEs.
 Both axes share the FFS denominator, so a state losing FFS enrollees to Medicare Advantage rises on both axes

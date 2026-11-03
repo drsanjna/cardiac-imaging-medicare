@@ -4,6 +4,9 @@ import pandas as pd
 from .. import config
 
 _JUNK_ROWS = 'BLANK|All Areas|United States|Notes|Source|¹|²|Area of Residence'
+# Header text of the FFS column in the two CMS Program Statistics layouts the workbooks come in:
+# MDCR ENROLL AB 14 (Original Medicare enrollees by type of entitlement) and AB 2 (total / Original / MA enrollment).
+FFS_HEADERS = ('Total Original Medicare Enrollees', 'Original Medicare Enrollment')
 
 
 def _finish(df, ffs_col, year):
@@ -16,28 +19,41 @@ def _finish(df, ffs_col, year):
     return pd.DataFrame({'year': year, 'state': df['STCD'].values, 'ffs': ffs.values})
 
 
-def parse_enrollment_2023(raw):
-    """Raw 2023 CMS workbook (header=None, skiprows=4) → DataFrame(year, state, ffs)."""
-    col_names = ['Area_of_Residence', 'State_Population', 'Total_Medicare_Enrollment',
-                 'Total_Medicare_Pct', 'Original_Medicare_Enrollment',
-                 'Original_Medicare_Pct', 'MA_Enrollment', 'MA_Pct',
-                 'Metro_Enrollment', 'Micro_Enrollment', 'NonCore_Enrollment']
-    raw = raw.copy()
-    raw.columns = col_names[:len(raw.columns)]
-    raw = raw.dropna(subset=['Area_of_Residence', 'Original_Medicare_Enrollment'])
-    return _finish(raw, 'Original_Medicare_Enrollment', 2023)
+def find_ffs_column(raw):
+    """Index of the FFS column: the first cell in the top rows (column 1 onward) whose text is one of FFS_HEADERS.
+
+    Column 0 holds the area names and the sheet title (the AB 14 title is 'Original Medicare Enrollment', the same
+    text as the AB 2 column header), so it is never a candidate.
+    """
+    for i in range(min(len(raw), 15)):
+        for j, v in enumerate(raw.iloc[i].tolist()):
+            if j > 0 and isinstance(v, str) and v.strip() in FFS_HEADERS:
+                return j
+    raise ValueError(f"No column headed {FFS_HEADERS} in the first rows of the enrollment sheet.")
 
 
-def parse_enrollment_2018(raw):
-    """Raw 2018 CMS workbook (header=None, skiprows=4) → DataFrame(year, state, ffs)."""
-    col_names = ['Area_of_Residence', 'Total_Original_Medicare_Enrollees',
-                 'Total_Aged', 'Aged_Without_ESRD']
-    for i in range(len(col_names), len(raw.columns)):
-        col_names.append(f'Extra_{i}')
+def parse_enrollment(raw, year):
+    """Raw CMS enrollment sheet (read with header=None) → DataFrame(year, state, ffs).
+
+    Works for the AB 14 and AB 2 layouts: the state name is in the first column and the FFS column is found by its
+    header text, so the number of columns and preamble rows does not matter.
+    """
     raw = raw.copy()
-    raw.columns = col_names[:len(raw.columns)]
-    raw = raw.dropna(subset=['Area_of_Residence', 'Total_Original_Medicare_Enrollees'])
-    return _finish(raw, 'Total_Original_Medicare_Enrollees', 2018)
+    raw.columns = range(raw.shape[1])
+    col = find_ffs_column(raw)
+    df = raw.rename(columns={0: 'Area_of_Residence', col: 'ffs_raw'})
+    df = df.dropna(subset=['Area_of_Residence', 'ffs_raw'])
+    return _finish(df, 'ffs_raw', int(year))
+
+
+def enrollment_sheet(path):
+    """Sheet to read in an enrollment workbook: the AB 14 sheet if there is one, else AB 2, else the first sheet."""
+    names = pd.ExcelFile(path).sheet_names
+    for key in ('AB 14', 'AB 2'):
+        hit = [s for s in names if key in s]
+        if hit:
+            return hit[0]
+    return names[0]
 
 
 def load_state_ffs(con, year):

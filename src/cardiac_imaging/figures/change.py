@@ -1,4 +1,4 @@
-"""Figure S5: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023."""
+"""Figure S5: change in radiologist + cardiologist density vs change in CTA rate by state, base year → end year."""
 import matplotlib.pyplot as plt
 import numpy as np
 

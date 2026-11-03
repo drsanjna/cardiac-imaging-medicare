@@ -1,4 +1,4 @@
-"""Physician density by state (all / radiology / cardiology), 2023: CTA billers (main models) and the whole
+"""Physician density by state (all / radiology / cardiology), END_YEAR: CTA billers (main models) and the whole
 radiology/cardiology workforce (sensitivity analysis), plus national NPI counts."""
 from .. import config
 from ..audit import log_filter
@@ -8,7 +8,7 @@ _CTA_WHERE = (f"year={config.END_YEAR} AND HCPCS_Cd='{config.CTA_CODE}' "
 
 
 def _specialty_npis(con, types, count_col):
-    """Unique CTA-billing NPIs per state for one specialty group, 2023."""
+    """Unique CTA-billing NPIs per state for one specialty group, END_YEAR."""
     df = con.execute(f"""
         SELECT Rndrng_NPI, Rndrng_Prvdr_State_Abrvtn AS state
         FROM {config.CLAIMS_TABLE} WHERE {_CTA_WHERE} AND Rndrng_Prvdr_Type IN {types}

@@ -1,4 +1,4 @@
-"""Figures 3–7, 10, 11: state choropleths per modality and comparator procedure (2018 / 2023 / change), plus a 2023 panel."""
+"""Figures 3–7, 10–12: state choropleths per modality and comparator procedure (base year / end year / change), plus an end-year panel."""
 import textwrap
 
 import pandas as pd
@@ -38,7 +38,7 @@ def plot_state_maps(state_rates_2018, state_rates_2023, delta_df):
 
 def plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rates_2023, delta_df):
     """A comparator's state map (Figures 10–12), same layout as Figures 3–7; a state with no rows in a year is grey."""
-    for year, rates_ in [(2018, state_rates_2018), (2023, state_rates_2023)]:
+    for year, rates_ in [(config.BASE_YEAR, state_rates_2018), (config.END_YEAR, state_rates_2023)]:
         missing = sorted(set(ALL_STATES) - set(rates_.loc[rates_['procedure_category'] == label, 'state']))
         if missing:
             note += f" No {year} rows for {', '.join(missing)} (none or suppressed): grey, no change shown."
@@ -47,9 +47,9 @@ def plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rat
 
 
 def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note='', grey_all_missing=False):
-    """Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`.
+    """Draw and save one 3-panel (base year / end year / change) state map for `proc`.
 
-    States with 2023 rows but none in 2018 are grey on the 2018 and change panels. With grey_all_missing, every
+    States with end-year rows but none in the base year are grey on the base-year and change panels. With grey_all_missing, every
     state of the 50 + DC without data in a panel is grey there (used for comparators with sparse coverage).
     """
     p2018 = state_rates_2018[state_rates_2018['procedure_category'] == proc]
@@ -65,7 +65,7 @@ def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_
     fig = make_subplots(
         rows=1, cols=3,
         specs=[[{'type': 'choropleth'}] * 3],
-        subplot_titles=['2018', '2023', 'Change (2023 − 2018)'],
+        subplot_titles=[str(config.BASE_YEAR), str(config.END_YEAR), f'Change ({config.END_YEAR} − {config.BASE_YEAR})'],
         horizontal_spacing=0.02,
     )
     fig.add_trace(go.Choropleth(
@@ -131,7 +131,7 @@ def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_
 
 
 def plot_all_modalities_panel(state_rates_2023):
-    """Unnumbered composite of 2023 state rates for all five modalities (optional Central Illustration)."""
+    """Unnumbered composite of end-year state rates for all five modalities (optional Central Illustration)."""
     fig_panel = make_subplots(
         rows=2, cols=3,
         specs=[[{'type': 'choropleth'}] * 3, [{'type': 'choropleth'}] * 2 + [None]],
@@ -154,11 +154,11 @@ def plot_all_modalities_panel(state_rates_2023):
     fig_panel.update_geos(**_GEOS)
     fig_panel.update_annotations(font=dict(size=18))
     fig_panel.update_layout(
-        title=dict(text='<b>Cardiac Imaging Rates by State (2023) — All Modalities</b>'
+        title=dict(text=f'<b>Cardiac Imaging Rates by State ({config.END_YEAR}) — All Modalities</b>'
                         '<br><span style="font-size:13px">Purple scale: darker = higher rate. '
                         'Scales differ by modality.</span>',
                    font=dict(size=20), x=0.5, xanchor='center'),
         height=720, width=1400, paper_bgcolor='white',
         margin=dict(l=10, r=10, t=100, b=20),
     )
-    save_plotly(fig_panel, 'figure_panel_all_modalities_2023.png', width=1400, height=720)
+    save_plotly(fig_panel, f'figure_panel_all_modalities_{config.END_YEAR}.png', width=1400, height=720)

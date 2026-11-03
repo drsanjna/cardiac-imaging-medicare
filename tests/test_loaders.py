@@ -42,7 +42,7 @@ def test_load_comparators_and_trend(con):
         assert any(f['filter'] == f'{label} rows, excluding territories/invalid states' and f['dropped'] > 0
                    for f in audit.FILTER_LOG)
     trend = claims.comparator_trend(df)
-    assert list(trend.columns) == ['year', 'procedure_category', 'total_services'] and len(trend) == 6 * len(config.COMPARATORS)
+    assert list(trend.columns) == ['year', 'procedure_category', 'total_services'] and len(trend) == len(synthetic.YEARS) * len(config.COMPARATORS)
     assert trend['total_services'].sum() == df['Tot_Srvcs'].sum()
 
 
@@ -69,29 +69,56 @@ def test_aggregate_segments_drops_unknown_and_logs(con):
     assert set(trend['year']) == set(synthetic.YEARS)
 
 
-def _raw_2023():
-    """A tiny raw 2023 enrollment sheet with junk rows and a territory."""
-    return pd.DataFrame([['Area of Residence', None, None, None, 'x'],
+def _raw_ab2():
+    """A tiny raw AB 2 sheet (2023 layout): preamble, header row, junk rows and a territory; FFS in column 4."""
+    return pd.DataFrame([['Total Medicare Enrollment', None, None, None, None], ['Calendar Year 2023', None, None, None, None],
+                         ['Area of Residence', 'State Population¹', 'Total Medicare Enrollment', 'x', 'Original Medicare Enrollment'],
+                         ['BLANK', None, None, None, None], ['United States²', 1, 2, 3, 99],
                          ['Alabama', 1, 2, 3, 900_000], ['Alaska', 1, 2, 3, '80000'],
-                         ['Puerto Rico', 1, 2, 3, 500], ['United States', 1, 2, 3, 99], ['Notes: blah', None, None, None, None]])
+                         ['Puerto Rico', 1, 2, 3, 500], ['Notes: blah', None, None, None, None]])
 
 
-def test_parse_enrollment_2023():
-    """Keeps states, drops header/total/notes rows and territories, converts FFS to int."""
-    out = enrollment.parse_enrollment_2023(_raw_2023())
+def test_parse_enrollment_ab2_layout():
+    """Finds the FFS column by header; keeps states, drops preamble/total/notes rows and territories, converts FFS to int."""
+    out = enrollment.parse_enrollment(_raw_ab2(), 2023)
     assert out.to_dict('records') == [{'year': 2023, 'state': 'AL', 'ffs': 900000}, {'year': 2023, 'state': 'AK', 'ffs': 80000}]
 
 
-def test_parse_enrollment_2018_with_extra_columns():
-    """Works when the 2018 sheet has more columns than named."""
-    raw = pd.DataFrame([['Texas', 3_000_000, 1, 2, 'extra', 'more'], ['Guam', 10, 1, 2, 'x', 'y']])
-    out = enrollment.parse_enrollment_2018(raw)
-    assert out.to_dict('records') == [{'year': 2018, 'state': 'TX', 'ffs': 3000000}]
+def test_parse_enrollment_ab14_layout_with_extra_columns():
+    """AB 14 layout (2018/2024): 'Total Original Medicare Enrollees' in column 1, more columns than needed, 'All Areas' row."""
+    raw = pd.DataFrame([['MDCR ENROLL AB 14', None, None, None, None, None],
+                        ['Area of Residence', 'Total Original Medicare Enrollees', 'Total Aged', 'Aged Without ESRD', 'extra', 'more'],
+                        ['All Areas', 9, 1, 2, 'x', 'y'], ['Texas', 3_000_000, 1, 2, 'extra', 'more'], ['Guam', 10, 1, 2, 'x', 'y']])
+    out = enrollment.parse_enrollment(raw, 2024)
+    assert out.to_dict('records') == [{'year': 2024, 'state': 'TX', 'ffs': 3000000}]
+
+
+def test_parse_enrollment_ignores_title_in_first_column():
+    """The AB 14 title cell 'Original Medicare Enrollment' (column 0) is not mistaken for the AB 2 FFS header."""
+    raw = pd.DataFrame([['Original Medicare Enrollment', None, None], ['Calendar Year 2024', None, None],
+                        ['Area of Residence', 'Total Original Medicare Enrollees', 'Total Aged'], ['Ohio', 1_100_000, 5]])
+    assert enrollment.parse_enrollment(raw, 2024).to_dict('records') == [{'year': 2024, 'state': 'OH', 'ffs': 1100000}]
+
+
+def test_parse_enrollment_without_known_header_fails():
+    """A sheet without either known FFS header is refused instead of guessing a column."""
+    with pytest.raises(ValueError, match='No column headed'):
+        enrollment.parse_enrollment(pd.DataFrame([['Area of Residence', 'Something else'], ['Texas', 5]]), 2024)
+
+
+def test_enrollment_sheet_prefers_ab14(tmp_path):
+    """In a multi-sheet CMS workbook the AB 14 sheet is chosen; a single-sheet workbook uses its only sheet."""
+    multi, single = tmp_path / 'multi.xlsx', tmp_path / 'single.xlsx'
+    with pd.ExcelWriter(multi) as xw:
+        for name in ('Table of Contents', 'MDCR ENROLL AB 13_CPS', 'MDCR ENROLL AB 14_CPS'):
+            pd.DataFrame([[1]]).to_excel(xw, sheet_name=name, index=False)
+    pd.DataFrame([[1]]).to_excel(single, sheet_name='Sheet1', index=False)
+    assert enrollment.enrollment_sheet(multi) == 'MDCR ENROLL AB 14_CPS' and enrollment.enrollment_sheet(single) == 'Sheet1'
 
 
 def test_load_state_ffs(con):
     """Returns {state: ffs} for a year and fails for a missing year."""
-    ffs = enrollment.load_state_ffs(con, 2023)
+    ffs = enrollment.load_state_ffs(con, config.END_YEAR)
     assert len(ffs) == 51 and all(isinstance(v, int) for v in ffs.values())
     with pytest.raises(ValueError):
         enrollment.load_state_ffs(con, 1999)
@@ -99,7 +126,7 @@ def test_load_state_ffs(con):
 
 def test_gv_demographics_resolution_and_cleaning(con):
     """States resolved from name, postal code or FIPS; fractions → %; territories, age bands and other years dropped."""
-    demo = demographics.load_gv_demographics(con, 2023)
+    demo = demographics.load_gv_demographics(con, config.END_YEAR)
     assert len(demo) == 51 and set(demo['state']) == set(synthetic.STATES)
     assert demo['pct_female'].between(40, 70).all()
     assert demo['mean_age'].between(60, 80).all()
@@ -120,8 +147,8 @@ def test_num_parses_cms_text():
 
 def test_cta_density_frames(con):
     """Density frames drop states lacking enrollment (AA) or specialty billers (AK/SD, DE/WY) and carry demographics."""
-    ffs = enrollment.load_state_ffs(con, 2023)
-    demo = demographics.load_gv_demographics(con, 2023)
+    ffs = enrollment.load_state_ffs(con, config.END_YEAR)
+    demo = demographics.load_gv_demographics(con, config.END_YEAR)
     frames = providers.load_cta_density_frames(con, ffs, demo)
     assert len(frames['all']) == 51 and 'AA' not in set(frames['all']['state'])
     assert not set(frames['rad']['state']) & synthetic.NO_RAD
@@ -135,14 +162,14 @@ def test_cta_density_frames(con):
 def test_workforce_density_frames_count_whole_specialties(con):
     """Workforce exposure counts every radiologist/cardiologist billing anything (not just CTA), excludes other
     specialties, and keeps the same CTA outcome as the main models."""
-    ffs = enrollment.load_state_ffs(con, 2023)
-    demo = demographics.load_gv_demographics(con, 2023)
+    ffs = enrollment.load_state_ffs(con, config.END_YEAR)
+    demo = demographics.load_gv_demographics(con, config.END_YEAR)
     wf = providers.load_workforce_density_frames(con, ffs, demo)
     main = providers.load_cta_density_frames(con, ffs, demo)
     assert len(wf['all']) == 51 and 'AA' not in set(wf['all']['state'])
     assert not set(wf['rad']['state']) & synthetic.NO_RAD and not set(wf['card']['state']) & synthetic.NO_CARD
     direct = con.execute(f"""SELECT Rndrng_Prvdr_State_Abrvtn s, COUNT(DISTINCT Rndrng_NPI) n FROM {config.CLAIMS_TABLE}
-        WHERE year=2023 AND Rndrng_Prvdr_Type IN {config.RAD_TYPES + config.CARD_TYPES} GROUP BY s""").fetchdf()
+        WHERE year={config.END_YEAR} AND Rndrng_Prvdr_Type IN {config.RAD_TYPES + config.CARD_TYPES} GROUP BY s""").fetchdf()
     got = wf['all'].set_index('state')['wf_unique_npis']
     assert all(got[s] == n for s, n in zip(direct['s'], direct['n']) if s in got.index)   # Internal Medicine excluded
     m = main['all'].set_index('state')['total_services']
@@ -175,8 +202,8 @@ def test_national_counts_deduplicate_multistate_npis(con):
 
 def test_states_without_billers(con, capsys):
     """Missing-biller report lists exactly the synthetic gaps."""
-    ffs = enrollment.load_state_ffs(con, 2023)
-    frames = providers.load_cta_density_frames(con, ffs, demographics.load_gv_demographics(con, 2023))
+    ffs = enrollment.load_state_ffs(con, config.END_YEAR)
+    frames = providers.load_cta_density_frames(con, ffs, demographics.load_gv_demographics(con, config.END_YEAR))
     missing = providers.report_states_without_billers(ffs, frames)
     assert missing['all'] == [] and set(missing['rad']) == synthetic.NO_RAD and set(missing['card']) == synthetic.NO_CARD
     assert 'ZERO CTA-BILLING' in capsys.readouterr().out

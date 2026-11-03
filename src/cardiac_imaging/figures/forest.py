@@ -78,7 +78,7 @@ def plot_forest(rows):
     ax.spines[['top', 'right']].set_visible(False)
 
     ax.set_title(
-        'Figure 9. CTA Utilization vs Imaging Physician Density (2023):\n'
+        f'Figure 9. CTA Utilization vs Imaging Physician Density ({config.END_YEAR}):\n'
         'Density IRRs Before and After Demographic Adjustment, by Interpreting Specialty',
         fontsize=13, fontweight='bold', pad=12,
     )

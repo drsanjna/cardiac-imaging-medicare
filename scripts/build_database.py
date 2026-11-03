@@ -4,11 +4,23 @@ Run after scripts/convert_cms_to_parquet.py:
     python scripts/build_database.py
 """
 import argparse
+import re
 from pathlib import Path
 
 from cardiac_imaging import config
 from cardiac_imaging.db import build, schema
 from cardiac_imaging.db.connection import get_connection
+
+
+def enrollment_workbooks(folder):
+    """{year: path} of every 'original medicare enrollment <year>.xlsx' in `folder`; BASE_YEAR and END_YEAR are required."""
+    found = {int(m.group(1)): p for p in folder.glob('original medicare enrollment *.xlsx')
+             if (m := re.search(r'(\d{4})\.xlsx$', p.name))}
+    missing = [y for y in (config.BASE_YEAR, config.END_YEAR) if y not in found]
+    if missing:
+        raise SystemExit(f"Missing enrollment workbook(s) for {missing} in {folder} "
+                         f"(expected 'original medicare enrollment <year>.xlsx').")
+    return found
 
 
 def main():
@@ -19,7 +31,7 @@ def main():
     p.add_argument('--materialize', action='store_true',
                    help="Copy claims into a native table (+4.2 GB disk) instead of a view over Parquet")
     p.add_argument('--reference-dir', type=Path, default=config.REFERENCE_DIR,
-                   help="Folder with 'original medicare enrollment 2018.xlsx' and '... 2023.xlsx'")
+                   help="Folder with the 'original medicare enrollment <year>.xlsx' workbooks")
     p.add_argument('--gv', default=config.GV_PUF_GLOB, help="Glob for the Geographic Variation PUF CSV(s)")
     args = p.parse_args()
 
@@ -31,9 +43,7 @@ def main():
     else:
         print(f"{config.CLAIMS_TABLE} already present (use --claims to rebuild):")
         build.report_claims(con)
-    d = args.reference_dir.expanduser()
-    build.load_state_enrollment(con, d / 'original medicare enrollment 2018.xlsx',
-                                d / 'original medicare enrollment 2023.xlsx')
+    build.load_state_enrollment(con, enrollment_workbooks(args.reference_dir.expanduser()))
     build.load_gv_puf(con, Path(args.gv).expanduser())
     con.execute("CHECKPOINT")
     problems = schema.validate(con)

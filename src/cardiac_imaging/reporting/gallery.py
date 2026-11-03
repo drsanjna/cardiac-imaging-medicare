@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from .. import config
 from ..figures.catalog import FIGURES, SECTIONS
 from . import run_store
 
@@ -13,10 +14,10 @@ SHOWN_TABLES = [
     ('nb_density_models', 'Density models — IRR per +1 NPI per 100,000 FFS beneficiaries (Figures 8, 9, S1, S2)'),
     ('density_sensitivity_workforce', 'Sensitivity — density models with the whole radiology/cardiology workforce as '
                                       'exposure vs CTA billers (original); compare the per +1 SD IRRs'),
-    ('table1_specialty_distribution', 'Table 1 — Provider specialty distribution by modality, 2023'),
-    ('change_summary', '2018 → 2023 change in volume, enrollment and rate (%)'),
+    ('table1_specialty_distribution', f'Table 1 — Provider specialty distribution by modality, {config.END_YEAR}'),
+    ('change_summary', f'{config.BASE_YEAR} → {config.END_YEAR} change in volume, enrollment and rate (%)'),
     ('national_market_share', 'National market share by modality (%)'),
-    ('state_summary_2023', 'State rate per 1,000 FFS beneficiaries, 2023 (sorted by all cardiac)'),
+    (f'state_summary_{config.END_YEAR}', f'State rate per 1,000 FFS beneficiaries, {config.END_YEAR} (sorted by all cardiac)'),
     ('filter_log', 'Row filters applied (nothing is dropped silently)'),
 ]
 
@@ -411,7 +412,7 @@ def build(run_dir):
     blocks = []
     for name, title in SHOWN_TABLES:
         if name in tables and (run_dir / tables[name]).exists():
-            blocks.append(f'<details {"open" if name != "state_summary_2023" else ""}><summary>{esc(title)}'
+            blocks.append(f'<details {"open" if not name.startswith("state_summary_") else ""}><summary>{esc(title)}'
                           f'<a href="{esc(tables[name])}" download>CSV</a></summary>'
                           f'<div class="tablewrap">{table_html(run_dir / tables[name])}</div></details>')
     others = [n for n in tables if n not in dict(SHOWN_TABLES)]

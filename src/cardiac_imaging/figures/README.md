@@ -33,6 +33,7 @@ flowchart LR
   n_catalog_py --> n_reporting_
   n_change_py --> n_pipeline_py
   n_choropleths_py --> n_pipeline_py
+  n_config_py --> n_catalog_py
   n_config_py --> n_change_py
   n_config_py --> n_choropleths_py
   n_config_py --> n_decomposition_py
@@ -64,8 +65,8 @@ flowchart LR
 | File | What it does |
 |---|---|
 | [`catalog.py`](catalog.py) | Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF). |
-| [`change.py`](change.py) | Figure S5: change in radiologist + cardiologist density vs change in CTA rate by state, 2018 → 2023. |
-| [`choropleths.py`](choropleths.py) | Figures 3–7, 10, 11: state choropleths per modality and comparator procedure (2018 / 2023 / change), plus a 2023 panel. |
+| [`change.py`](change.py) | Figure S5: change in radiologist + cardiologist density vs change in CTA rate by state, base year → end year. |
+| [`choropleths.py`](choropleths.py) | Figures 3–7, 10–12: state choropleths per modality and comparator procedure (base year / end year / change), plus an end-year panel. |
 | [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR). |
 | [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
 | [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks. |
@@ -87,8 +88,8 @@ Every function and class in this directory, including internal helpers.
 - `map_stem(proc, fig_num)` — File stem of a state-map figure, e.g. figure4_spect_state_maps.
 - `plot_state_maps(state_rates_2018, state_rates_2023, delta_df)` — One 3-panel map figure per modality, numbered 3–7 in PROC_ORDER.
 - `plot_comparator_state_maps(label, fig_num, note, state_rates_2018, state_rates_2023, delta_df)` — A comparator's state map (Figures 10–12), same layout as Figures 3–7; a state with no rows in a year is grey.
-- `plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note, grey_all_missing)` — Draw and save one 3-panel (2018 / 2023 / change) state map for `proc`.
-- `plot_all_modalities_panel(state_rates_2023)` — Unnumbered composite of 2023 state rates for all five modalities (optional Central Illustration).
+- `plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_df, note, grey_all_missing)` — Draw and save one 3-panel (base year / end year / change) state map for `proc`.
+- `plot_all_modalities_panel(state_rates_2023)` — Unnumbered composite of end-year state rates for all five modalities (optional Central Illustration).
 
 **`decomposition.py`**
 - `plot_figure1(decomp_df)` — Draw and save Figure 1 (volume, FFS enrollment and rate per column of FIG1_ORDER present in decomp_df, 3 × n).

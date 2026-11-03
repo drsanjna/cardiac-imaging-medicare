@@ -64,14 +64,14 @@ Every function and class in this directory, including internal helpers.
 
 **`synthetic.py`**
 - `claims_frame(seed)` — Synthetic Physician & Other Practitioners rows covering every filter the pipeline applies.
-- `enrollment_frame()` — FFS enrollment for 50 states + DC in 2018 and 2023 (no territories, no AA).
+- `enrollment_frame()` — FFS enrollment for 50 states + DC in the base and end years (no territories, no AA).
 - `gv_frame()` — Raw GV PUF rows (all text) with national, territory, age-band, name/postal/FIPS-only and suppressed cases.
 - `build(path, claims)` — Write the three tables to a DuckDB file at `path` with the data model's column types; returns the path.
 
 **`test_analysis.py`**
 - `_trend()` *(internal)* — Year × modality totals with simple known numbers.
 - `test_decompose_rate_per_1000()` — Rate = services / national FFS enrollment × 1000.
-- `test_change_summary_matches_hand_calculation()` — 2018→2023 % change computed per modality; enrollment change identical for all.
+- `test_change_summary_matches_hand_calculation()` — BASE→END % change computed per modality; enrollment change identical for all.
 - `test_change_summary_adds_ica_after_imaging_modalities()` — With ICA in the trend, it is the last row of the change summary; imaging rows are unchanged.
 - `test_rate_deltas_can_keep_missing_states_missing()` — A state absent in the base year gets no delta (not end − 0) when missing_as_zero=False.
 - `test_print_change_summary_format(capsys)` — Console table keeps its original layout.
@@ -177,9 +177,12 @@ Every function and class in this directory, including internal helpers.
 - `test_load_comparators_and_trend(con)` — ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
-- `_raw_2023()` *(internal)* — A tiny raw 2023 enrollment sheet with junk rows and a territory.
-- `test_parse_enrollment_2023()` — Keeps states, drops header/total/notes rows and territories, converts FFS to int.
-- `test_parse_enrollment_2018_with_extra_columns()` — Works when the 2018 sheet has more columns than named.
+- `_raw_ab2()` *(internal)* — A tiny raw AB 2 sheet (2023 layout): preamble, header row, junk rows and a territory; FFS in column 4.
+- `test_parse_enrollment_ab2_layout()` — Finds the FFS column by header; keeps states, drops preamble/total/notes rows and territories, converts FFS to int.
+- `test_parse_enrollment_ab14_layout_with_extra_columns()` — AB 14 layout (2018/2024): 'Total Original Medicare Enrollees' in column 1, more columns than needed, 'All Areas' row.
+- `test_parse_enrollment_ignores_title_in_first_column()` — The AB 14 title cell 'Original Medicare Enrollment' (column 0) is not mistaken for the AB 2 FFS header.
+- `test_parse_enrollment_without_known_header_fails()` — A sheet without either known FFS header is refused instead of guessing a column.
+- `test_enrollment_sheet_prefers_ab14(tmp_path)` — In a multi-sheet CMS workbook the AB 14 sheet is chosen; a single-sheet workbook uses its only sheet.
 - `test_load_state_ffs(con)` — Returns {state: ffs} for a year and fails for a missing year.
 - `test_gv_demographics_resolution_and_cleaning(con)` — States resolved from name, postal code or FIPS; fractions → %; territories, age bands and other years dropped.
 - `test_gv_missing_year(con)` — Asking for a year not in the file fails with the available years.
@@ -219,13 +222,13 @@ Every function and class in this directory, including internal helpers.
 - `test_real_database_matches_data_model()` — The live database still matches db/schema.py.
 - `real_run(tmp_path_factory)` — One full run on the real data (no TIFFs, not published, isolated folders).
 - `test_headline_irrs_unchanged(real_run)` — Adjusted density IRRs and CIs match the published values to 4 decimals.
-- `test_table1_cta_shares_unchanged(real_run)` — Radiologists read 59.1% and cardiologists 37.2% of cardiac CTAs in 2023.
-- `test_physician_counts_and_states(real_run)` — Model sizes: 51 / 49 / 46 states; 2,847 / 1,616 / 1,140 unique physicians.
-- `test_change_summary_unchanged(real_run)` — 2018→2023 rate change per modality (PET = 78491/78492/78430/78431 since 2026-10-24; was −34.4 without PET/CT).
-- `test_manifest_records_real_rows(real_run)` — The run records all 58,853,705 claim rows.
+- `test_table1_cta_shares_unchanged(real_run)` — Radiologists read 58.3% and cardiologists 37.6% of cardiac CTAs in 2024.
+- `test_physician_counts_and_states(real_run)` — Model sizes: 51 / 49 / 50 states; 3,223 / 1,746 / 1,353 unique physicians (2024).
+- `test_change_summary_unchanged(real_run)` — 2018→2024 rate change per modality (2018→2023 was: Echo 4.1, SPECT −21.0, CTA 199.4, MRI 122.9, PET 55.4, ICA −14.8,
+- `test_manifest_records_real_rows(real_run)` — The run records all 68,635,378 claim rows (2018–2024).
 - `test_workforce_sensitivity_irrs(real_run)` — Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models.
-- `test_workforce_density_by_year(real_run)` — Figures S3/S4: whole-workforce density vs CTA rate is positive in 2023 (IRR 1.0049) and weaker in 2018 (1.0041).
-- `test_workforce_change_models(real_run)` — Figure S5: Δ rate ~ Δ density slope 0.038 (shared FFS denominator); count model elasticity 1.10, not significant.
+- `test_workforce_density_by_year(real_run)` — Figures S3/S4: whole-workforce density vs CTA rate is positive in 2024 (IRR 1.0032) and in 2018 (1.0041).
+- `test_workforce_change_models(real_run)` — Figure S5: Δ rate ~ Δ density slope 0.026 (shared FFS denominator); count model elasticity 0.27, not significant.
 
 **`test_reporting.py`**
 - `test_log_filter_records_and_prints(capsys)` — log_filter returns `after`, records an entry and prints dropped items.

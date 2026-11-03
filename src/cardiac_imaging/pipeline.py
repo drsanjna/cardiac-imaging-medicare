@@ -19,27 +19,27 @@ MANIFEST = """
 MAIN TEXT
   Figure 1:  Volume / enrollment / rate decomposition (5 modalities + ICA + TAVR + CACS × 3 metrics)
   Figure 2:  Market share — stacked area with advanced-modality zoom insets
-  Figure 3:  Echo        — state rates, 2018 / 2023 / change
-  Figure 4:  SPECT       — state rates, 2018 / 2023 / change
-  Figure 5:  Cardiac CTA — state rates, 2018 / 2023 / change
-  Figure 6:  Cardiac MRI — state rates, 2018 / 2023 / change
-  Figure 7:  Cardiac PET — state rates, 2018 / 2023 / change
+  Figure 3:  Echo        — state rates, {b} / {e} / change
+  Figure 4:  SPECT       — state rates, {b} / {e} / change
+  Figure 5:  Cardiac CTA — state rates, {b} / {e} / change
+  Figure 6:  Cardiac MRI — state rates, {b} / {e} / change
+  Figure 7:  Cardiac PET — state rates, {b} / {e} / change
   Figure 8:  All-provider density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure 9:  Combined forest plot — density IRRs before/after adjustment (FINAL)
-  Figure 10: Invasive coronary angiography — state rates, 2018 / 2023 / change
-  Figure 11: TAVR — state rates, 2018 / 2023 / change
-  Figure 12: Coronary artery calcium score (CACS) — state rates, 2018 / 2023 / change
-  (unnumbered composite: all-modality 2023 state panel)
+  Figure 10: Invasive coronary angiography — state rates, {b} / {e} / change
+  Figure 11: TAVR — state rates, {b} / {e} / change
+  Figure 12: Coronary artery calcium score (CACS) — state rates, {b} / {e} / change
+  (unnumbered composite: all-modality {e} state panel)
 
 SUPPLEMENT
   Figure S1: Radiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S2: Cardiologist density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Figure S3: Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 (same layout as S2)
-  Figure S4: Same as S3 for 2018
-  Figure S5: Change in radiologist + cardiologist density vs change in CTA rate by state, 2018→2023
+  Figure S3: Radiologist + cardiologist (any Part B) density vs CTA rate, {e} (same layout as S2)
+  Figure S4: Same as S3 for {b}
+  Figure S5: Change in radiologist + cardiologist density vs change in CTA rate by state, {b}→{e}
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -53,7 +53,7 @@ POPULATION
   state codes (XX, ZZ, blank).
 
 Enrollment: CMS Program Statistics — Original Medicare Enrollment
-State enrollment: CMS Monthly Enrollment Reports (2018, 2023)
+State enrollment: CMS Program Statistics, Original Medicare enrollment by state ({b}, {e})
 Claims: Medicare Physician & Other Practitioners by Provider and Service
 """
 
@@ -83,7 +83,7 @@ def step_load_claims(ctx):
 
 
 def step_figure1(ctx):
-    """Figure 1 and the 2018 → 2023 change summary."""
+    """Figure 1 and the BASE_YEAR → END_YEAR change summary."""
     print("Building Figure 1: Volume/Enrollment/Rate Decomposition...")
     decomp_df = rates.decompose(pd.concat([ctx['trend'], claims.comparator_trend(ctx['df_comp'])], ignore_index=True))
     decomposition.plot_figure1(decomp_df)
@@ -105,52 +105,53 @@ def step_figure2(ctx):
 
 
 def step_state_maps(ctx):
-    """State rates for 2018 and 2023, Figures 3–7 and the all-modality panel."""
+    """State rates for BASE_YEAR and END_YEAR, Figures 3–7 and the all-modality panel."""
     print("Building Figures 3–7: State Choropleth Heatmaps...")
     con, df = ctx['con'], ctx['df_detail']
-    ctx['state_ffs_2023'] = enrollment.load_state_ffs(con, config.END_YEAR)
-    ctx['state_ffs_2018'] = enrollment.load_state_ffs(con, config.BASE_YEAR)
-    r23 = rates.compute_state_rates(df[df['year'] == config.END_YEAR], ctx['state_ffs_2023'])
-    r18 = rates.compute_state_rates(df[df['year'] == config.BASE_YEAR], ctx['state_ffs_2018'])
-    ctx['state_rates_2023'] = r23
-    deltas = rates.rate_deltas(r23, r18)
-    choropleths.plot_state_maps(r18, r23, deltas)
-    ctx['tables'].update(state_rates_2018=r18.set_index('state'), state_rates_2023=r23.set_index('state'),
-                         state_rate_change=deltas.set_index('state'))
-    choropleths.plot_all_modalities_panel(r23)
+    ctx['state_ffs_end'] = enrollment.load_state_ffs(con, config.END_YEAR)
+    ctx['state_ffs_base'] = enrollment.load_state_ffs(con, config.BASE_YEAR)
+    r_end = rates.compute_state_rates(df[df['year'] == config.END_YEAR], ctx['state_ffs_end'])
+    r_base = rates.compute_state_rates(df[df['year'] == config.BASE_YEAR], ctx['state_ffs_base'])
+    ctx['state_rates_end'] = r_end
+    deltas = rates.rate_deltas(r_end, r_base)
+    choropleths.plot_state_maps(r_base, r_end, deltas)
+    ctx['tables'].update({f'state_rates_{config.BASE_YEAR}': r_base.set_index('state'),
+                          f'state_rates_{config.END_YEAR}': r_end.set_index('state'),
+                          'state_rate_change': deltas.set_index('state')})
+    choropleths.plot_all_modalities_panel(r_end)
     print("Figures 3–7 complete.\n")
 
 
 def step_comparator_maps(ctx):
-    """Figures 10–12: state rates for 2018 and 2023 and the change, for each comparator procedure (ICA, TAVR, CACS)."""
+    """Figures 10–12: state rates for BASE_YEAR and END_YEAR and the change, for each comparator procedure (ICA, TAVR, CACS)."""
     comp = ctx['df_comp']
     for label, fig_num, note in choropleths.COMPARATOR_MAPS:
         print(f"Building Figure {fig_num}: {label} state map...")
         sub = comp[comp['procedure_category'] == label]
-        r23 = rates.compute_state_rates(sub[sub['year'] == config.END_YEAR], ctx['state_ffs_2023'])
-        r18 = rates.compute_state_rates(sub[sub['year'] == config.BASE_YEAR], ctx['state_ffs_2018'])
-        deltas = rates.rate_deltas(r23, r18, missing_as_zero=False)
-        choropleths.plot_comparator_state_maps(label, fig_num, note, r18, r23, deltas)
+        r_end = rates.compute_state_rates(sub[sub['year'] == config.END_YEAR], ctx['state_ffs_end'])
+        r_base = rates.compute_state_rates(sub[sub['year'] == config.BASE_YEAR], ctx['state_ffs_base'])
+        deltas = rates.rate_deltas(r_end, r_base, missing_as_zero=False)
+        choropleths.plot_comparator_state_maps(label, fig_num, note, r_base, r_end, deltas)
         key = {config.ICA_LABEL: 'ica', config.TAVR_LABEL: 'tavr', config.CACS_LABEL: 'cacs'}[label]
         ctx['tables'][f'{key}_state_rates'] = (deltas.set_index('state').drop(columns='procedure_category')
-                                               .sort_values('rate_per_1000_2023', ascending=False))
+                                               .sort_values(f'rate_per_1000_{config.END_YEAR}', ascending=False))
     print("Figures 10–12 complete.\n")
 
 def step_state_table(ctx):
-    """Print and save the 2023 state rate table."""
+    """Print and save the END_YEAR state rate table."""
     print("=" * 80)
     print(f"State-Level Procedure Rate per 1,000 FFS Beneficiaries ({config.END_YEAR}, Top 20)")
     print("=" * 80)
-    summary = rates.state_summary_table(ctx['state_rates_2023'])
+    summary = rates.state_summary_table(ctx['state_rates_end'])
     print(summary.head(20).to_string())
     print(f"\n({len(summary)} states total)")
-    ctx['tables']['state_summary_2023'] = summary
+    ctx['tables'][f'state_summary_{config.END_YEAR}'] = summary
 
 
 def step_density_models(ctx):
     """Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs."""
     print(f"Building multivariable NB (age + sex adjustment), {config.END_YEAR}...")
-    con, state_ffs = ctx['con'], ctx['state_ffs_2023']
+    con, state_ffs = ctx['con'], ctx['state_ffs_end']
     demo = demographics.load_gv_demographics(con, config.GV_YEAR)
     frames = providers.load_cta_density_frames(con, state_ffs, demo)
     n_phys = providers.national_physician_counts(con)
@@ -158,13 +159,13 @@ def step_density_models(ctx):
 
     specs = [  # key, density column, x label, title, color, file stem
         ('all', 'npis_per_100k', 'CTA-Billing NPIs per 100,000 FFS Beneficiaries',
-         'Figure 8. All-Provider Density vs CTA Rate — Multivariable NB (age + %female), 2023',
+         f'Figure 8. All-Provider Density vs CTA Rate — Multivariable NB (age + %female), {config.END_YEAR}',
          style.PURPLE, 'figure8_nb_all_density'),
         ('rad', 'rad_npis_per_100k', 'Radiologist NPIs per 100,000 FFS Beneficiaries',
-         'Supplemental Figure S1. Radiologist Density vs CTA Rate — Multivariable NB, 2023',
+         f'Supplemental Figure S1. Radiologist Density vs CTA Rate — Multivariable NB, {config.END_YEAR}',
          style.BLUE, 'figureS1_nb_rad_density'),
         ('card', 'card_npis_per_100k', 'Cardiologist NPIs per 100,000 FFS Beneficiaries',
-         'Supplemental Figure S2. Cardiologist Density vs CTA Rate — Multivariable NB, 2023',
+         f'Supplemental Figure S2. Cardiologist Density vs CTA Rate — Multivariable NB, {config.END_YEAR}',
          style.CARD_RED, 'figureS2_nb_card_density'),
     ]
     ctx['nb_results'] = {}
@@ -184,7 +185,7 @@ def step_density_models(ctx):
 def step_workforce_sensitivity(ctx):
     """Sensitivity (post hoc, reviewer R2): Figure 8/S1/S2 models with all radiologists/cardiologists as exposure."""
     print("Sensitivity: density models with the whole radiology/cardiology workforce as exposure...")
-    con, state_ffs = ctx['con'], ctx['state_ffs_2023']
+    con, state_ffs = ctx['con'], ctx['state_ffs_end']
     demo = demographics.load_gv_demographics(con, config.GV_YEAR)
     frames = providers.load_workforce_density_frames(con, state_ffs, demo)
     n_phys = providers.national_workforce_counts(con)
@@ -209,10 +210,10 @@ def step_workforce_sensitivity(ctx):
     table = pd.DataFrame(rows).set_index(['model', 'exposure'])
     ctx['tables']['density_sensitivity_workforce'] = table
 
-    # Figures S3 (2023) and S4 (2018): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
+    # Figures S3 (END_YEAR) and S4 (BASE_YEAR): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
     col, label = labels['all']
     by_year = {config.END_YEAR: (wf_fits['all'], n_phys['all'])}
-    ffs18 = ctx['state_ffs_2018'] if 'state_ffs_2018' in ctx else enrollment.load_state_ffs(con, config.BASE_YEAR)
+    ffs18 = ctx['state_ffs_base'] if 'state_ffs_base' in ctx else enrollment.load_state_ffs(con, config.BASE_YEAR)
     frames18 = providers.load_workforce_density_frames(con, ffs18, demographics.load_gv_demographics(con, config.BASE_YEAR),
                                                        year=config.BASE_YEAR)
     fit18 = nb_models.fit_density_models(frames18['all'], col, label)
@@ -232,7 +233,7 @@ def step_workforce_sensitivity(ctx):
                      'IRR adj per +1 SD': per_sd[0], 'CI low (SD)': per_sd[1], 'CI high (SD)': per_sd[2]})
     ctx['tables']['workforce_density_by_year'] = pd.DataFrame(rows).set_index('year')
 
-    # Figure S5: did states that gained physicians also gain CTA use? (change-on-change, 2018 → 2023)
+    # Figure S5: did states that gained physicians also gain CTA use? (change-on-change, BASE_YEAR → END_YEAR)
     chg = change.change_frame(frames['all'], frames18['all'], config.END_YEAR, config.BASE_YEAR)
     fits = change.fit_change_models(chg, config.END_YEAR, config.BASE_YEAR)
     change_fig.plot_change_on_change(chg, fits, config.END_YEAR, config.BASE_YEAR)
@@ -293,7 +294,7 @@ def run_all(con=None, database=None, report_errors=True, record=True, label=None
                 if run:
                     run.log_step(name, time.time() - t0, ok=error is None)
         print("\n" + "=" * 80 + "\nALL FIGURES COMPLETE — FINAL NUMBERING\n" + "=" * 80)
-        print(MANIFEST.format(la=config.TIFF_LINEART_DPI, mp=config.TIFF_PANEL_DPI, out=config.OUTPUT_DIR))
+        print(MANIFEST.format(la=config.TIFF_LINEART_DPI, mp=config.TIFF_PANEL_DPI, out=config.OUTPUT_DIR, b=config.BASE_YEAR, e=config.END_YEAR))
     finally:
         if run:
             run.finish(ctx, error)

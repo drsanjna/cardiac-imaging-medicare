@@ -1,18 +1,18 @@
 # Study protocol summary
 
-What this repo is building toward: a research paper on cardiac imaging use in Medicare fee-for-service, 2018–2023.
+What this repo is building toward: a research paper on cardiac imaging use in Medicare fee-for-service, 2018–2024.
 Definitions here describe what the code does today; `src/cardiac_imaging/config.py` remains the single source of truth.
 Open decisions live in [PENDING.md](PENDING.md).
 
 ## At a glance
 | | |
 |---|---|
-| Question | How did use of Echo, SPECT, cardiac CTA, cardiac MRI and cardiac PET change in Medicare FFS from 2018 to 2023, nationally and by state, and is state CTA use associated with the density of physicians who bill for CTA? |
+| Question | How did use of Echo, SPECT, cardiac CTA, cardiac MRI and cardiac PET change in Medicare FFS from 2018 to 2024, nationally and by state, and is state CTA use associated with the density of physicians who bill for CTA? |
 | Primary hypothesis | TODO (user): state it, with direction, before further analysis. |
-| Primary outcome | TODO (user): e.g. change in CTA services per 1,000 FFS beneficiaries 2018→2023, or the adjusted density IRR. |
+| Primary outcome | TODO (user): e.g. change in CTA services per 1,000 FFS beneficiaries 2018→2024, or the adjusted density IRR. |
 | Design | Serial cross-sectional (national and state trends) + state-level ecological regression (density models). |
 | Population | Medicare FFS Part B services rendered in the 50 states + DC. Territories and invalid state codes excluded. |
-| Years | 2018–2023 (`BASE_YEAR`–`END_YEAR`); density models use 2023 only. |
+| Years | 2018–2024 (`BASE_YEAR`–`END_YEAR`); density models use 2024 only. 2024 replaced 2023 as the end year on 2026-11-02 (user decision); 2023 results are kept in earlier runs. |
 | Target journal | TODO (user). TIFF settings follow JACC artwork rules, so a JACC-family journal is assumed until confirmed. |
 | Reporting checklist | RECORD (STROBE extension for routinely collected health data). |
 
@@ -20,9 +20,9 @@ Open decisions live in [PENDING.md](PENDING.md).
 | Table | Source | Used for |
 |---|---|---|
 | `partb_provider_service` | CMS Medicare Physician & Other Practitioners — by Provider and Service PUF, one file per year | Numerators (services), provider counts, specialty, RUCA, place of service |
-| `state_ffs_enrollment` | CMS Program Statistics — Original Medicare enrollment by state | State denominators |
+| `state_ffs_enrollment` | CMS Program Statistics — Original Medicare enrollment by state (table AB 14 for 2018 and 2024, AB 2 for 2023; Part A and/or B, person-years). State values equal KFF's re-publication for 2018 and 2023 (NV, SC off by 1); KFF's 2024 vintage is 0.05–0.15% lower in every state, so AB 14 is used (user decision 2026-11-02) | State denominators |
 | `MEDICARE_ENROLLMENT` (config) | CMS Program Statistics — national Original Medicare enrollment | National denominators |
-| `gv_puf` | CMS Medicare Geographic Variation PUF, 2023 | State mean beneficiary age and % female (model covariates) |
+| `gv_puf` | CMS Medicare Geographic Variation PUF, 2024 (file covers 2014–2024) | State mean beneficiary age and % female (model covariates) |
 
 ## Definitions (as coded)
 | Modality | HCPCS | Group |
@@ -37,7 +37,7 @@ Open decisions live in [PENDING.md](PENDING.md).
 | Coronary artery calcium score, CACS (comparator) | 75571 | — |
 
 ICA and TAVR (added 2026-10-24) and CACS (added 2026-11-02) appear only in Figure 1 and in Figures 10–12. It is kept out of the modality definitions, so market
-share, Table 1, the Traditional/Advanced totals and the state summary stay imaging-only. Codes stable 2018–2023; 98–99%
+share, Table 1, the Traditional/Advanced totals and the state summary stay imaging-only. Codes stable 2018–2024; 98–99%
 billed in facilities, so rows are the professional component. PCI codes (92920–92944) are not included.
 **TAVR services ≈ 2 × procedures**: about 49% of TAVR services are billed by cardiology and 49% by cardiac/thoracic
 surgery every year (co-surgeon billing of the same code), and the PUF cannot pair them. Report TAVR as services, or
@@ -57,7 +57,7 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 - **Setting**: `Place_Of_Srvc` F (facility) / O (office).
 
 ## Models (Figures 8, 9, S1, S2)
-- Unit: state (≤ 51). Outcome: 2023 CTA service count. Offset: log state FFS enrollment. Family: negative binomial
+- Unit: state (≤ 51). Outcome: END_YEAR (2024) CTA service count. Offset: log state FFS enrollment. Family: negative binomial
   (NB2), Poisson start values.
 - Exposure: CTA-billing NPIs per 100,000 FFS beneficiaries — all providers (Fig 8), radiology (S1), cardiology (S2).
   Density is in natural units, so the IRR is per 1 additional CTA-billing NPI per 100,000 beneficiaries.
@@ -65,12 +65,12 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
   checked (> 5 flags collinearity).
 - Specialty models keep only states with ≥ 1 specialty CTA biller (logged in `filter_log`).
 - **Sensitivity (post hoc, reviewer R2 circularity):** the same three models with the exposure replaced by all
-  radiologists / cardiologists billing any Part B service in 2023 per 100,000 FFS beneficiaries, so the exposure is not
+  radiologists / cardiologists billing any Part B service in the end year per 100,000 FFS beneficiaries, so the exposure is not
   selected by billing CTA. Reported per +1 per 100,000 and per +1 SD (comparable across exposures). Table
   `density_sensitivity_workforce`. Caveat: measures the whole specialty, not trained CCTA readers.
-  Figures S3 (2023) and S4 (2018) plot this exposure (radiologists + cardiologists) against the CTA rate in Figure S2's
+  Figures S3 (end year) and S4 (2018) plot this exposure (radiologists + cardiologists) against the CTA rate in Figure S2's
   layout; table `workforce_density_by_year`. Two cross-sections, not a test of change within states.
-  Figure S5: change-on-change by state, 2018→2023 (Δ density vs Δ CTA rate, OLS with HC3 SEs, with/without DC and MN).
+  Figure S5: change-on-change by state, 2018→end year (Δ density vs Δ CTA rate, OLS with HC3 SEs, with/without DC and MN).
   Both axes share the FFS denominator, which fell ~11% (median state) as MA grew, so Δ density mostly reflects the
   shrinking denominator (median physician count +3.7%). The count model Δlog CTA ~ Δlog physicians + Δlog FFS removes
   that and is the one to interpret. Tables `workforce_cta_change_by_state`, `workforce_cta_change_models`.
@@ -78,30 +78,35 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 ## Outputs → manuscript
 | Output | Content |
 |---|---|
-| Figure 1 | Volume vs FFS enrollment vs rate, by modality plus ICA and TAVR, 2018–2023 |
+| Figure 1 | Volume vs FFS enrollment vs rate, by modality plus ICA, TAVR and CACS, 2018–2024 |
 | Figure 2 | Modality share by rural/urban × office/facility |
-| Figures 3–7 | State rate maps 2018 / 2023 / change, one per modality |
+| Figures 3–7 | State rate maps 2018 / 2024 / change, one per modality |
 | Figure 8 | All-provider density vs CTA rate, NB fits |
 | Figure 9 | Forest plot of density IRRs, unadjusted vs adjusted |
-| Figure 10 | Invasive coronary angiography state rate maps 2018 / 2023 / change |
-| Figure 11 | TAVR state rate maps 2018 / 2023 / change |
-| Figure 12 | CACS state rate maps 2018 / 2023 / change (12 states without 2018 rows, 3 without 2023 rows) |
+| Figure 10 | Invasive coronary angiography state rate maps 2018 / 2024 / change |
+| Figure 11 | TAVR state rate maps 2018 / 2024 / change |
+| Figure 12 | CACS state rate maps 2018 / 2024 / change (states without rows in a year are grey and named in the footnote) |
 | Table 1 | Specialty distribution (Cardiology / Radiology / Other) by modality |
 | Figures S1–S2 | Radiologist and cardiologist density models |
-| Figures S3–S4 | Radiologist + cardiologist (any Part B) density vs CTA rate, 2023 and 2018 (post hoc) |
-| Figure S5 | Change in that density vs change in CTA rate by state, 2018→2023 (post hoc) |
-| Composite | 2023 state rates, all modalities (candidate Central Illustration) |
+| Figures S3–S4 | Radiologist + cardiologist (any Part B) density vs CTA rate, 2024 and 2018 (post hoc) |
+| Figure S5 | Change in that density vs change in CTA rate by state, 2018→2024 (post hoc) |
+| Composite | 2024 state rates, all modalities (candidate Central Illustration) |
 
 ## Known limitations — check every claim against these
 - **Small-cell suppression**: the PUF omits provider × HCPCS × place-of-service rows with < 11 beneficiaries. Counts are
   undercounts, most in low-volume (often rural, small) states, and NPIs with few CTAs are invisible to the density measure.
 - **Geography mismatch**: services are assigned to the rendering provider's state, enrollment to the beneficiary's state
   of residence. Cross-border care (e.g. DC, states served by neighbouring academic centres) distorts state rates.
-- **FFS only, shrinking denominator**: national FFS enrollment fell from 38.0 M (2018) to 33.7 M (2023) as Medicare
+- **FFS only, shrinking denominator**: national FFS enrollment fell from 38.0 M (2018) to 33.2 M (2024) as Medicare
   Advantage grew, unevenly by state. A rate change mixes practice change with a changing FFS population.
 - **Services, not patients**: facility rows carry only the professional (interpretation) component; `Tot_Srvcs` counts
   services, and `Tot_Benes` is not unique across providers. Never describe results as patients or studies performed.
 - **2020 is a COVID discontinuity**: trend statements need a sensitivity analysis excluding 2020.
+- **2024 data vintage**: the 2024 claims file is CMS release R26 (May 2026); 2018–2023 are the files downloaded in
+  February 2026. CMS re-released 2013–2022 in November 2025 (R25); if the 2018 file predates that, small revisions are
+  possible — check the 2018 row count against CMS before submission. From 2024 CMS excludes Part B
+  immunosuppressive-drug-only (PBID) beneficiaries from its Part B counts; the Part A and/or B denominator used here is
+  not affected.
 - **CPT code changes inside the window**: every modality's code set must be audited year by year for added or deleted
   codes. PET: CPT 2020 split PET perfusion into PET only (78491/78492) and PET with concurrent CT (78430/78431); both
   are counted since 2026-10-24, so the series is continuous. This was a correction of a coding error found while

@@ -39,11 +39,11 @@ def report_claims(con):
         print(f"  {col}: {types.get(col, 'MISSING')}")
 
 
-def load_state_enrollment(con, xlsx_2018, xlsx_2023):
-    """Parse the CMS state enrollment workbooks and store one clean (year, state, ffs) table."""
+def load_state_enrollment(con, workbooks):
+    """Parse the CMS state enrollment workbooks ({year: path}) and store one clean (year, state, ffs) table."""
     df = pd.concat([
-        enrollment.parse_enrollment_2018(pd.read_excel(xlsx_2018, header=None, skiprows=4)),
-        enrollment.parse_enrollment_2023(pd.read_excel(xlsx_2023, header=None, skiprows=4)),
+        enrollment.parse_enrollment(pd.read_excel(path, sheet_name=enrollment.enrollment_sheet(path), header=None), year)
+        for year, path in sorted(workbooks.items())
     ], ignore_index=True)
     con.register('_enr', df)
     con.execute(f"CREATE OR REPLACE TABLE {config.ENROLLMENT_TABLE} AS SELECT * FROM _enr")
