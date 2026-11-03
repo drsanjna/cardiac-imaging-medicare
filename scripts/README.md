@@ -70,6 +70,7 @@ flowchart LR
 Every function and class in this directory, including internal helpers.
 
 **`build_database.py`**
+- `enrollment_workbooks(folder)` — {year: path} of every 'original medicare enrollment <year>.xlsx' in `folder`; BASE_YEAR and END_YEAR are required.
 - `main()` — Parse arguments, build/refresh cms.duckdb tables, and validate them against the data model.
 
 **`check_docs.py`**

@@ -5,10 +5,13 @@ One script sets up everything; it is safe to re-run and never deletes anything.
 ## 1. Get the data onto the new laptop (either option)
 
 - **Copy from your first laptop (fastest):** AirDrop or USB the folder `~/Downloads/cms_parquet` (2.1 GB) plus
-  `original medicare enrollment 2018.xlsx`, `original medicare enrollment 2023.xlsx` and the
+  `original medicare enrollment 2018.xlsx`, `… 2023.xlsx`, `… 2024.xlsx` and the
   `Medicare_GV_by_National_State_County_….csv` file into `~/Downloads` on the new laptop.
-- **Or download from CMS:** the six yearly *Medicare Physician & Other Practitioners — by Provider and Service* CSVs
-  (2018–2023), the two *Original Medicare enrollment by state* workbooks, and the *Medicare Geographic Variation — by
+- **Or download from CMS:** the seven yearly *Medicare Physician & Other Practitioners — by Provider and Service* CSVs
+  (2018–2024; the 2024 file is published as `PHY_R26_P05_V10_D24_Prov_Svc.csv`, rename it to
+  `Medicare_Physician_Other_Practitioners_by_Provider_and_Service_2024.csv`), the *Original Medicare enrollment by state*
+  workbooks (2018 and 2024 are the `MDCR ENROLL AB 14` table from CMS Program Statistics, 2023 is `AB 2`; name each
+  `original medicare enrollment <year>.xlsx`), and the *Medicare Geographic Variation — by
   National, State & County* CSV, into `~/Downloads` (or one folder below it).
 
 ## 2. Run the setup script

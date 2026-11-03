@@ -70,8 +70,8 @@ GV_TABLE         = 'gv_puf'                  # Geographic Variation PUF, raw (al
 # STUDY WINDOW
 # ==========================================================================
 BASE_YEAR = 2018
-END_YEAR  = 2023
-GV_YEAR   = 2023
+END_YEAR  = 2024   # 2024 added by the user 2026-11-02 (replaces 2023 as the end year)
+GV_YEAR   = 2024
 CTA_CODE  = '75574'
 
 # TIFF export settings (JACC: color/grayscale >=300 DPI, line art >=1200 DPI)
@@ -142,10 +142,14 @@ COMPARATORS = {ICA_LABEL: ICA_CODES, TAVR_LABEL: TAVR_CODES, CACS_LABEL: CACS_CO
 
 # ==========================================================================
 # ENROLLMENT: CMS Program Statistics — Original Medicare Enrollment
+# National Part A and/or Part B Original Medicare enrollees (person-years, 50 states + DC), 'United States' row of
+# table MDCR ENROLL AB 14 (2018, 2024) / AB 2 (2023). State values match KFF's re-publication to the person
+# (2018: all 51 states; 2023: NV and SC differ by 1); KFF's 2024 vintage is 0.1% lower in every state.
 # ==========================================================================
 MEDICARE_ENROLLMENT = {
     2018: 37_994_241, 2019: 37_898_471, 2020: 37_094_414,
     2021: 35_681_342, 2022: 34_596_702, 2023: 33_694_472,
+    2024: 33_229_645,
 }
 
 # ==========================================================================

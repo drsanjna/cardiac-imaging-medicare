@@ -41,7 +41,7 @@ flowchart LR
 
 | File | What it does |
 |---|---|
-| [`change.py`](change.py) | Change-on-change, 2018 → 2023: did states that gained radiologists/cardiologists also gain CTA use? |
+| [`change.py`](change.py) | Change-on-change, BASE_YEAR → END_YEAR: did states that gained radiologists/cardiologists also gain CTA use? |
 | [`nb_models.py`](nb_models.py) | Multivariable negative binomial (NB2) models of state CTA counts vs physician density, adjusted for age and sex. |
 | [`rates.py`](rates.py) | Utilization rates per 1,000 FFS beneficiaries: national decomposition, market share, state rates and deltas. |
 | [`tables.py`](tables.py) | Table 1: provider specialty distribution by modality — also the source of the forest-plot share labels. |
@@ -74,7 +74,7 @@ Every function and class in this directory, including internal helpers.
 - `market_share_by_segment(df_agg)` — {segment: year × modality % share} for the four rural/urban × office/facility segments (Figure 2 data).
 - `national_market_share(trend)` — Year × modality % share nationally, plus Traditional and Advanced totals.
 - `compute_state_rates(df_detail_sub, state_ffs_lookup)` — State × modality services and rate per 1,000 FFS beneficiaries.
-- `rate_deltas(rates_end, rates_base, missing_as_zero)` — Outer-join end-year and base-year state rates; rate_delta = end − base.
+- `rate_deltas(rates_end, rates_base, missing_as_zero, y1, y0)` — Outer-join end-year and base-year state rates (columns rate_per_1000_<y1>, rate_per_1000_<y0>); rate_delta = end − base.
 - `state_summary_table(state_rates)` — State × modality rate table with an 'All Cardiac' total, sorted descending.
 
 **`tables.py`**

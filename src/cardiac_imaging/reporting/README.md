@@ -26,7 +26,9 @@ flowchart LR
   n_pipeline_py["pipeline.py"]
   n_scripts_["scripts/"]
   n_audit_py --> n_run_store_py
+  n_config_py --> n_gallery_py
   n_config_py --> n_index_py
+  n_config_py --> n_insights_py
   n_config_py --> n_publish_py
   n_config_py --> n_run_store_py
   n_config_py --> n_sync_py

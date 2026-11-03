@@ -1,4 +1,4 @@
-# Cardiac Imaging Utilization in Medicare FFS (2018–2023)
+# Cardiac Imaging Utilization in Medicare FFS (2018–2024)
 
 > State and national trends in Echo, SPECT, cardiac CTA, MRI and PET among Medicare fee-for-service beneficiaries, plus negative binomial models of CTA use vs imaging-physician density. Produces Figures 1–9, S1–S2 and Table 1.
 
@@ -91,7 +91,7 @@ Each run gets its own folder in `~/Downloads/cms_runs/` (linked as `runs/` here)
 
 | Directory | What it is |
 |---|---|
-| [`src/cardiac_imaging/`](src/cardiac_imaging/README.md) | Cardiac imaging utilization in Medicare FFS, 2018–2023: data, models, figures. |
+| [`src/cardiac_imaging/`](src/cardiac_imaging/README.md) | Cardiac imaging utilization in Medicare FFS, 2018–2024: data, models, figures. |
 | [`src/cardiac_imaging/analysis/`](src/cardiac_imaging/analysis/README.md) | Analysis: utilization rates, market share, Table 1, and negative binomial density models. |
 | [`src/cardiac_imaging/app/`](src/cardiac_imaging/app/README.md) | Local app (python -m cardiac_imaging.app): serves the run history with one-click restore/undo and chart discussions. |
 | [`src/cardiac_imaging/db/`](src/cardiac_imaging/db/README.md) | Database layer: open the local DuckDB file (read-only for analysis) and build its tables from Parquet + reference files. |

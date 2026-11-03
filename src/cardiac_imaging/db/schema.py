@@ -38,13 +38,13 @@ CLAIMS_COLUMNS = [
 ]
 
 ENROLLMENT_COLUMNS = [
-    ('year', 'BIGINT', 'Enrollment year (2018 or 2023).', True),
+    ('year', 'BIGINT', 'Enrollment year: one per workbook found (2018, 2023, 2024); the analysis uses BASE_YEAR and END_YEAR.', True),
     ('state', 'VARCHAR', 'State postal code (50 states + DC; territories removed when the workbook is parsed).', True),
     ('ffs', 'BIGINT', 'Original Medicare (fee-for-service) enrollees — the denominator of every state rate.', True),
 ]
 
 GV_COLUMNS = [   # only the columns the analysis reads; the table keeps all ~246 raw columns as VARCHAR
-    ('YEAR', 'VARCHAR', 'Data year; the models use config.GV_YEAR (2023).', True),
+    ('YEAR', 'VARCHAR', 'Data year; the models use config.GV_YEAR (= END_YEAR).', True),
     ('BENE_GEO_LVL', 'VARCHAR', "Geography level (National / State / County); the analysis keeps 'State'.", True),
     ('BENE_GEO_DESC', 'VARCHAR', 'Geography name or postal code; resolved to a state code.', True),
     ('BENE_GEO_CD', 'VARCHAR', 'Geography FIPS code; fallback for resolving the state.', True),
@@ -56,15 +56,15 @@ GV_COLUMNS = [   # only the columns the analysis reads; the table keeps all ~246
 TABLES = [
     dict(name='partb_provider_service', kind='VIEW', columns=CLAIMS_COLUMNS, all_columns_listed=True,
          grain='One row per provider (NPI) × HCPCS code × place of service × year.',
-         source='CMS Medicare Physician & Other Practitioners — by Provider and Service, 2018–2023 (public use file).',
+         source='CMS Medicare Physician & Other Practitioners — by Provider and Service, 2018–2024 (public use file).',
          built_by='scripts/build_database.py → db.build.build_claims_table (view over ~/Downloads/cms_parquet/YYYY__*.parquet, '
                   'written by scripts/convert_cms_to_parquet.py).',
          size='58,853,705 rows (9.4–10.1 M per year).'),
     dict(name='state_ffs_enrollment', kind='TABLE', columns=ENROLLMENT_COLUMNS, all_columns_listed=True,
          grain='One row per state × year.',
-         source="CMS Original Medicare enrollment workbooks ('original medicare enrollment 2018.xlsx' / '… 2023.xlsx').",
+         source="CMS Original Medicare enrollment workbooks ('original medicare enrollment <year>.xlsx': AB 14 for 2018 and 2024, AB 2 for 2023).",
          built_by='scripts/build_database.py → db.build.load_state_enrollment (parsed by loaders.enrollment).',
-         size='102 rows (51 per year).'),
+         size='153 rows (51 per year).'),
     dict(name='gv_puf', kind='TABLE', columns=GV_COLUMNS, all_columns_listed=False,
          grain='One row per geography × age group × year (raw file, every value VARCHAR).',
          source='CMS Medicare Geographic Variation public use file (National, State & County).',
@@ -75,7 +75,7 @@ TABLES = [
 RELATIONSHIPS = [  # (from table, to table, join keys, meaning)
     ('partb_provider_service', 'state_ffs_enrollment', 'Rndrng_Prvdr_State_Abrvtn = state, year',
      'Services per state divided by FFS enrollees → rate per 1,000 beneficiaries (Figures 1, 3–8).'),
-    ('partb_provider_service', 'gv_puf', 'Rndrng_Prvdr_State_Abrvtn = resolved state, year = 2023',
+    ('partb_provider_service', 'gv_puf', 'Rndrng_Prvdr_State_Abrvtn = resolved state, year = GV_YEAR',
      'State mean age and % female join the CTA density models as covariates (Figures 8, 9, S1, S2).'),
 ]
 

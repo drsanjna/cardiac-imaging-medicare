@@ -64,14 +64,14 @@ Every function and class in this directory, including internal helpers.
 
 **`synthetic.py`**
 - `claims_frame(seed)` — Synthetic Physician & Other Practitioners rows covering every filter the pipeline applies.
-- `enrollment_frame()` — FFS enrollment for 50 states + DC in 2018 and 2023 (no territories, no AA).
+- `enrollment_frame()` — FFS enrollment for 50 states + DC in the base and end years (no territories, no AA).
 - `gv_frame()` — Raw GV PUF rows (all text) with national, territory, age-band, name/postal/FIPS-only and suppressed cases.
 - `build(path, claims)` — Write the three tables to a DuckDB file at `path` with the data model's column types; returns the path.
 
 **`test_analysis.py`**
 - `_trend()` *(internal)* — Year × modality totals with simple known numbers.
 - `test_decompose_rate_per_1000()` — Rate = services / national FFS enrollment × 1000.
-- `test_change_summary_matches_hand_calculation()` — 2018→2023 % change computed per modality; enrollment change identical for all.
+- `test_change_summary_matches_hand_calculation()` — BASE→END % change computed per modality; enrollment change identical for all.
 - `test_change_summary_adds_ica_after_imaging_modalities()` — With ICA in the trend, it is the last row of the change summary; imaging rows are unchanged.
 - `test_rate_deltas_can_keep_missing_states_missing()` — A state absent in the base year gets no delta (not end − 0) when missing_as_zero=False.
 - `test_print_change_summary_format(capsys)` — Console table keeps its original layout.
@@ -177,9 +177,11 @@ Every function and class in this directory, including internal helpers.
 - `test_load_comparators_and_trend(con)` — ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
-- `_raw_2023()` *(internal)* — A tiny raw 2023 enrollment sheet with junk rows and a territory.
-- `test_parse_enrollment_2023()` — Keeps states, drops header/total/notes rows and territories, converts FFS to int.
-- `test_parse_enrollment_2018_with_extra_columns()` — Works when the 2018 sheet has more columns than named.
+- `_raw_ab2()` *(internal)* — A tiny raw AB 2 sheet (2023 layout): preamble, header row, junk rows and a territory; FFS in column 4.
+- `test_parse_enrollment_ab2_layout()` — Finds the FFS column by header; keeps states, drops preamble/total/notes rows and territories, converts FFS to int.
+- `test_parse_enrollment_ab14_layout_with_extra_columns()` — AB 14 layout (2018/2024): 'Total Original Medicare Enrollees' in column 1, more columns than needed, 'All Areas' row.
+- `test_parse_enrollment_without_known_header_fails()` — A sheet without either known FFS header is refused instead of guessing a column.
+- `test_enrollment_sheet_prefers_ab14(tmp_path)` — In a multi-sheet CMS workbook the AB 14 sheet is chosen; a single-sheet workbook uses its only sheet.
 - `test_load_state_ffs(con)` — Returns {state: ffs} for a year and fails for a missing year.
 - `test_gv_demographics_resolution_and_cleaning(con)` — States resolved from name, postal code or FIPS; fractions → %; territories, age bands and other years dropped.
 - `test_gv_missing_year(con)` — Asking for a year not in the file fails with the available years.

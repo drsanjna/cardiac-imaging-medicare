@@ -41,7 +41,7 @@ flowchart LR
 | [`claims.py`](claims.py) | Claims-level cardiac imaging data: specialty guard, procedure-level detail, segment aggregates. |
 | [`demographics.py`](demographics.py) | State mean age and % female from the CMS Geographic Variation PUF (model covariates). |
 | [`enrollment.py`](enrollment.py) | State-level Original Medicare (FFS) enrollment: parse CMS workbooks at upload, read back as {state: ffs}. |
-| [`providers.py`](providers.py) | Physician density by state (all / radiology / cardiology), 2023: CTA billers (main models) and the whole |
+| [`providers.py`](providers.py) | Physician density by state (all / radiology / cardiology), END_YEAR: CTA billers (main models) and the whole |
 
 ## Functions
 
@@ -62,12 +62,13 @@ Every function and class in this directory, including internal helpers.
 
 **`enrollment.py`**
 - `_finish(df, ffs_col, year)` *(internal)* — Drop note/total rows, map state names to codes, drop territories, return (year, state, ffs).
-- `parse_enrollment_2023(raw)` — Raw 2023 CMS workbook (header=None, skiprows=4) → DataFrame(year, state, ffs).
-- `parse_enrollment_2018(raw)` — Raw 2018 CMS workbook (header=None, skiprows=4) → DataFrame(year, state, ffs).
+- `find_ffs_column(raw)` — Index of the FFS column: the first cell in the top rows whose text is one of FFS_HEADERS.
+- `parse_enrollment(raw, year)` — Raw CMS enrollment sheet (read with header=None) → DataFrame(year, state, ffs).
+- `enrollment_sheet(path)` — Sheet to read in an enrollment workbook: the AB 14 sheet if there is one, else AB 2, else the first sheet.
 - `load_state_ffs(con, year)` — {state: FFS enrollment} for one year, from ENROLLMENT_TABLE.
 
 **`providers.py`**
-- `_specialty_npis(con, types, count_col)` *(internal)* — Unique CTA-billing NPIs per state for one specialty group, 2023.
+- `_specialty_npis(con, types, count_col)` *(internal)* — Unique CTA-billing NPIs per state for one specialty group, END_YEAR.
 - `_with_enrollment(df, state_ffs, label)` *(internal)* — Attach FFS enrollment to a state frame and log states dropped for lacking it.
 - `_specialty_frame(vol, npis, count_col, density_col, state_ffs, demo, label)` *(internal)* — State CTA volume + specialty NPI density + demographics; keeps states with ≥1 specialty biller.
 - `load_cta_density_frames(con, state_ffs, demo)` — State-level CTA volume + NPI density + demographics, keyed 'all', 'rad', 'card'.

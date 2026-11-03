@@ -12,7 +12,7 @@ from cardiac_imaging.style import PROC_ORDER
 def _trend():
     """Year × modality totals with simple known numbers."""
     rows = []
-    for y in range(2018, 2024):
+    for y in range(config.BASE_YEAR, config.END_YEAR + 1):
         for i, p in enumerate(PROC_ORDER):
             rows.append(dict(year=y, procedure_category=p, total_services=1000.0 * (i + 1) * (1 + 0.1 * (y - 2018))))
     return pd.DataFrame(rows)
@@ -27,20 +27,22 @@ def test_decompose_rate_per_1000():
 
 
 def test_change_summary_matches_hand_calculation():
-    """2018→2023 % change computed per modality; enrollment change identical for all."""
+    """BASE→END % change computed per modality; enrollment change identical for all."""
     cs = rates.change_summary(rates.decompose(_trend()))
     assert list(cs.index) == PROC_ORDER
-    assert cs.loc['Echo', 'volume_pct'] == pytest.approx(50.0)
+    assert cs.loc['Echo', 'volume_pct'] == pytest.approx(10.0 * (config.END_YEAR - config.BASE_YEAR))   # _trend grows 10%/yr
     enr = config.MEDICARE_ENROLLMENT
     assert cs['enrollment_pct'].nunique() == 1
-    assert cs.loc['SPECT', 'enrollment_pct'] == pytest.approx((enr[2023] - enr[2018]) / enr[2018] * 100)
-    expected_rate = ((1.5 / enr[2023]) / (1 / enr[2018]) - 1) * 100
+    b, e = config.BASE_YEAR, config.END_YEAR
+    assert cs.loc['SPECT', 'enrollment_pct'] == pytest.approx((enr[e] - enr[b]) / enr[b] * 100)
+    growth = 1 + 0.1 * (e - b)                                       # _trend grows 10%/yr
+    expected_rate = ((growth / enr[e]) / (1 / enr[b]) - 1) * 100
     assert cs.loc['Cardiac PET', 'rate_pct'] == pytest.approx(expected_rate)
 
 
 def test_change_summary_adds_ica_after_imaging_modalities():
     """With ICA in the trend, it is the last row of the change summary; imaging rows are unchanged."""
-    ica = pd.DataFrame([dict(year=y, procedure_category=config.ICA_LABEL, total_services=500.0) for y in range(2018, 2024)])
+    ica = pd.DataFrame([dict(year=y, procedure_category=config.ICA_LABEL, total_services=500.0) for y in range(config.BASE_YEAR, config.END_YEAR + 1)])
     base = rates.change_summary(rates.decompose(_trend()))
     cs = rates.change_summary(rates.decompose(pd.concat([_trend(), ica], ignore_index=True)))
     assert list(cs.index) == PROC_ORDER + [config.ICA_LABEL]
@@ -61,7 +63,8 @@ def test_print_change_summary_format(capsys):
     """Console table keeps its original layout."""
     rates.print_change_summary(rates.decompose(_trend()))
     out = capsys.readouterr().out
-    assert '2018 → 2023 Change Summary' in out and 'Cardiac CTA' in out and '+50.0%' in out
+    assert f'{config.BASE_YEAR} → {config.END_YEAR} Change Summary' in out and 'Cardiac CTA' in out
+    assert f'+{10.0 * (config.END_YEAR - config.BASE_YEAR):.1f}%' in out
 
 
 def test_market_shares_sum_to_100(con):
@@ -224,4 +227,5 @@ def test_comparator_map_greys_every_panel_without_data(monkeypatch):
     grey = [t for t in fig.data if t.colorscale and t.colorscale[0][1] == choropleths.NO_DATA_GREY]
     assert len(grey) == 3                                       # one grey layer per panel
     assert 'ME' in grey[1].locations and 'AK' in grey[0].locations and 'AL' not in grey[2].locations
-    assert 'No 2018 rows for' in fig.layout.annotations[-1].text and 'No 2023 rows for' in fig.layout.annotations[-1].text
+    note = fig.layout.annotations[-1].text
+    assert f'No {config.BASE_YEAR} rows for' in note and f'No {config.END_YEAR} rows for' in note

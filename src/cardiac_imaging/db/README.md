@@ -73,24 +73,24 @@ erDiagram
     VARCHAR BENE_FEML_PCT
   }
   partb_provider_service }o--|| state_ffs_enrollment : "Rndrng_Prvdr_State_Abrvtn = state, year"
-  partb_provider_service }o--|| gv_puf : "Rndrng_Prvdr_State_Abrvtn = resolved state, year = 2023"
+  partb_provider_service }o--|| gv_puf : "Rndrng_Prvdr_State_Abrvtn = resolved state, year = GV_YEAR"
 ```
 
 **Joins**
 
 - `partb_provider_service` → `state_ffs_enrollment` on `Rndrng_Prvdr_State_Abrvtn = state, year`: Services per state divided by FFS enrollees → rate per 1,000 beneficiaries (Figures 1, 3–8).
-- `partb_provider_service` → `gv_puf` on `Rndrng_Prvdr_State_Abrvtn = resolved state, year = 2023`: State mean age and % female join the CTA density models as covariates (Figures 8, 9, S1, S2).
+- `partb_provider_service` → `gv_puf` on `Rndrng_Prvdr_State_Abrvtn = resolved state, year = GV_YEAR`: State mean age and % female join the CTA density models as covariates (Figures 8, 9, S1, S2).
 
 ### `partb_provider_service` (view)
 
 - **One row =** One row per provider (NPI) × HCPCS code × place of service × year.
-- **Source:** CMS Medicare Physician & Other Practitioners — by Provider and Service, 2018–2023 (public use file).
+- **Source:** CMS Medicare Physician & Other Practitioners — by Provider and Service, 2018–2024 (public use file).
 - **Built by:** scripts/build_database.py → db.build.build_claims_table (view over ~/Downloads/cms_parquet/YYYY__*.parquet, written by scripts/convert_cms_to_parquet.py).
 - **Size:** 58,853,705 rows (9.4–10.1 M per year).
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `year` | INTEGER | Calendar year of service; taken from the YYYY__ prefix of the Parquet file name. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 27 more |
+| `year` | INTEGER | Calendar year of service; taken from the YYYY__ prefix of the Parquet file name. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 28 more |
 | `Rndrng_NPI` | VARCHAR | National Provider Identifier of the rendering (billing) clinician. Unique NPIs = physicians. | `db/build.py: report_claims`<br>`loaders/claims.py: aggregate_segments`<br>`loaders/claims.py: load_comparator_detail`<br>`loaders/claims.py: load_detail`<br>`loaders/providers.py: _specialty_npis`<br>…and 5 more |
 | `Rndrng_Prvdr_Last_Org_Name` | VARCHAR | Provider last name or organization name. | — |
 | `Rndrng_Prvdr_First_Name` | VARCHAR | Provider first name. | — |
@@ -123,15 +123,15 @@ erDiagram
 ### `state_ffs_enrollment` (table)
 
 - **One row =** One row per state × year.
-- **Source:** CMS Original Medicare enrollment workbooks ('original medicare enrollment 2018.xlsx' / '… 2023.xlsx').
+- **Source:** CMS Original Medicare enrollment workbooks ('original medicare enrollment <year>.xlsx': AB 14 for 2018 and 2024, AB 2 for 2023).
 - **Built by:** scripts/build_database.py → db.build.load_state_enrollment (parsed by loaders.enrollment).
-- **Size:** 102 rows (51 per year).
+- **Size:** 153 rows (51 per year).
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `year` | BIGINT | Enrollment year (2018 or 2023). | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 27 more |
-| `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/change.py: change_frame`<br>`analysis/change.py: fit_change_models`<br>`analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>`analysis/rates.py: rate_deltas`<br>…and 28 more |
-| `ffs` | BIGINT | Original Medicare (fee-for-service) enrollees — the denominator of every state rate. | `db/build.py: load_state_enrollment`<br>`loaders/enrollment.py: _finish`<br>`loaders/enrollment.py: load_state_ffs`<br>`loaders/enrollment.py: parse_enrollment_2018`<br>`loaders/enrollment.py: parse_enrollment_2023` |
+| `year` | BIGINT | Enrollment year: one per workbook found (2018, 2023, 2024); the analysis uses BASE_YEAR and END_YEAR. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 28 more |
+| `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/change.py: change_frame`<br>`analysis/change.py: fit_change_models`<br>`analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>`analysis/rates.py: rate_deltas`<br>…and 27 more |
+| `ffs` | BIGINT | Original Medicare (fee-for-service) enrollees — the denominator of every state rate. | `db/build.py: load_state_enrollment`<br>`loaders/enrollment.py: _finish`<br>`loaders/enrollment.py: load_state_ffs`<br>`loaders/enrollment.py: parse_enrollment` |
 
 ### `gv_puf` (table)
 
@@ -144,7 +144,7 @@ Only the columns the analysis reads are listed; every other raw column is kept a
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `YEAR` | VARCHAR | Data year; the models use config.GV_YEAR (2023). | `loaders/demographics.py: load_gv_demographics` |
+| `YEAR` | VARCHAR | Data year; the models use config.GV_YEAR (= END_YEAR). | `loaders/demographics.py: load_gv_demographics` |
 | `BENE_GEO_LVL` | VARCHAR | Geography level (National / State / County); the analysis keeps 'State'. | `loaders/demographics.py: load_gv_demographics` |
 | `BENE_GEO_DESC` | VARCHAR | Geography name or postal code; resolved to a state code. | `loaders/demographics.py: load_gv_demographics` |
 | `BENE_GEO_CD` | VARCHAR | Geography FIPS code; fallback for resolving the state. | `loaders/demographics.py: load_gv_demographics` |
@@ -159,7 +159,7 @@ Every function and class in this directory, including internal helpers.
 **`build.py`**
 - `build_claims_table(con, parquet_dir, materialize)` — (Re)create CLAIMS_TABLE over YYYY__*.parquet with `year` from the file name; prints rows per year.
 - `report_claims(con)` — Rows per year and the types of the identifier columns (must be VARCHAR).
-- `load_state_enrollment(con, xlsx_2018, xlsx_2023)` — Parse the CMS state enrollment workbooks and store one clean (year, state, ffs) table.
+- `load_state_enrollment(con, workbooks)` — Parse the CMS state enrollment workbooks ({year: path}) and store one clean (year, state, ffs) table.
 - `load_gv_puf(con, csv_glob)` — Load the Geographic Variation PUF as all-VARCHAR (cleaning happens in loaders.demographics).
 
 **`connection.py`**

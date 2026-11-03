@@ -9,14 +9,15 @@ from cardiac_imaging.db import schema
 STATES = sorted(set(config.STATE_ABBR_MAP.values()))          # 50 + DC
 NAME = {v: k for k, v in config.STATE_ABBR_MAP.items()}
 ABBR2FIPS = {v: k for k, v in config.FIPS2ABBR.items()}
-NO_RAD = {'AK', 'SD'}                  # states with no radiologist CTA reader in 2023 (exercises the ≥1-biller filter)
-NO_CARD = {'DE', 'WY'}                 # states with no cardiologist CTA reader in 2023
+NO_RAD = {'AK', 'SD'}                  # states with no radiologist CTA reader in the end year (exercises the ≥1-biller filter)
+NO_CARD = {'DE', 'WY'}                 # states with no cardiologist CTA reader in the end year
 EXTRA_AREAS = ['PR', 'AA']             # territory (excluded) and military code (passes the filter, has no enrollment)
 CODES = {'Echo': '93306', 'SPECT': '78452', 'Cardiac CTA': '75574', 'Cardiac MRI': '75561', 'Cardiac PET': '78492',
          'ICA': '93458', 'TAVR': '33361', 'CACS': '75571'}   # comparator procedures (config.COMPARATORS)
-NO_CACS_2023 = {'ME'}            # CACS rows missing in 2023 (exercises grey no-data panels)
+NO_CACS_END = {'ME'}             # CACS rows missing in the end year (exercises grey no-data panels)
 NO_TAVR_2018 = {'VT'}            # TAVR rows only from 2019 (exercises blank-state handling on the map)
-YEARS = list(range(2018, 2024))
+BASE, END = config.BASE_YEAR, config.END_YEAR
+YEARS = list(range(BASE, END + 1))
 
 
 def claims_frame(seed=7):
@@ -41,7 +42,7 @@ def claims_frame(seed=7):
                 for mod in mods:
                     if mod == 'TAVR' and year == 2018 and st in NO_TAVR_2018:
                         continue
-                    if mod == 'CACS' and year == 2023 and st in NO_CACS_2023:
+                    if mod == 'CACS' and year == END and st in NO_CACS_END:
                         continue
                     base = {'Echo': 400, 'SPECT': 120, 'Cardiac CTA': 8 * density * growth, 'Cardiac MRI': 5 * growth, 'Cardiac PET': 15,
                             'ICA': 60 * (1 - 0.04 * (year - 2018)), 'TAVR': 12 * growth, 'CACS': 9 * growth}[mod]
@@ -51,31 +52,31 @@ def claims_frame(seed=7):
                                  'Rndrng_Prvdr_State_FIPS': ABBR2FIPS.get(st, '72'), 'Rndrng_Prvdr_Zip5': f'0{npi % 10000:04d}',
                                  'HCPCS_Cd': CODES[mod], 'Place_Of_Srvc': 'F' if npi % 3 else 'O', 'Tot_Srvcs': srv,
                                  'Tot_Bene_Day_Srvcs': int(srv * 0.9), 'Tot_Benes': int(srv * 0.8), 'Rndrng_Prvdr_Ent_Cd': 'I'})
-            rows.append({**{c: None for c in cols}, 'year': 2023, 'Rndrng_NPI': str(npi), 'Rndrng_Prvdr_Type': ptype,
+            rows.append({**{c: None for c in cols}, 'year': END, 'Rndrng_NPI': str(npi), 'Rndrng_Prvdr_Type': ptype,
                          'Rndrng_Prvdr_State_Abrvtn': st, 'Rndrng_Prvdr_Cntry': 'US', 'HCPCS_Cd': '99213', 'Place_Of_Srvc': 'O',
                          'Tot_Srvcs': 500.0, 'Tot_Bene_Day_Srvcs': 400, 'Tot_Benes': 300})   # non-cardiac row
     return pd.DataFrame(rows, columns=cols)
 
 
 def enrollment_frame():
-    """FFS enrollment for 50 states + DC in 2018 and 2023 (no territories, no AA)."""
-    return pd.DataFrame([dict(year=y, state=st, ffs=200_000 + 37_000 * i + (5_000 if y == 2018 else 0))
-                         for y in (2018, 2023) for i, st in enumerate(STATES)])
+    """FFS enrollment for 50 states + DC in the base and end years (no territories, no AA)."""
+    return pd.DataFrame([dict(year=y, state=st, ffs=200_000 + 37_000 * i + (5_000 if y == BASE else 0))
+                         for y in (BASE, END) for i, st in enumerate(STATES)])
 
 
 def gv_frame():
     """Raw GV PUF rows (all text) with national, territory, age-band, name/postal/FIPS-only and suppressed cases."""
-    rows = [dict(YEAR='2023', BENE_GEO_LVL='National', BENE_GEO_DESC='National', BENE_GEO_CD='', BENE_AGE_LVL='All',
+    rows = [dict(YEAR=str(END), BENE_GEO_LVL='National', BENE_GEO_DESC='National', BENE_GEO_CD='', BENE_AGE_LVL='All',
                  BENE_AVG_AGE='72.0', BENE_FEML_PCT='0.55', EXTRA_COL='x')]
     for i, st in enumerate(STATES):
         desc = NAME[st] if i % 3 == 0 else (st if i % 3 == 1 else '')
-        for year in ('2018', '2022', '2023'):   # 2018 feeds Figure S4
+        for year in (str(BASE), '2022', str(END)):   # the base year feeds Figure S4
             rows.append(dict(YEAR=year, BENE_GEO_LVL='State', BENE_GEO_DESC=desc, BENE_GEO_CD=f'{ABBR2FIPS[st]}.0',
                              BENE_AGE_LVL='All', BENE_AVG_AGE=f'{70 + (i % 9) * 0.4:.1f}', BENE_FEML_PCT=f'{0.50 + (i % 7) * 0.01:.2f}',
                              EXTRA_COL='x'))
-        rows.append(dict(YEAR='2023', BENE_GEO_LVL='State', BENE_GEO_DESC=desc, BENE_GEO_CD=ABBR2FIPS[st], BENE_AGE_LVL='<65',
+        rows.append(dict(YEAR=str(END), BENE_GEO_LVL='State', BENE_GEO_DESC=desc, BENE_GEO_CD=ABBR2FIPS[st], BENE_AGE_LVL='<65',
                          BENE_AVG_AGE='*', BENE_FEML_PCT='*', EXTRA_COL='x'))
-    rows.append(dict(YEAR='2023', BENE_GEO_LVL='State', BENE_GEO_DESC='Puerto Rico', BENE_GEO_CD='72', BENE_AGE_LVL='All',
+    rows.append(dict(YEAR=str(END), BENE_GEO_LVL='State', BENE_GEO_DESC='Puerto Rico', BENE_GEO_CD='72', BENE_AGE_LVL='All',
                      BENE_AVG_AGE='70.0', BENE_FEML_PCT='0.56', EXTRA_COL='x'))
     return pd.DataFrame(rows)
 

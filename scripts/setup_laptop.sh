@@ -76,19 +76,19 @@ find_file() { find "$DATA_DIR" -maxdepth 3 -type f -name "$1" -size +0 2>/dev/nu
 PARQUET_DIR="${CMS_PARQUET_DIR:-$DATA_DIR/cms_parquet}"
 n_pq=$(ls "$PARQUET_DIR"/20??__*.parquet 2>/dev/null | wc -l | tr -d ' ')
 missing=()
-if [ "$n_pq" -ge 6 ]; then ok "Parquet already present: $n_pq files in $PARQUET_DIR (CSVs not needed)"
+if [ "$n_pq" -ge 7 ]; then ok "Parquet already present: $n_pq files in $PARQUET_DIR (CSVs not needed)"
 else
   CSV_DIR=""
-  for y in 2018 2019 2020 2021 2022 2023; do
+  for y in 2018 2019 2020 2021 2022 2023 2024; do
     f=$(find_file "Medicare_Physician_Other_Practitioners_by_Provider_and_Service_$y.csv")
     [ -n "$f" ] && CSV_DIR="${CSV_DIR:-$(dirname "$f")}" || missing+=("Medicare_Physician_Other_Practitioners_by_Provider_and_Service_$y.csv  (CMS 'Medicare Physician & Other Practitioners — by Provider and Service', $y)")
   done
-  [ ${#missing[@]} -eq 0 ] && ok "all 6 yearly claims CSVs found"
+  [ ${#missing[@]} -eq 0 ] && ok "all 7 yearly claims CSVs found"
 fi
-ENR18=$(find_file "original medicare enrollment 2018.xlsx"); ENR23=$(find_file "original medicare enrollment 2023.xlsx")
+ENR18=$(find_file "original medicare enrollment 2018.xlsx"); ENR24=$(find_file "original medicare enrollment 2024.xlsx")
 GV=$(find_file "Medicare_GV_by_National_State_County*.csv")
 [ -n "$ENR18" ] || missing+=("original medicare enrollment 2018.xlsx  (CMS Original Medicare enrollment by state, 2018)")
-[ -n "$ENR23" ] || missing+=("original medicare enrollment 2023.xlsx  (CMS Original Medicare enrollment by state, 2023)")
+[ -n "$ENR24" ] || missing+=("original medicare enrollment 2024.xlsx  (CMS Program Statistics 'Original Medicare Enrollment' tables 9–14 zip for 2024, the AB 14 workbook, renamed)")
 [ -n "$GV" ]    || missing+=("Medicare_GV_by_National_State_County_….csv  (CMS 'Medicare Geographic Variation — by National, State & County')")
 if [ ${#missing[@]} -gt 0 ]; then
   echo "  These files are missing from $DATA_DIR (or one folder below it):"
