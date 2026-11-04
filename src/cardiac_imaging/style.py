@@ -22,10 +22,19 @@ COLOR_CTA   = '#8B3A8B'
 COLOR_MRI   = '#C154C1'
 COLOR_PET   = '#E88BE8'
 
-PROC_ORDER  = ['Echo', 'SPECT', 'Cardiac CTA', 'Cardiac MRI', 'Cardiac PET']
+PROC_ORDER  = ['Stress Echo', 'SPECT MPI', 'Cardiac CTA', 'Cardiac MRI', 'Cardiac PET']
 PROC_COLORS = [COLOR_ECHO, COLOR_SPECT, COLOR_CTA, COLOR_MRI, COLOR_PET]
-# Figure 1 adds the comparator procedures (config.COMPARATORS: ICA, TAVR) after the imaging modalities.
+# Legend / title text where it differs from the category key.
+DISPLAY_LABELS = {'Cardiac MRI': 'Cardiac MRI (stress CMR included)'}
+# Figure 1 adds the comparator procedures (config.COMPARATORS, empty when switched off) after the imaging modalities.
 FIG1_ORDER  = PROC_ORDER + list(config.COMPARATORS)
+# The ranked CTA-change figure follows the comparator maps (10–12) when they are on, else it is Figure 10.
+RANKED_FIG_NUM = 10 + len(config.COMPARATORS)
+
+
+def display_label(proc):
+    """Legend/title text for a modality key (e.g. 'Cardiac MRI' → 'Cardiac MRI (stress CMR included)')."""
+    return DISPLAY_LABELS.get(proc, proc)
 
 COLOR_VOLUME     = '#C0392B'
 COLOR_ENROLLMENT = '#7F8C8D'

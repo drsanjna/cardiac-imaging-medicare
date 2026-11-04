@@ -6,7 +6,7 @@ import numpy as np
 
 from .. import config
 from ..analysis.rates import SEGMENTS
-from ..style import COLOR_CTA, COLOR_MRI, COLOR_PET, PROC_COLORS, PROC_ORDER
+from ..style import COLOR_CTA, COLOR_MRI, COLOR_PET, PROC_COLORS, PROC_ORDER, display_label
 from .export import save_pub_fig
 
 SEG_TITLES = {
@@ -37,7 +37,7 @@ def plot_figure2(market_data):
         for i, proc in enumerate(PROC_ORDER):
             vals = seg_pct[proc].values if proc in seg_pct.columns else np.zeros(len(years))
             ax_main.fill_between(years, y_stack, y_stack + vals,
-                                 color=PROC_COLORS[i], label=proc, alpha=0.85)
+                                 color=PROC_COLORS[i], label=display_label(proc), alpha=0.85)
             y_stack += vals
 
         ax_main.set_ylim(0, 100); ax_main.set_xlim(years.min(), years.max())
@@ -57,7 +57,7 @@ def plot_figure2(market_data):
         for i, proc in enumerate(ADV_PROCS):
             vals = seg_pct[proc].values if proc in seg_pct.columns else np.zeros(len(years))
             ax_inset.fill_between(years, y_stack_adv, y_stack_adv + vals,
-                                  color=ADV_COLORS[i], label=proc, alpha=0.85)
+                                  color=ADV_COLORS[i], label=display_label(proc), alpha=0.85)
             y_stack_adv += vals
 
         ax_inset.set_ylim(0, max(y_stack_adv.max() * 1.35, 0.5))
@@ -82,7 +82,7 @@ def plot_figure2(market_data):
                               fontsize=10, ha='center', fontweight='bold', color='#5B005B')
 
     fig.suptitle('Figure 2. Market Share: Composition of Cardiac Imaging Modalities\n'
-                 'Traditional (Echo + SPECT) vs Advanced (CTA + CMR + PET)',
+                 'Traditional (Stress Echo + SPECT MPI) vs Advanced (CTA + CMR + PET)',
                  fontsize=15, fontweight='bold', y=0.97)
     fig.text(0.06, 0.015,
              'Shaded bands = each modality’s share of total cardiac imaging volume. '

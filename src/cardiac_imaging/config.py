@@ -94,35 +94,50 @@ CARD_TYPES = ('Cardiology', 'Interventional Cardiology',
               'Clinical Cardiac Electrophysiology',
               'Advanced Heart Failure and Transplant Cardiology')
 
-# Cardiac PET = myocardial perfusion PET: 78491/78492 (PET only) + 78430/78431 (PET with concurrent CT, CPT 2020+).
-# Not counted: 78432/78433 (perfusion + metabolic), 78429/78459 (metabolic/viability), 78434 (blood-flow add-on to
-# a perfusion study, never a separate study). Set by the user 2026-10-24 (docs/PENDING.md item 1).
-MODALITY_CASE = """
+# Modality code sets. Changed by the user 2026-11-04 (ischaemic-testing scope, docs/PENDING.md item 10):
+#   Stress Echo  93350 (stress echo, imaging only) + 93351 (stress echo with ECG monitoring). Resting TTE 93306–93308
+#                is no longer counted.
+#   SPECT MPI    78451 (single study) + 78452 (multiple studies).
+#   Cardiac MRI  75557/75561 (morphology + function, without/with contrast) and the stress-perfusion studies
+#                75559/75563. 75558/75560/75562/75564 were deleted from CPT in 2010 and have no rows 2018–2024; they
+#                are listed because the user's definition names them. The flow-mapping add-on 75565 (a second line
+#                on the same study, ~25–31% of the old CMR count) is no longer counted.
+#   Cardiac PET  myocardial perfusion PET: 78491/78492 (PET only) + 78430/78431 (PET with concurrent CT, CPT 2020+).
+#                Not counted: 78432/78433 (perfusion + metabolic), 78429/78459 (metabolic/viability), 78434 (blood-flow
+#                add-on). Set by the user 2026-10-24 (docs/PENDING.md item 1).
+STRESS_ECHO_CODES = ('93350', '93351')
+SPECT_CODES       = ('78451', '78452')
+CMR_CODES         = ('75557', '75558', '75561', '75562')            # morphology + function
+STRESS_CMR_CODES  = ('75559', '75560', '75563', '75564')            # with stress imaging (kept inside 'Cardiac MRI')
+PET_CODES         = ('78491', '78492', '78430', '78431')
+_CMR_ALL = CMR_CODES + STRESS_CMR_CODES
+
+MODALITY_CASE = f"""
     CASE
-        WHEN HCPCS_Cd BETWEEN '75557' AND '75565' THEN 'Cardiac MRI'
-        WHEN HCPCS_Cd = '75574'                    THEN 'Cardiac CTA'
-        WHEN HCPCS_Cd IN ('78491','78492','78430','78431') THEN 'Cardiac PET'
-        WHEN HCPCS_Cd IN ('93306','93307','93308')  THEN 'Echo'
-        WHEN HCPCS_Cd IN ('78451','78452')          THEN 'SPECT'
+        WHEN HCPCS_Cd IN {_CMR_ALL}           THEN 'Cardiac MRI'
+        WHEN HCPCS_Cd = '{CTA_CODE}'          THEN 'Cardiac CTA'
+        WHEN HCPCS_Cd IN {PET_CODES}          THEN 'Cardiac PET'
+        WHEN HCPCS_Cd IN {STRESS_ECHO_CODES}  THEN 'Stress Echo'
+        WHEN HCPCS_Cd IN {SPECT_CODES}        THEN 'SPECT MPI'
     END
 """
 
-MODALITY_TYPE_CASE = """
+MODALITY_TYPE_CASE = f"""
     CASE
-        WHEN HCPCS_Cd BETWEEN '75557' AND '75565' THEN 'Advanced'
-        WHEN HCPCS_Cd = '75574'                    THEN 'Advanced'
-        WHEN HCPCS_Cd IN ('78491','78492','78430','78431') THEN 'Advanced'
-        WHEN HCPCS_Cd IN ('93306','93307','93308')  THEN 'Traditional'
-        WHEN HCPCS_Cd IN ('78451','78452')          THEN 'Traditional'
+        WHEN HCPCS_Cd IN {_CMR_ALL}           THEN 'Advanced'
+        WHEN HCPCS_Cd = '{CTA_CODE}'          THEN 'Advanced'
+        WHEN HCPCS_Cd IN {PET_CODES}          THEN 'Advanced'
+        WHEN HCPCS_Cd IN {STRESS_ECHO_CODES}  THEN 'Traditional'
+        WHEN HCPCS_Cd IN {SPECT_CODES}        THEN 'Traditional'
     END
 """
 
-CARDIAC_HCPCS_WHERE = """
-    (HCPCS_Cd BETWEEN '75557' AND '75565'
-     OR HCPCS_Cd = '75574'
-     OR HCPCS_Cd IN ('78491','78492','78430','78431')
-     OR HCPCS_Cd IN ('93306','93307','93308')
-     OR HCPCS_Cd IN ('78451','78452'))
+CARDIAC_HCPCS_WHERE = f"""
+    (HCPCS_Cd IN {_CMR_ALL}
+     OR HCPCS_Cd = '{CTA_CODE}'
+     OR HCPCS_Cd IN {PET_CODES}
+     OR HCPCS_Cd IN {STRESS_ECHO_CODES}
+     OR HCPCS_Cd IN {SPECT_CODES})
 """
 
 # COMPARATOR PROCEDURES — not imaging modalities: each gets a Figure 1 column and its own state map, and is kept out
@@ -138,7 +153,11 @@ TAVR_CODES = ('33361', '33362', '33363', '33364', '33365', '33366')
 # imaging totals stay unchanged. Medicare often treats it as screening; 12 states have no rows in 2018.
 CACS_LABEL = 'CACS'
 CACS_CODES = ('75571',)
-COMPARATORS = {ICA_LABEL: ICA_CODES, TAVR_LABEL: TAVR_CODES, CACS_LABEL: CACS_CODES}   # Figure 1 column order
+ALL_COMPARATORS = {ICA_LABEL: ICA_CODES, TAVR_LABEL: TAVR_CODES, CACS_LABEL: CACS_CODES}   # Figure 1 column order
+# Switched off by the user 2026-11-04 ("drop TAVR, ICA and CACS for now"): no Figure 1 columns, no comparator maps.
+# Flip to True to bring them back unchanged.
+INCLUDE_COMPARATORS = os.environ.get('CARDIAC_COMPARATORS', '0') == '1'
+COMPARATORS = ALL_COMPARATORS if INCLUDE_COMPARATORS else {}
 
 # ==========================================================================
 # ENROLLMENT: CMS Program Statistics — Original Medicare Enrollment

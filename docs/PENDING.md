@@ -5,11 +5,6 @@ When one is settled, move it to **Resolved** with the date, the decision and the
 
 ## Open
 
-### 2. Confirm the scope of Echo and CTA (Methods wording)
-*Added 2026-10-24.* Echo is resting TTE only (excludes stress echo 93350/93351, ~200k/yr, and TEE 93312). CTA is
-coronary CTA 75574 only (excludes calcium score 75571, structural CT 75572/75573, FFR-CT 0501T). Confirm these are
-intended and state them in Methods.
-
 ### 3. Fill in the study TODOs in `docs/STUDY.md`
 *Added 2026-10-24.* Primary hypothesis (with direction), primary outcome, and target journal.
 
@@ -45,6 +40,19 @@ approval of its proposed config entries (years, r grid, 1.04 threshold, bootstra
 a commit whose hash is recorded in the plan before any H1 outcome is queried.
 
 ## Resolved
+
+### 10. Ischaemic-testing scope: stress echo, SPECT MPI, CMR code set, comparators off — resolved 2026-11-04
+*Decision (user, after the 2026-11-04 biostatistics meeting and R1's scope comment):* (1) Echo becomes **stress echo**
+93350 + 93351; resting TTE 93306–93308 is no longer counted. (2) SPECT confirmed as 78451 + 78452, relabelled
+**SPECT MPI**. (3) Cardiac MRI = 75557 + 75558 + 75561 + 75562 plus stress CMR 75559 + 75560 + 75563 + 75564, legend
+"Cardiac MRI (stress CMR included)"; the flow-mapping add-on 75565 is dropped (75558/75560/75562/75564 are retired CPT
+codes with no rows). (4) ICA, TAVR and CACS comparators switched off for now (`config.INCLUDE_COMPARATORS`); their
+code and tests stay. *Impact (2018→2024 rate change):* stress echo −28.8% (resting TTE was +6.8%), SPECT MPI −25.6%
+(unchanged), CTA +277.9% (unchanged), CMR +150.9% (was +173.6% with the add-on), PET +81.8% (unchanged). Advanced share
+of the five is now 27.0% in 2024 (was 6.0% when resting TTE dominated the denominator); SPECT MPI alone is 63.5%.
+Table 1 CTA shares and every density IRR are unchanged (CTA-only models). 16 figures; the ranked CTA-change figure is
+Figure 10. This also closes item 2 (scope of Echo and CTA): CTA stays 75574 only.
+Run `ischemic-scope-stress-echo-cmr` (2026-11-04).
 
 ### 9. 2024 data and denominator — resolved 2026-11-02
 *Decision (user):* 2024 replaces 2023 as the end year (`END_YEAR = GV_YEAR = 2024`); the 2024 state denominator is CMS

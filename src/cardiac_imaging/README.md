@@ -108,6 +108,7 @@ Every function and class in this directory, including internal helpers.
 
 **`style.py`**
 - `apply_rcparams()` — Set matplotlib defaults used by every figure.
+- `display_label(proc)` — Legend/title text for a modality key (e.g. 'Cardiac MRI' → 'Cardiac MRI (stress CMR included)').
 
 ## Notes
 
