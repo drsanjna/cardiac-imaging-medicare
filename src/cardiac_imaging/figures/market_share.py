@@ -1,4 +1,4 @@
-"""Figure 2: modality market share by rural/urban × office/facility, with advanced-modality zoom insets."""
+"""Figure 2: relative distribution of the five modalities by rural/urban × office/facility, with CTA/CMR/PET zoom insets."""
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -42,7 +42,7 @@ def plot_figure2(market_data):
 
         ax_main.set_ylim(0, 100); ax_main.set_xlim(years.min(), years.max())
         ax_main.set_title(SEG_TITLES[seg], fontsize=13, fontweight='bold', pad=8)
-        ax_main.set_ylabel('Market Share (%)', fontsize=12)
+        ax_main.set_ylabel('Share of five-modality volume (%)', fontsize=12)
         ax_main.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
         ax_main.set_xticks(years)
         ax_main.tick_params(labelsize=10)
@@ -81,11 +81,11 @@ def plot_figure2(market_data):
                               textcoords="offset points", xytext=(0, 8),
                               fontsize=10, ha='center', fontweight='bold', color='#5B005B')
 
-    fig.suptitle('Figure 2. Market Share: Composition of Cardiac Imaging Modalities\n'
-                 'Traditional (Stress Echo + SPECT MPI) vs Advanced (CTA + CMR + PET)',
+    fig.suptitle('Figure 2. Relative Distribution of the Five Studied Modalities by Practice Setting\n'
+                 'Stress Echo + SPECT MPI vs CTA + CMR + PET (share of their combined volume)',
                  fontsize=15, fontweight='bold', y=0.97)
     fig.text(0.06, 0.015,
-             'Shaded bands = each modality’s share of total cardiac imaging volume. '
+             'Shaded bands = each modality’s share of the combined volume of the five studied modalities. '
              'Bold labels on insets = advanced-modality share in first and last year.',
              fontsize=10, color='#555555')
     save_pub_fig(fig, 'figure2_market_share', config.TIFF_PANEL_DPI)

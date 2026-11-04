@@ -18,7 +18,7 @@ from .reporting import run_store
 MANIFEST = """
 MAIN TEXT
   Figure 1:  Volume / enrollment / rate decomposition (5 modalities × 3 metrics{comp})
-  Figure 2:  Market share — stacked area with advanced-modality zoom insets
+  Figure 2:  Relative distribution of the five modalities by setting — stacked area with CTA/CMR/PET zoom insets
   Figure 3:  Stress echo — state rates, {b} / {e} / change
   Figure 4:  SPECT MPI   — state rates, {b} / {e} / change
   Figure 5:  Cardiac CTA — state rates, {b} / {e} / change
