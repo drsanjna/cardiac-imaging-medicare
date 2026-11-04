@@ -90,6 +90,8 @@ Every function and class in this directory, including internal helpers.
 - `test_change_frame_computes_state_changes()` — Δ density, Δ rate and % changes per state; states missing from the base year are dropped and logged.
 - `test_change_count_model_recovers_elasticity()` — With CTA ∝ physicians^1.5 and FFS changes unrelated, the count model returns an elasticity near 1.5.
 - `test_comparator_map_greys_every_panel_without_data(monkeypatch)` — With grey_all_missing, states lacking data in a panel (either year) are named in the note and drawn grey.
+- `test_state_rate_dispersion_hand_calculation()` — Median, IQR and P90/P10 per modality and year from the deltas frame; P90/P10 is NaN when P10 is 0.
+- `test_partial_regression_frame_matches_count_model()` — Frisch–Waugh: the slope of the y-residuals on the x-residuals (through the origin) equals the model's elasticity.
 
 **`test_app.py`**
 - `run_copy(pipeline_run, monkeypatch, isolated)` — A private copy of the synthetic run inside this test's RUNS_DIR (so tests can write conversations etc.).

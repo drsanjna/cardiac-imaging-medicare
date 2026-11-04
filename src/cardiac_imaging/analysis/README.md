@@ -56,6 +56,7 @@ Every function and class in this directory, including internal helpers.
 - `_coef(res, i)` *(internal)* — (estimate, CI low, CI high, p) for coefficient i of a fitted OLS.
 - `fit_change_models(df, end_year, base_year, exclude)` — Primary rate model (all states and without `exclude`), Spearman ρ, and the count model; returns a dict.
 - `change_results_table(fits)` — Tidy table of the change models (one row per model).
+- `partial_regression_frame(df, fits, end_year, base_year)` — Added-variable (partial-regression) coordinates for the count model's physician term, one row per state.
 
 **`nb_models.py`**
 - `fit_nb_design(X, counts, offset)` — Fit NB2 with Poisson start values; returns (result, alpha, Poisson dispersion).
@@ -76,6 +77,7 @@ Every function and class in this directory, including internal helpers.
 - `compute_state_rates(df_detail_sub, state_ffs_lookup)` — State × modality services and rate per 1,000 FFS beneficiaries.
 - `rate_deltas(rates_end, rates_base, missing_as_zero, y1, y0)` — Outer-join end-year and base-year state rates (columns rate_per_1000_<y1>, rate_per_1000_<y0>); rate_delta = end − base.
 - `state_summary_table(state_rates)` — State × modality rate table with an 'All Cardiac' total, sorted descending.
+- `state_rate_dispersion(deltas, procs, y0, y1)` — Spread of state rates per modality and year: median, IQR (Q1–Q3), P10, P90 and the P90/P10 ratio.
 
 **`tables.py`**
 - `specialty_distribution(con, year)` — Cardiology / Radiology / Other % of services and total volume, per modality.

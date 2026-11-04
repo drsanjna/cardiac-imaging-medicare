@@ -1,4 +1,5 @@
 """Utilization rates per 1,000 FFS beneficiaries: national decomposition, market share, state rates and deltas."""
+import numpy as np
 import pandas as pd
 
 from .. import config
@@ -100,3 +101,23 @@ def state_summary_table(state_rates):
     ).reindex(columns=PROC_ORDER).fillna(0).round(2))
     summary_pivot['All Cardiac'] = summary_pivot.sum(axis=1)
     return summary_pivot.sort_values('All Cardiac', ascending=False)
+
+
+def state_rate_dispersion(deltas, procs=None, y0=config.BASE_YEAR, y1=config.END_YEAR):
+    """Spread of state rates per modality and year: median, IQR (Q1–Q3), P10, P90 and the P90/P10 ratio.
+
+    `deltas` is rate_deltas() output, so both years cover the same states. The P90/P10 ratio is the usual
+    geographic-variation summary (Wennberg); it is NaN when P10 is 0.
+    """
+    procs = procs or sorted(deltas['procedure_category'].unique())
+    rows = []
+    for proc in procs:
+        sub = deltas[deltas['procedure_category'] == proc]
+        for year in (y0, y1):
+            r = sub[f'rate_per_1000_{year}'].astype(float)
+            q1, med, q3 = r.quantile([0.25, 0.5, 0.75])
+            p10, p90 = r.quantile([0.10, 0.90])
+            rows.append({'procedure_category': proc, 'year': year, 'states': int(len(r)), 'median': med,
+                         'Q1': q1, 'Q3': q3, 'IQR': q3 - q1, 'P10': p10, 'P90': p90,
+                         'P90/P10': p90 / p10 if p10 > 0 else np.nan, 'min': r.min(), 'max': r.max()})
+    return pd.DataFrame(rows).set_index(['procedure_category', 'year'])
