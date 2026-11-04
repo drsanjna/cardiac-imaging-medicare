@@ -8,7 +8,7 @@ import json
 import duckdb
 import pytest
 
-from cardiac_imaging import pipeline
+from cardiac_imaging import config, pipeline
 from cardiac_imaging.db import schema
 from conftest import REAL_DB
 
@@ -72,12 +72,14 @@ def test_physician_counts_and_states(real_run):
 
 
 def test_change_summary_unchanged(real_run):
-    """2018→2024 rate change per modality (2018→2023 was: Echo 4.1, SPECT −21.0, CTA 199.4, MRI 122.9, PET 55.4, ICA −14.8,
-    TAVR 61.6, CACS 374.4)."""
+    """2018→2024 rate change per modality under the ischaemic-testing scope set 2026-11-04 (stress echo instead of resting
+    TTE; CMR without the 75565 add-on; comparators off). Before that change: Echo (TTE) +6.8, SPECT −25.6, CTA +277.9,
+    MRI +173.6, PET +81.8, ICA −15.3, TAVR +72.3, CACS +554.1."""
     cs = real_run['tables']['change_summary']['rate_pct'].round(1).to_dict()
-    assert cs == {'Echo': 6.8, 'SPECT': -25.6, 'Cardiac CTA': 277.9, 'Cardiac MRI': 173.6, 'Cardiac PET': 81.8,
-                  'Invasive Coronary Angiography': -15.3, 'TAVR': 72.3,
-                  'CACS': 554.1}
+    expected = {'Stress Echo': -28.8, 'SPECT MPI': -25.6, 'Cardiac CTA': 277.9, 'Cardiac MRI': 150.9, 'Cardiac PET': 81.8}
+    if config.COMPARATORS:
+        expected.update({'Invasive Coronary Angiography': -15.3, 'TAVR': 72.3, 'CACS': 554.1})
+    assert cs == expected
 
 
 def test_manifest_records_real_rows(real_run):

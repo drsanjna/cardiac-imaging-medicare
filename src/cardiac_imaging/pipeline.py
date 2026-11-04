@@ -17,20 +17,18 @@ from .reporting import run_store
 
 MANIFEST = """
 MAIN TEXT
-  Figure 1:  Volume / enrollment / rate decomposition (5 modalities + ICA + TAVR + CACS × 3 metrics)
+  Figure 1:  Volume / enrollment / rate decomposition (5 modalities × 3 metrics{comp})
   Figure 2:  Market share — stacked area with advanced-modality zoom insets
-  Figure 3:  Echo        — state rates, {b} / {e} / change
-  Figure 4:  SPECT       — state rates, {b} / {e} / change
+  Figure 3:  Stress echo — state rates, {b} / {e} / change
+  Figure 4:  SPECT MPI   — state rates, {b} / {e} / change
   Figure 5:  Cardiac CTA — state rates, {b} / {e} / change
-  Figure 6:  Cardiac MRI — state rates, {b} / {e} / change
+  Figure 6:  Cardiac MRI (stress CMR included) — state rates, {b} / {e} / change
   Figure 7:  Cardiac PET — state rates, {b} / {e} / change
   Figure 8:  All-provider density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure 9:  Combined forest plot — density IRRs before/after adjustment (FINAL)
-  Figure 10: Invasive coronary angiography — state rates, {b} / {e} / change
-  Figure 11: TAVR — state rates, {b} / {e} / change
-  Figure 12: Coronary artery calcium score (CACS) — state rates, {b} / {e} / change
-  Figure 13: States ranked by change in CTA rate, {b}→{e}, with median / IQR / P90:P10 of state rates
+  Figures 10–12 (ICA, TAVR, CACS state maps): {compmaps}
+  Figure {rk}: States ranked by change in CTA rate, {b}→{e}, with median / IQR / P90:P10 of state rates
   (unnumbered composite: all-modality {e} state panel)
 
 SUPPLEMENT
@@ -79,14 +77,17 @@ def step_load_claims(ctx):
     ctx['df_detail'] = claims.load_detail(con)
     ctx['df_agg'] = claims.aggregate_segments(ctx['df_detail'])
     ctx['trend'] = claims.national_trend(ctx['df_agg'])
-    ctx['df_comp'] = claims.load_comparators(con)   # ICA, TAVR: Figure 1 columns + Figures 10–11; not imaging
+    ctx['df_comp'] = claims.load_comparators(con)   # ICA, TAVR, CACS when switched on: Figure 1 columns + maps; not imaging
     print("Data pipeline complete.\n")
 
 
 def step_figure1(ctx):
     """Figure 1 and the BASE_YEAR → END_YEAR change summary."""
     print("Building Figure 1: Volume/Enrollment/Rate Decomposition...")
-    decomp_df = rates.decompose(pd.concat([ctx['trend'], claims.comparator_trend(ctx['df_comp'])], ignore_index=True))
+    trend = ctx['trend']
+    if not ctx['df_comp'].empty:    # comparators switched on: extra Figure 1 columns after the modalities
+        trend = pd.concat([trend, claims.comparator_trend(ctx['df_comp'])], ignore_index=True)
+    decomp_df = rates.decompose(trend)
     decomposition.plot_figure1(decomp_df)
     rates.print_change_summary(decomp_df)
     ctx['tables']['national_volume_rates'] = decomp_df.set_index(['procedure_category', 'year'])
@@ -129,6 +130,9 @@ def step_state_maps(ctx):
 def step_comparator_maps(ctx):
     """Figures 10–12: state rates for BASE_YEAR and END_YEAR and the change, for each comparator procedure (ICA, TAVR, CACS)."""
     comp = ctx['df_comp']
+    if not choropleths.COMPARATOR_MAPS:
+        print("Comparator maps skipped (config.INCLUDE_COMPARATORS is off).\n")
+        return
     for label, fig_num, note in choropleths.COMPARATOR_MAPS:
         print(f"Building Figure {fig_num}: {label} state map...")
         sub = comp[comp['procedure_category'] == label]
@@ -300,7 +304,10 @@ def run_all(con=None, database=None, report_errors=True, record=True, label=None
                 if run:
                     run.log_step(name, time.time() - t0, ok=error is None)
         print("\n" + "=" * 80 + "\nALL FIGURES COMPLETE — FINAL NUMBERING\n" + "=" * 80)
-        print(MANIFEST.format(la=config.TIFF_LINEART_DPI, mp=config.TIFF_PANEL_DPI, out=config.OUTPUT_DIR, b=config.BASE_YEAR, e=config.END_YEAR))
+        on = bool(config.COMPARATORS)
+        print(MANIFEST.format(la=config.TIFF_LINEART_DPI, mp=config.TIFF_PANEL_DPI, out=config.OUTPUT_DIR, b=config.BASE_YEAR,
+                              e=config.END_YEAR, rk=style.RANKED_FIG_NUM, comp=' + ICA + TAVR + CACS' if on else '',
+                              compmaps='on' if on else 'switched off (config.INCLUDE_COMPARATORS)'))
     finally:
         if run:
             run.finish(ctx, error)

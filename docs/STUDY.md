@@ -7,7 +7,7 @@ Open decisions live in [PENDING.md](PENDING.md).
 ## At a glance
 | | |
 |---|---|
-| Question | How did use of Echo, SPECT, cardiac CTA, cardiac MRI and cardiac PET change in Medicare FFS from 2018 to 2024, nationally and by state, and is state CTA use associated with the density of physicians who bill for CTA? |
+| Question | How did use of non-invasive ischaemic testing (stress echo, SPECT MPI, cardiac CTA, cardiac MRI including stress CMR, cardiac PET MPI) change in Medicare FFS from 2018 to 2024, nationally and by state, and is state CTA use associated with the density of physicians who bill for CTA? |
 | Primary hypothesis | TODO (user): state it, with direction, before further analysis. |
 | Primary outcome | TODO (user): e.g. change in CTA services per 1,000 FFS beneficiaries 2018→2024, or the adjusted density IRR. |
 | Design | Serial cross-sectional (national and state trends) + state-level ecological regression (density models). |
@@ -27,23 +27,26 @@ Open decisions live in [PENDING.md](PENDING.md).
 ## Definitions (as coded)
 | Modality | HCPCS | Group |
 |---|---|---|
-| Echo | 93306, 93307, 93308 (resting TTE only) | Traditional |
-| SPECT | 78451, 78452 | Traditional |
+| Stress Echo | 93350, 93351 (stress echo; resting TTE 93306–93308 not counted since 2026-11-04) | Traditional |
+| SPECT MPI | 78451, 78452 | Traditional |
 | Cardiac CTA | 75574 (coronary CTA only) | Advanced |
-| Cardiac MRI | 75557–75565 | Advanced |
+| Cardiac MRI | 75557, 75561 (morphology + function) and stress CMR 75559, 75563; 75558/75560/75562/75564 listed but retired from CPT in 2010 (no rows). The flow-mapping add-on 75565 is not counted since 2026-11-04 (it was ~25–31% of the old CMR count, as a second line on the same study). Legend: "Cardiac MRI (stress CMR included)". | Advanced |
 | Cardiac PET | 78491, 78492 (PET); 78430, 78431 (PET with concurrent CT, from 2020) | Advanced |
-| Invasive coronary angiography (comparator, not imaging) | 93454–93461 (diagnostic cath with coronary angiography) | — |
-| TAVR (comparator, not imaging) | 33361–33366 (all access routes; bypass add-ons 33367–33369 excluded) | — |
-| Coronary artery calcium score, CACS (comparator) | 75571 | — |
+| Invasive coronary angiography (comparator, switched off) | 93454–93461 (diagnostic cath with coronary angiography) | — |
+| TAVR (comparator, switched off) | 33361–33366 (all access routes; bypass add-ons 33367–33369 excluded) | — |
+| Coronary artery calcium score, CACS (comparator, switched off) | 75571 | — |
 
-ICA and TAVR (added 2026-10-24) and CACS (added 2026-11-02) appear only in Figure 1 and in Figures 10–12. It is kept out of the modality definitions, so market
-share, Table 1, the Traditional/Advanced totals and the state summary stay imaging-only. Codes stable 2018–2024; 98–99%
+The comparators (ICA and TAVR added 2026-10-24, CACS 2026-11-02) were switched off by the user 2026-11-04
+(`config.INCLUDE_COMPARATORS`, env `CARDIAC_COMPARATORS=1` restores them). When on they appear only in Figure 1 and in
+Figures 10–12 and are kept out of the modality definitions, so market share, Table 1, the Traditional/Advanced totals
+and the state summary stay imaging-only. Codes stable 2018–2024; 98–99%
 billed in facilities, so rows are the professional component. PCI codes (92920–92944) are not included.
 **TAVR services ≈ 2 × procedures**: about 49% of TAVR services are billed by cardiology and 49% by cardiac/thoracic
 surgery every year (co-surgeon billing of the same code), and the PUF cannot pair them. Report TAVR as services, or
 halve only with that caveat stated. Wyoming has no TAVR rows in 2018–2019 (none or suppressed); its 2018 and change panels are grey.
 
-Codes deliberately or possibly out of scope (must be stated in Methods): stress echo 93350/93351, TEE 93312,
+Codes deliberately or possibly out of scope (must be stated in Methods): resting TTE 93306–93308 (dropped 2026-11-04), TEE 93312,
+CMR flow-mapping add-on 75565,
 calcium score 75571 (comparator only, Figures 1 and 12), structural cardiac CT 75572/75573, FFR-CT 0501T–0504T; PET perfusion + metabolic 78432/78433,
 metabolic/viability PET 78429/78459, and the absolute blood-flow add-on 78434 (an add-on to a perfusion study, so
 never counted as a separate study). PET codes set by the user on 2026-10-24 (PENDING.md, Resolved).
@@ -73,7 +76,7 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
   Figure S5: change-on-change by state, 2018→end year, shown as the partial-regression (added-variable) plot of the
   count model Δlog CTA ~ Δlog physicians + Δlog FFS (OLS, HC3 SEs); the Δ rate ~ Δ density slopes (with/without DC and MN)
   stay in the model table.
-  Figure 13: states ranked by Δ CTA rate per 1,000, 2018→end year, with median, IQR and P90/P10 of state rates per year.
+  Figure 10 (13 with comparators on): states ranked by Δ CTA rate per 1,000, 2018→end year, with median, IQR and P90/P10 of state rates per year.
   Both axes share the FFS denominator, which fell ~11% (median state) as MA grew, so Δ density mostly reflects the
   shrinking denominator (median physician count +3.7%). The count model Δlog CTA ~ Δlog physicians + Δlog FFS removes
   that and is the one to interpret. Tables `workforce_cta_change_by_state`, `workforce_cta_change_models`.
@@ -81,15 +84,12 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 ## Outputs → manuscript
 | Output | Content |
 |---|---|
-| Figure 1 | Volume vs FFS enrollment vs rate, by modality plus ICA, TAVR and CACS, 2018–2024 |
+| Figure 1 | Volume vs FFS enrollment vs rate, by modality, 2018–2024 (comparator columns only when switched on) |
 | Figure 2 | Modality share by rural/urban × office/facility |
 | Figures 3–7 | State rate maps 2018 / 2024 / change, one per modality |
 | Figure 8 | All-provider density vs CTA rate, NB fits |
 | Figure 9 | Forest plot of density IRRs, unadjusted vs adjusted |
-| Figure 10 | Invasive coronary angiography state rate maps 2018 / 2024 / change |
-| Figure 11 | TAVR state rate maps 2018 / 2024 / change |
-| Figure 12 | CACS state rate maps 2018 / 2024 / change (states without rows in a year are grey and named in the footnote) |
-| Figure 13 | States ranked by change in CTA rate per 1,000, 2018→2024, with per-year dispersion statistics (post hoc) |
+| Figure 10 | States ranked by change in CTA rate per 1,000, 2018→2024, with per-year dispersion statistics (post hoc). Numbered 13 when the comparator maps (10–12: ICA, TAVR, CACS) are switched on |
 | Table 1 | Specialty distribution (Cardiology / Radiology / Other) by modality |
 | Figures S1–S2 | Radiologist and cardiologist density models |
 | Figures S3–S4 | Radiologist + cardiologist (any Part B) density vs CTA rate, 2024 and 2018 (post hoc) |
@@ -114,7 +114,8 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 - **CPT code changes inside the window**: every modality's code set must be audited year by year for added or deleted
   codes. PET: CPT 2020 split PET perfusion into PET only (78491/78492) and PET with concurrent CT (78430/78431); both
   are counted since 2026-10-24, so the series is continuous. This was a correction of a coding error found while
-  reviewing the PET trend; report it in Methods as such. Echo, SPECT, CTA and MRI still need the same audit.
+  reviewing the PET trend; report it in Methods as such. CMR was audited 2026-11-04 (per-code counts; 75565 add-on removed).
+  Stress echo, SPECT and CTA still need the same audit.
 - **Ecological design**: n ≤ 51; associations are state-level only (no individual-level inference). Density and use can
   drive each other (supply-induced demand vs demand attracting physicians), so no causal language. Neighbouring states
   are not independent (spatial autocorrelation). Keep covariates few for 51 units, and report how many density measures

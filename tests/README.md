@@ -176,6 +176,7 @@ Every function and class in this directory, including internal helpers.
 **`test_loaders.py`**
 - `test_specialty_guard(con)` — Passes when every specialty string exists; fails loudly when one is missing.
 - `test_load_detail_filters_and_classifies(con)` — Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality.
+- `test_load_comparators_off_by_default(con)` — With comparators switched off, the loader and the trend return empty frames with the usual columns.
 - `test_load_comparators_and_trend(con)` — ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
@@ -226,7 +227,7 @@ Every function and class in this directory, including internal helpers.
 - `test_headline_irrs_unchanged(real_run)` — Adjusted density IRRs and CIs match the published values to 4 decimals.
 - `test_table1_cta_shares_unchanged(real_run)` — Radiologists read 58.3% and cardiologists 37.6% of cardiac CTAs in 2024.
 - `test_physician_counts_and_states(real_run)` — Model sizes: 51 / 49 / 50 states; 3,223 / 1,746 / 1,353 unique physicians (2024).
-- `test_change_summary_unchanged(real_run)` — 2018→2024 rate change per modality (2018→2023 was: Echo 4.1, SPECT −21.0, CTA 199.4, MRI 122.9, PET 55.4, ICA −14.8,
+- `test_change_summary_unchanged(real_run)` — 2018→2024 rate change per modality under the ischaemic-testing scope set 2026-11-04 (stress echo instead of resting
 - `test_manifest_records_real_rows(real_run)` — The run records all 68,635,378 claim rows (2018–2024).
 - `test_workforce_sensitivity_irrs(real_run)` — Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models.
 - `test_workforce_density_by_year(real_run)` — Figures S3/S4: whole-workforce density vs CTA rate is positive in 2024 (IRR 1.0032) and in 2018 (1.0041).

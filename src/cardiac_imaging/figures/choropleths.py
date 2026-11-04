@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from .. import config
-from ..style import CHORO_FONT, DELTA_SCALE, PROC_ORDER, PURPLE_SCALE
+from ..style import CHORO_FONT, DELTA_SCALE, PROC_ORDER, PURPLE_SCALE, display_label
 from .export import save_plotly
 
 _GEOS = dict(scope='usa', projection_type='albers usa',
@@ -22,6 +22,7 @@ COMPARATOR_MAPS = [
                             'co-surgeons, so services ≈ 2 × procedures.'),
     (config.CACS_LABEL, 12, 'CACS = coronary artery calcium score, CPT 75571.'),
 ]
+COMPARATOR_MAPS = [m for m in COMPARATOR_MAPS if m[0] in config.COMPARATORS]   # empty when switched off
 ALL_STATES = sorted(config.STATE_ABBR_MAP.values())   # 50 states + DC
 
 
@@ -114,7 +115,7 @@ def plot_one_state_map(proc, fig_num, state_rates_2018, state_rates_2023, delta_
     fig.update_annotations(font=dict(size=18))
     fig.update_layout(
         title=dict(
-            text=(f'<b>Figure {fig_num}.</b> {proc} — Rate per 1,000 FFS Beneficiaries by State<br>'
+            text=(f'<b>Figure {fig_num}.</b> {display_label(proc)} — Rate per 1,000 FFS Beneficiaries by State<br>'
                   f'<span style="font-size:13px">Purple scale: darker = higher rate. '
                   f'Diverging scale (right panel): red = rate decrease, blue = rate increase, '
                   f'white = no change. Territories excluded.</span>'),

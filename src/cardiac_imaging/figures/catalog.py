@@ -1,6 +1,6 @@
 """Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF)."""
 from .. import config
-from ..style import PROC_ORDER
+from ..style import PROC_ORDER, RANKED_FIG_NUM, display_label
 
 B, E = config.BASE_YEAR, config.END_YEAR
 
@@ -67,16 +67,17 @@ FIGURES = [
     dict(stem='figure1_decomposition', label='Figure 1', section='Main text',
          title='Volume vs FFS enrollment vs utilization rate',
          caption='Annual procedure volume, national FFS enrollment and rate per 1,000 beneficiaries '
-                 'for each imaging modality, invasive coronary angiography (CPT 93454–93461), TAVR (CPT 33361–33366) and '
-                 'coronary artery calcium score (CPT 75571), '
-                 f'{B}–{E}. TAVR services ≈ 2 × procedures (co-surgeon billing).', **_src('decomposition')),
+                 f'for each imaging modality, {B}–{E}. Cardiac MRI includes stress CMR.'
+                 + (' Comparators: invasive coronary angiography (CPT 93454–93461), TAVR (CPT 33361–33366; services ≈ 2 × '
+                    'procedures, co-surgeon billing) and coronary artery calcium score (CPT 75571).' if config.COMPARATORS else ''),
+         **_src('decomposition')),
     dict(stem='figure2_market_share', label='Figure 2', section='Main text',
          title='Modality market share by setting',
          caption='Share of cardiac imaging volume by modality in urban/rural × office/facility segments, '
                  'with zoom insets for CTA + CMR + PET.', **_src('market_share')),
     *[dict(stem=f'figure{n}_{proc.lower().replace(" ", "_")}_state_maps', label=f'Figure {n}', section='Main text',
-           title=f'{proc}: state rates {B} / {E} / change',
-           caption=f'{proc} rate per 1,000 FFS beneficiaries by state in {B} and {E}, and the change '
+           title=f'{display_label(proc)}: state rates {B} / {E} / change',
+           caption=f'{display_label(proc)} rate per 1,000 FFS beneficiaries by state in {B} and {E}, and the change '
                    '(red = decrease, blue = increase). Territories excluded.', **_src('maps'))
       for proc, n in _MAP_NUMBERS.items()],
     dict(stem='figure8_nb_all_density', label='Figure 8', section='Main text',
@@ -87,6 +88,7 @@ FIGURES = [
          title='Density IRRs before and after adjustment',
          caption='Forest plot of density incidence rate ratios for all providers, radiologists and cardiologists.',
          **_src('forest')),
+    *[f for f in [
     dict(stem='figure10_invasive_coronary_angiography_state_maps', label='Figure 10', section='Main text',
          title=f'Invasive coronary angiography: state rates {B} / {E} / change',
          caption='Invasive coronary angiography (diagnostic catheterization with coronary angiography, CPT 93454–93461) '
@@ -102,7 +104,8 @@ FIGURES = [
          caption=f'Coronary artery calcium score (CPT 75571) services per 1,000 FFS beneficiaries by state in {B} and {E}, '
                  'and the change. States with no rows in a year (none, or suppressed) are grey. Same layout as Figures 3–7.',
          **_src('cacs_map')),
-    dict(stem='figure13_cta_state_ranked_change', label='Figure 13', section='Main text',
+    ] if f['stem'].split('_')[0] in {f'figure{10 + i}' for i in range(len(config.COMPARATORS))}],   # comparators off → none
+    dict(stem=f'figure{RANKED_FIG_NUM}_cta_state_ranked_change', label=f'Figure {RANKED_FIG_NUM}', section='Main text',
          title=f'States ranked by change in CTA rate, {B}→{E}',
          caption=f'Each state\'s change in CTA services per 1,000 FFS beneficiaries, {B}→{E}, largest at the top, '
                  f'labelled with the {B} → {E} rates; dashed line = median state change. Box: median, IQR and '

@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 import synthetic
+from cardiac_imaging.style import PROC_ORDER
 from cardiac_imaging import audit, config
 from cardiac_imaging.loaders import claims, demographics, enrollment, providers
 
@@ -22,8 +23,9 @@ def test_load_detail_filters_and_classifies(con):
     """Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality."""
     audit.FILTER_LOG.clear()
     df = claims.load_detail(con)
-    assert set(df['procedure_category']) == set(synthetic.CODES) - set(config.COMPARATORS) - {'ICA'}   # comparators load separately
+    assert set(df['procedure_category']) == set(PROC_ORDER)      # comparators (ICA, TAVR, CACS) never load here
     assert not set(df['HCPCS_Cd']) & (set(config.ICA_CODES) | set(config.TAVR_CODES) | set(config.CACS_CODES))
+    assert not set(df['HCPCS_Cd']) & {'93306', '93307', '93308', '75565'}   # resting TTE and the CMR flow add-on are out
     assert 'PR' not in set(df['state']) and 'AA' in set(df['state'])
     assert set(df['rural_urban']) == {'Urban', 'Rural', 'Unknown'}
     assert set(df['modality_type']) == {'Advanced', 'Traditional'}
@@ -32,17 +34,27 @@ def test_load_detail_filters_and_classifies(con):
     assert any('excluding territories' in l for l in labels)
 
 
+def test_load_comparators_off_by_default(con):
+    """With comparators switched off, the loader and the trend return empty frames with the usual columns."""
+    if config.COMPARATORS:
+        pytest.skip('comparators switched on')
+    df = claims.load_comparators(con)
+    assert df.empty and list(df.columns) == claims.COMPARATOR_COLUMNS
+    trend = claims.comparator_trend(df)
+    assert trend.empty and list(trend.columns) == ['year', 'procedure_category', 'total_services']
+
+
 def test_load_comparators_and_trend(con):
     """ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure."""
     audit.FILTER_LOG.clear()
-    df = claims.load_comparators(con)
-    assert set(df['procedure_category']) == set(config.COMPARATORS) and 'PR' not in set(df['state'])
-    for label, codes in config.COMPARATORS.items():
+    df = claims.load_comparators(con, config.ALL_COMPARATORS)
+    assert set(df['procedure_category']) == set(config.ALL_COMPARATORS) and 'PR' not in set(df['state'])
+    for label, codes in config.ALL_COMPARATORS.items():
         assert set(df.loc[df['procedure_category'] == label, 'HCPCS_Cd']) <= set(codes)
         assert any(f['filter'] == f'{label} rows, excluding territories/invalid states' and f['dropped'] > 0
                    for f in audit.FILTER_LOG)
     trend = claims.comparator_trend(df)
-    assert list(trend.columns) == ['year', 'procedure_category', 'total_services'] and len(trend) == len(synthetic.YEARS) * len(config.COMPARATORS)
+    assert list(trend.columns) == ['year', 'procedure_category', 'total_services'] and len(trend) == len(synthetic.YEARS) * len(config.ALL_COMPARATORS)
     assert trend['total_services'].sum() == df['Tot_Srvcs'].sum()
 
 

@@ -1,4 +1,4 @@
-"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR)."""
+"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities (+ comparators when switched on)."""
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -13,7 +13,8 @@ ROW_CONFIG = [
     ('rate_per_1000',  'Rate per 1,000 Beneficiaries',  COLOR_RATE,       'D'),
 ]
 
-TITLES = {config.ICA_LABEL: 'Invasive Coronary\nAngiography (ICA)',
+TITLES = {'Cardiac MRI': 'Cardiac MRI\n(stress CMR included)',
+          config.ICA_LABEL: 'Invasive Coronary\nAngiography (ICA)',
           config.TAVR_LABEL: 'Transcatheter Aortic Valve\nReplacement (TAVR)',
           config.CACS_LABEL: 'Coronary Artery\nCalcium Score (CACS)'}
 
@@ -70,8 +71,9 @@ def plot_figure1(decomp_df):
                  fontsize=14, fontweight='bold', y=0.96)
     fig.text(0.05, 0.015,
              'Symbols: circles = annual procedure volume; squares = national FFS enrollment; '
-             'diamonds = utilization rate per 1,000 FFS beneficiaries. '
-             'ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461. '
-             'TAVR = CPT 33361–33366; usually billed by two co-surgeons, so services ≈ 2 × procedures. CACS = CPT 75571.',
+             'diamonds = utilization rate per 1,000 FFS beneficiaries. Cardiac MRI includes stress CMR (CPT 75559/75563).'
+             + (' ICA = diagnostic catheterization with coronary angiography, CPT 93454–93461. '
+                'TAVR = CPT 33361–33366; usually billed by two co-surgeons, so services ≈ 2 × procedures. CACS = CPT 75571.'
+                if config.COMPARATORS else ''),
              fontsize=10, color='#555555')
     save_pub_fig(fig, 'figure1_decomposition', config.TIFF_PANEL_DPI)
