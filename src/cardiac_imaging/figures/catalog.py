@@ -33,8 +33,13 @@ _SRC = {
                    'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
                    'analysis.nb_models:density_partial_curve', 'loaders.demographics:load_gv_demographics'],
                   ['workforce_density_by_year', 'density_sensitivity_workforce']),
-    'change': (['figures.change:plot_change_on_change', 'analysis.change:change_frame',
-                'analysis.change:fit_change_models', 'analysis.change:change_results_table',
+    'ranked': (['figures.ranked_change:plot_ranked_state_change', 'analysis.rates:state_rate_dispersion',
+                'analysis.rates:rate_deltas', 'analysis.rates:compute_state_rates', 'loaders.enrollment:load_state_ffs',
+                'loaders.claims:load_detail', 'pipeline:step_state_maps'],
+               ['state_rate_change', 'state_rate_dispersion']),
+    'change': (['figures.change:plot_change_partial_regression', 'analysis.change:change_frame',
+                'analysis.change:fit_change_models', 'analysis.change:partial_regression_frame',
+                'analysis.change:change_results_table',
                 'loaders.providers:load_workforce_density_frames', 'pipeline:step_workforce_sensitivity'],
                ['workforce_cta_change_by_state', 'workforce_cta_change_models']),
     'panel': (['figures.choropleths:plot_all_modalities_panel', 'analysis.rates:compute_state_rates',
@@ -97,6 +102,11 @@ FIGURES = [
          caption=f'Coronary artery calcium score (CPT 75571) services per 1,000 FFS beneficiaries by state in {B} and {E}, '
                  'and the change. States with no rows in a year (none, or suppressed) are grey. Same layout as Figures 3–7.',
          **_src('cacs_map')),
+    dict(stem='figure13_cta_state_ranked_change', label='Figure 13', section='Main text',
+         title=f'States ranked by change in CTA rate, {B}→{E}',
+         caption=f'Each state\'s change in CTA services per 1,000 FFS beneficiaries, {B}→{E}, largest at the top, '
+                 f'labelled with the {B} → {E} rates; dashed line = median state change. Box: median, IQR and '
+                 'P90/P10 ratio of the state rates in each year.', **_src('ranked')),
     dict(stem=f'figure_panel_all_modalities_{E}', label='Composite', section='Composite',
          title=f'All modalities, {E} state rates',
          caption=f'Unnumbered composite of {E} state rates for all five modalities (optional Central Illustration).',
@@ -114,12 +124,13 @@ FIGURES = [
                    'Unadjusted and age/sex-adjusted NB fits (post hoc, responds to the circularity concern).',
            **_src('workforce'))
       for num, year in [('S3', E), ('S4', B)]],
-    dict(stem='figureS5_workforce_change_vs_cta_change', label='Figure S5', section='Supplement',
-         title=f'Change in radiologist + cardiologist density vs change in CTA rate, {B}→{E}',
-         caption='Each state: change in radiologists + cardiologists (any Part B) per 100,000 FFS beneficiaries vs '
-                 f'change in CTA rate per 1,000, {B}→{E}. OLS fits (robust SE) with and without DC and MN; the box '
-                 'also gives a count model that holds the change in FFS enrollment fixed (both axes share the FFS '
-                 'denominator). Post hoc.', **_src('change')),
+    dict(stem='figureS5_cta_change_partial_regression', label='Figure S5', section='Supplement',
+         title=f'Change in CTA services vs change in radiologist + cardiologist numbers, {B}→{E} (partial regression)',
+         caption='Added-variable plot for the count model Δlog CTA = α + β·Δlog physicians + γ·Δlog FFS enrollment: '
+                 'each state is plotted after removing the part of both changes explained by its change in FFS '
+                 'enrollment, so the slope is the adjusted elasticity β (line through the origin, 95% band from '
+                 'HC3 SEs). Radiologists + cardiologists billing any Part B service. The unadjusted Δ rate ~ Δ '
+                 'density slopes remain in the model table. Post hoc.', **_src('change')),
 ]
 
 SECTIONS = ['Main text', 'Composite', 'Supplement']
