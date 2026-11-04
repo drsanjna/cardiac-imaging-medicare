@@ -92,6 +92,7 @@ Every function and class in this directory, including internal helpers.
 - `test_comparator_map_greys_every_panel_without_data(monkeypatch)` — With grey_all_missing, states lacking data in a panel (either year) are named in the note and drawn grey.
 - `test_state_rate_dispersion_hand_calculation()` — Median, IQR and P90/P10 per modality and year from the deltas frame; P90/P10 is NaN when P10 is 0.
 - `test_partial_regression_frame_matches_count_model()` — Frisch–Waugh: the slope of the y-residuals on the x-residuals (through the origin) equals the model's elasticity.
+- `test_rate_trends_draws_one_line_per_procedure(monkeypatch)` — Figure 8: CTA, TAVR and CACS each get a line; a procedure missing from the frame is skipped, not drawn empty.
 
 **`test_app.py`**
 - `run_copy(pipeline_run, monkeypatch, isolated)` — A private copy of the synthetic run inside this test's RUNS_DIR (so tests can write conversations etc.).

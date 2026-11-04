@@ -29,10 +29,10 @@ _SRC = {
                   'analysis.rates:compute_state_rates', 'analysis.rates:rate_deltas', 'loaders.claims:load_comparator_detail',
                   'loaders.enrollment:load_state_ffs', 'pipeline:step_comparator_maps'],
                  ['cacs_state_rates']),
-    'workforce': (['figures.density:plot_density_fit', 'pipeline:step_workforce_sensitivity',
-                   'loaders.providers:load_workforce_density_frames', 'analysis.nb_models:fit_density_models',
-                   'analysis.nb_models:density_partial_curve', 'loaders.demographics:load_gv_demographics'],
-                  ['workforce_density_by_year', 'density_sensitivity_workforce']),
+    'rate_trends': (['figures.rate_trends:plot_rate_trends', 'pipeline:step_rate_trends', 'analysis.rates:decompose',
+                     'loaders.claims:load_comparators', 'loaders.claims:load_comparator_detail', 'loaders.claims:comparator_trend',
+                     'loaders.claims:national_trend'],
+                    ['cta_tavr_cacs_rates', 'national_volume_rates']),
     'ranked': (['figures.ranked_change:plot_ranked_state_change', 'analysis.rates:state_rate_dispersion',
                 'analysis.rates:rate_deltas', 'analysis.rates:compute_state_rates', 'loaders.enrollment:load_state_ffs',
                 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
@@ -80,14 +80,12 @@ FIGURES = [
            caption=f'{display_label(proc)} rate per 1,000 FFS beneficiaries by state in {B} and {E}, and the change '
                    '(red = decrease, blue = increase). Territories excluded.', **_src('maps'))
       for proc, n in _MAP_NUMBERS.items()],
-    dict(stem='figure8_nb_all_density', label='Figure 8', section='Main text',
-         title='All-provider density vs CTA rate',
-         caption='State CTA rate vs CTA-billing NPIs per 100,000 FFS beneficiaries, with unadjusted and '
-                 'age/sex-adjusted negative binomial fits.', **_src('density')),
-    dict(stem='figure9_density_irr_forest', label='Figure 9', section='Main text',
-         title='Density IRRs before and after adjustment',
-         caption='Forest plot of density incidence rate ratios for all providers, radiologists and cardiologists.',
-         **_src('forest')),
+    dict(stem='figure8_cta_tavr_cacs_rates', label='Figure 8', section='Main text',
+         title='Cardiac CTA, TAVR and CACS: national rates by year',
+         caption=f'National services per 1,000 FFS beneficiaries by year, {B}–{E}, for cardiac CTA (CPT 75574), TAVR '
+                 '(CPT 33361–33366; services ≈ 2 × procedures, co-surgeon billing) and standalone coronary artery calcium '
+                 'score (CPT 75571). A calcium score acquired within a CTA is bundled into the CTA code, so the two '
+                 'series do not overlap.', **_src('rate_trends')),
     *[f for f in [
     dict(stem='figure10_invasive_coronary_angiography_state_maps', label='Figure 10', section='Main text',
          title=f'Invasive coronary angiography: state rates {B} / {E} / change',
@@ -114,19 +112,20 @@ FIGURES = [
          title=f'All modalities, {E} state rates',
          caption=f'Unnumbered composite of {E} state rates for all five modalities (optional Central Illustration).',
          **_src('panel')),
-    dict(stem='figureS1_nb_rad_density', label='Figure S1', section='Supplement',
+    dict(stem='figureS1_nb_all_density', label='Figure S1', section='Supplement',
+         title='All-provider density vs CTA rate',
+         caption='State CTA rate vs CTA-billing NPIs per 100,000 FFS beneficiaries, with unadjusted and '
+                 'age/sex-adjusted negative binomial fits.', **_src('density')),
+    dict(stem='figureS2_density_irr_forest', label='Figure S2', section='Supplement',
+         title='Density IRRs before and after adjustment',
+         caption='Forest plot of density incidence rate ratios for all providers, radiologists and cardiologists.',
+         **_src('forest')),
+    dict(stem='figureS3_nb_rad_density', label='Figure S3', section='Supplement',
          title='Radiologist density vs CTA rate',
-         caption='Same model as Figure 8, using radiologist NPIs per 100,000 FFS beneficiaries.', **_src('density')),
-    dict(stem='figureS2_nb_card_density', label='Figure S2', section='Supplement',
+         caption='Same model as Figure S1, using radiologist NPIs per 100,000 FFS beneficiaries.', **_src('density')),
+    dict(stem='figureS4_nb_card_density', label='Figure S4', section='Supplement',
          title='Cardiologist density vs CTA rate',
-         caption='Same model as Figure 8, using cardiologist NPIs per 100,000 FFS beneficiaries.', **_src('density')),
-    *[dict(stem=f'figure{num}_workforce_density_{year}', label=f'Figure {num}', section='Supplement',
-           title=f'Radiologist + cardiologist density vs CTA rate, {year}',
-           caption=f'Same layout as Figure S2. x-axis: unique radiologists + cardiologists billing any Part B service in '
-                   f'{year} per 100,000 FFS beneficiaries (not selected by CTA billing); y-axis: {year} CTA rate. '
-                   'Unadjusted and age/sex-adjusted NB fits (post hoc, responds to the circularity concern).',
-           **_src('workforce'))
-      for num, year in [('S3', E), ('S4', B)]],
+         caption='Same model as Figure S1, using cardiologist NPIs per 100,000 FFS beneficiaries.', **_src('density')),
     dict(stem='figureS5_cta_change_partial_regression', label='Figure S5', section='Supplement',
          title=f'Change in CTA services vs change in radiologist + cardiologist numbers, {B}→{E} (partial regression)',
          caption='Added-variable plot for the count model Δlog CTA = α + β·Δlog physicians + γ·Δlog FFS enrollment: '

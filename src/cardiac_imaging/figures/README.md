@@ -20,6 +20,7 @@ flowchart LR
     n_forest_py["forest.py"]
     n_market_share_py["market_share.py"]
     n_ranked_change_py["ranked_change.py"]
+    n_rate_trends_py["rate_trends.py"]
   end
   n_analysis_["analysis/"]
   n_app_["app/"]
@@ -43,6 +44,7 @@ flowchart LR
   n_config_py --> n_forest_py
   n_config_py --> n_market_share_py
   n_config_py --> n_ranked_change_py
+  n_config_py --> n_rate_trends_py
   n_decomposition_py --> n_pipeline_py
   n_density_py --> n_pipeline_py
   n_export_py --> n_change_py
@@ -52,9 +54,11 @@ flowchart LR
   n_export_py --> n_forest_py
   n_export_py --> n_market_share_py
   n_export_py --> n_ranked_change_py
+  n_export_py --> n_rate_trends_py
   n_forest_py --> n_pipeline_py
   n_market_share_py --> n_pipeline_py
   n_ranked_change_py --> n_pipeline_py
+  n_rate_trends_py --> n_pipeline_py
   n_style_py --> n_catalog_py
   n_style_py --> n_change_py
   n_style_py --> n_choropleths_py
@@ -63,6 +67,7 @@ flowchart LR
   n_style_py --> n_forest_py
   n_style_py --> n_market_share_py
   n_style_py --> n_ranked_change_py
+  n_style_py --> n_rate_trends_py
 ```
 
 ## Files
@@ -73,11 +78,12 @@ flowchart LR
 | [`change.py`](change.py) | Figure S5: partial-regression plot of the change-on-change count model, base year → end year. |
 | [`choropleths.py`](choropleths.py) | Figures 3–7, 10–12: state choropleths per modality and comparator procedure (base year / end year / change), plus an end-year panel. |
 | [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities (+ comparators when switched on). |
-| [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
+| [`density.py`](density.py) | Figures S1, S3, S4: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
 | [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks. |
-| [`forest.py`](forest.py) | Figure 9: density IRRs before/after adjustment by specialty. |
+| [`forest.py`](forest.py) | Figure S2: density IRRs before/after adjustment by specialty. |
 | [`market_share.py`](market_share.py) | Figure 2: modality market share by rural/urban × office/facility, with advanced-modality zoom insets. |
 | [`ranked_change.py`](ranked_change.py) | Ranked CTA-change figure (number = style.RANKED_FIG_NUM): every state by its change in CTA rate per 1,000, base → end year. |
+| [`rate_trends.py`](rate_trends.py) | Figure 8: national rate per 1,000 FFS beneficiaries by year for cardiac CTA, TAVR and CACS on one axis. |
 
 ## Functions
 
@@ -119,6 +125,9 @@ Every function and class in this directory, including internal helpers.
 
 **`ranked_change.py`**
 - `plot_ranked_state_change(deltas, dispersion, end_year, base_year, proc, fname)` — Horizontal lollipop chart: states on the y-axis sorted by Δ rate, Δ rate per 1,000 on the x-axis.
+
+**`rate_trends.py`**
+- `plot_rate_trends(decomp_df, procs, fname, fig_num)` — One line per procedure: rate per 1,000 FFS beneficiaries (y) by year (x), end-of-line labels with the last value.
 
 ## Notes
 
