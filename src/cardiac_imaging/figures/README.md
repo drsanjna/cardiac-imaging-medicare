@@ -81,7 +81,7 @@ flowchart LR
 | [`density.py`](density.py) | Figures S1, S3, S4: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
 | [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks. |
 | [`forest.py`](forest.py) | Figure S2: density IRRs before/after adjustment by specialty. |
-| [`market_share.py`](market_share.py) | Figure 2: modality market share by rural/urban × office/facility, with advanced-modality zoom insets. |
+| [`market_share.py`](market_share.py) | Figure 2: relative distribution of the five modalities by rural/urban × office/facility, with CTA/CMR/PET zoom insets. |
 | [`ranked_change.py`](ranked_change.py) | Ranked CTA-change figure (number = style.RANKED_FIG_NUM): every state by its change in CTA rate per 1,000, base → end year. |
 | [`rate_trends.py`](rate_trends.py) | Figure 8: national rate per 1,000 FFS beneficiaries by year for cardiac CTA, TAVR and CACS on one axis. |
 

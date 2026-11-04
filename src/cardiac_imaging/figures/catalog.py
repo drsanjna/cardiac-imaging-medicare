@@ -72,8 +72,8 @@ FIGURES = [
                     'procedures, co-surgeon billing) and coronary artery calcium score (CPT 75571).' if config.COMPARATORS else ''),
          **_src('decomposition')),
     dict(stem='figure2_market_share', label='Figure 2', section='Main text',
-         title='Modality market share by setting',
-         caption='Share of cardiac imaging volume by modality in urban/rural × office/facility segments, '
+         title='Relative distribution of the five modalities by setting',
+         caption='Each modality\'s share of the combined volume of the five studied modalities in urban/rural × office/facility segments, '
                  'with zoom insets for CTA + CMR + PET.', **_src('market_share')),
     *[dict(stem=f'figure{n}_{proc.lower().replace(" ", "_")}_state_maps', label=f'Figure {n}', section='Main text',
            title=f'{display_label(proc)}: state rates {B} / {E} / change',
