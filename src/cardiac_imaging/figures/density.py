@@ -1,4 +1,4 @@
-"""Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs."""
+"""Figures S1, S3, S4: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs."""
 import matplotlib.pyplot as plt
 import numpy as np
 

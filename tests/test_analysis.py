@@ -259,3 +259,17 @@ def test_partial_regression_frame_matches_count_model():
     slope = float(np.sum(pr['x_resid'] * pr['y_resid']) / np.sum(pr['x_resid'] ** 2))
     assert slope == pytest.approx(fits['count model']['elasticity'][0], rel=1e-9)
     assert abs(pr['x_resid'].mean()) < 1e-9 and abs(pr['y_resid'].mean()) < 1e-9   # residuals of a fit with intercept
+
+
+def test_rate_trends_draws_one_line_per_procedure(monkeypatch):
+    """Figure 8: CTA, TAVR and CACS each get a line; a procedure missing from the frame is skipped, not drawn empty."""
+    from cardiac_imaging.figures import rate_trends
+    seen = {}
+    monkeypatch.setattr(rate_trends, 'save_pub_fig', lambda fig, *a, **k: seen.update(fig=fig))
+    rows = [dict(year=y, procedure_category=p, rate_per_1000=r * (1 + 0.2 * (y - 2018)))
+            for y in range(2018, 2025) for p, r in [('Cardiac CTA', 1.5), (config.TAVR_LABEL, 1.7)]]
+    present = rate_trends.plot_rate_trends(pd.DataFrame(rows))
+    assert present == ['Cardiac CTA', config.TAVR_LABEL]
+    ax = seen['fig'].axes[0]
+    assert len(ax.get_lines()) == 2 and [t.get_text() for t in ax.get_legend().get_texts()] == \
+        [rate_trends.TITLES['Cardiac CTA'], rate_trends.TITLES[config.TAVR_LABEL]]

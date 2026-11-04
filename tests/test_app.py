@@ -24,7 +24,7 @@ def run_copy(pipeline_run, monkeypatch, isolated):
 
 def test_context_uses_code_at_snapshot(run_copy):
     """Chart context includes the plotting function source, related tables and the data model."""
-    ctx = chat.context(run_copy, 'figure8_nb_all_density')
+    ctx = chat.context(run_copy, 'figureS1_nb_all_density')
     refs = [r for r, _, _ in ctx['code']]
     assert refs[0] == 'figures.density:plot_density_fit'
     assert all(src.startswith('def ') for _, _, src in ctx['code'])
@@ -86,7 +86,7 @@ def test_backend_errors_are_shown_not_raised(run_copy):
 def test_handoff_backend_gives_full_prompt(run_copy, monkeypatch):
     """Without a model, the reply is a ready-made prompt containing the code and the hypothesis, plus setup steps."""
     monkeypatch.setattr(chat, 'claude_binary', lambda: None)
-    conv = chat.send(run_copy, 'figure9_density_irr_forest', 'Cardiologist IRR is confounded by urbanicity',
+    conv = chat.send(run_copy, 'figureS2_density_irr_forest', 'Cardiologist IRR is confounded by urbanicity',
                      engine=chat.HandoffBackend())
     text = conv['messages'][-1]['text']
     assert 'def plot_forest' in text and 'confounded by urbanicity' in text and 'brew install' in text

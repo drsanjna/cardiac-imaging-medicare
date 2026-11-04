@@ -96,13 +96,14 @@ Every function and class in this directory, including internal helpers.
 - `step_connect(ctx)` — Open the read-only database, check required tables, and record claim rows per year.
 - `step_load_claims(ctx)` — Verify specialty strings, load cardiac claim detail, and build segment aggregates + national trend.
 - `step_figure1(ctx)` — Figure 1 and the BASE_YEAR → END_YEAR change summary.
+- `step_rate_trends(ctx)` — Figure 8: national CTA, TAVR and CACS rates per 1,000 FFS by year (TAVR/CACS loaded here even when comparators are off).
 - `step_figure2(ctx)` — Figure 2 and the national market share table.
 - `step_state_maps(ctx)` — State rates for BASE_YEAR and END_YEAR, Figures 3–7, the all-modality panel and Figure 13 (ranked CTA change).
 - `step_comparator_maps(ctx)` — Figures 10–12: state rates for BASE_YEAR and END_YEAR and the change, for each comparator procedure (ICA, TAVR, CACS).
 - `step_state_table(ctx)` — Print and save the END_YEAR state rate table.
-- `step_density_models(ctx)` — Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs.
-- `step_workforce_sensitivity(ctx)` — Sensitivity (post hoc, reviewer R2): Figure 8/S1/S2 models with all radiologists/cardiologists as exposure.
-- `step_table1_forest(ctx)` — Table 1 (specialty shares by modality) and the Figure 9 forest plot.
+- `step_density_models(ctx)` — Fit the CTA density NB models (all, radiology, cardiology); Figures S1, S3, S4; headline IRRs.
+- `step_workforce_sensitivity(ctx)` — Sensitivity (post hoc, reviewer R2): the S1/S3/S4 models with all radiologists/cardiologists as exposure (tables only).
+- `step_table1_forest(ctx)` — Table 1 (specialty shares by modality) and the Figure S2 forest plot.
 - `run_all(con, database, report_errors, record, label)` — Run every step in order; on failure, report it (log file + optional GitHub issue) and re-raise.
 - `main()` — Command-line entry point: parse options and run the pipeline.
 

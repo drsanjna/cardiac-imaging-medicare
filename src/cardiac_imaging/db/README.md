@@ -79,7 +79,7 @@ erDiagram
 **Joins**
 
 - `partb_provider_service` → `state_ffs_enrollment` on `Rndrng_Prvdr_State_Abrvtn = state, year`: Services per state divided by FFS enrollees → rate per 1,000 beneficiaries (Figures 1, 3–8).
-- `partb_provider_service` → `gv_puf` on `Rndrng_Prvdr_State_Abrvtn = resolved state, year = GV_YEAR`: State mean age and % female join the CTA density models as covariates (Figures 8, 9, S1, S2).
+- `partb_provider_service` → `gv_puf` on `Rndrng_Prvdr_State_Abrvtn = resolved state, year = GV_YEAR`: State mean age and % female join the CTA density models as covariates (Figures S1–S4).
 
 ### `partb_provider_service` (view)
 
@@ -90,7 +90,7 @@ erDiagram
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `year` | INTEGER | Calendar year of service; taken from the YYYY__ prefix of the Parquet file name. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 30 more |
+| `year` | INTEGER | Calendar year of service; taken from the YYYY__ prefix of the Parquet file name. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 32 more |
 | `Rndrng_NPI` | VARCHAR | National Provider Identifier of the rendering (billing) clinician. Unique NPIs = physicians. | `db/build.py: report_claims`<br>`loaders/claims.py: aggregate_segments`<br>`loaders/claims.py: load_comparator_detail`<br>`loaders/claims.py: load_detail`<br>`loaders/providers.py: _specialty_npis`<br>…and 5 more |
 | `Rndrng_Prvdr_Last_Org_Name` | VARCHAR | Provider last name or organization name. | — |
 | `Rndrng_Prvdr_First_Name` | VARCHAR | Provider first name. | — |
@@ -129,7 +129,7 @@ erDiagram
 
 | Column | Type | Meaning | Used in |
 |---|---|---|---|
-| `year` | BIGINT | Enrollment year: one per workbook found (2018, 2023, 2024); the analysis uses BASE_YEAR and END_YEAR. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 30 more |
+| `year` | BIGINT | Enrollment year: one per workbook found (2018, 2023, 2024); the analysis uses BASE_YEAR and END_YEAR. | `analysis/nb_models.py: print_model_report`<br>`analysis/rates.py: change_summary`<br>`analysis/rates.py: decompose`<br>`analysis/rates.py: market_share_by_segment`<br>`analysis/rates.py: national_market_share`<br>…and 32 more |
 | `state` | VARCHAR | State postal code (50 states + DC; territories removed when the workbook is parsed). | `analysis/change.py: change_frame`<br>`analysis/change.py: fit_change_models`<br>`analysis/change.py: partial_regression_frame`<br>`analysis/nb_models.py: fit_density_models`<br>`analysis/rates.py: compute_state_rates`<br>…and 30 more |
 | `ffs` | BIGINT | Original Medicare (fee-for-service) enrollees — the denominator of every state rate. | `db/build.py: load_state_enrollment`<br>`loaders/enrollment.py: _finish`<br>`loaders/enrollment.py: load_state_ffs`<br>`loaders/enrollment.py: parse_enrollment` |
 

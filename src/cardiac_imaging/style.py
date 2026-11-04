@@ -28,8 +28,8 @@ PROC_COLORS = [COLOR_ECHO, COLOR_SPECT, COLOR_CTA, COLOR_MRI, COLOR_PET]
 DISPLAY_LABELS = {'Cardiac MRI': 'Cardiac MRI (stress CMR included)'}
 # Figure 1 adds the comparator procedures (config.COMPARATORS, empty when switched off) after the imaging modalities.
 FIG1_ORDER  = PROC_ORDER + list(config.COMPARATORS)
-# The ranked CTA-change figure follows the comparator maps (10–12) when they are on, else it is Figure 10.
-RANKED_FIG_NUM = 10 + len(config.COMPARATORS)
+# Figure 8 = CTA/TAVR/CACS rate trends; the ranked CTA-change figure is Figure 9, or 13 after the comparator maps (10–12).
+RANKED_FIG_NUM = 13 if config.COMPARATORS else 9
 
 
 def display_label(proc):

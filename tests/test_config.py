@@ -68,8 +68,8 @@ def test_relative_env_paths_resolve_inside_repo(monkeypatch):
 def test_catalog_entries_are_complete_and_unique():
     """Every figure has a unique stem, a known section, and code + table references."""
     stems = [f['stem'] for f in catalog.FIGURES]
-    # 12 imaging figures + ranked CTA change + Figures S3–S5, plus Figures 10–12 (ICA, TAVR, CACS maps) when comparators are on
-    assert len(stems) == len(set(stems)) == 16 + len(config.COMPARATORS)
+    # Figures 1–9 + composite + S1–S5 = 15, plus Figures 10–12 (ICA, TAVR, CACS maps) when comparators are on
+    assert len(stems) == len(set(stems)) == 15 + len(config.COMPARATORS)
     for f in catalog.FIGURES:
         assert f['section'] in catalog.SECTIONS
         assert f['title'] and f['caption'] and f['label']

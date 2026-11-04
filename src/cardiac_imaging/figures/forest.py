@@ -1,4 +1,4 @@
-"""Figure 9: density IRRs before/after adjustment by specialty."""
+"""Figure S2: density IRRs before/after adjustment by specialty."""
 import textwrap
 
 import matplotlib.pyplot as plt
@@ -78,7 +78,7 @@ def plot_forest(rows):
     ax.spines[['top', 'right']].set_visible(False)
 
     ax.set_title(
-        f'Figure 9. CTA Utilization vs Imaging Physician Density ({config.END_YEAR}):\n'
+        f'Supplemental Figure S2. CTA Utilization vs Imaging Physician Density ({config.END_YEAR}):\n'
         'Density IRRs Before and After Demographic Adjustment, by Interpreting Specialty',
         fontsize=13, fontweight='bold', pad=12,
     )
@@ -88,4 +88,4 @@ def plot_forest(rows):
                        edgecolor='#cccccc', linewidth=0.8))
 
     plt.tight_layout()
-    save_pub_fig(fig, 'figure9_density_irr_forest', config.TIFF_LINEART_DPI)
+    save_pub_fig(fig, 'figureS2_density_irr_forest', config.TIFF_LINEART_DPI)

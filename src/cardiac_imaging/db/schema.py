@@ -76,7 +76,7 @@ RELATIONSHIPS = [  # (from table, to table, join keys, meaning)
     ('partb_provider_service', 'state_ffs_enrollment', 'Rndrng_Prvdr_State_Abrvtn = state, year',
      'Services per state divided by FFS enrollees → rate per 1,000 beneficiaries (Figures 1, 3–8).'),
     ('partb_provider_service', 'gv_puf', 'Rndrng_Prvdr_State_Abrvtn = resolved state, year = GV_YEAR',
-     'State mean age and % female join the CTA density models as covariates (Figures 8, 9, S1, S2).'),
+     'State mean age and % female join the CTA density models as covariates (Figures S1–S4).'),
 ]
 
 

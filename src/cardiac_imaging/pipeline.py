@@ -11,7 +11,7 @@ from . import config, errors, style
 from .analysis import change, nb_models, rates, tables
 from .db.connection import get_connection, require_tables
 from .figures import change as change_fig
-from .figures import choropleths, decomposition, density, forest, market_share, ranked_change
+from .figures import choropleths, decomposition, density, forest, market_share, ranked_change, rate_trends
 from .loaders import claims, demographics, enrollment, providers
 from .reporting import run_store
 
@@ -24,20 +24,18 @@ MAIN TEXT
   Figure 5:  Cardiac CTA — state rates, {b} / {e} / change
   Figure 6:  Cardiac MRI (stress CMR included) — state rates, {b} / {e} / change
   Figure 7:  Cardiac PET — state rates, {b} / {e} / change
-  Figure 8:  All-provider density vs CTA rate — multivariable NB
-             (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Figure 9:  Combined forest plot — density IRRs before/after adjustment (FINAL)
+  Figure 8:  Cardiac CTA, TAVR and CACS — national rate per 1,000 FFS by year, one axis
   Figures 10–12 (ICA, TAVR, CACS state maps): {compmaps}
   Figure {rk}: States ranked by change in CTA rate, {b}→{e}, with median / IQR / P90:P10 of state rates
   (unnumbered composite: all-modality {e} state panel)
 
 SUPPLEMENT
-  Figure S1: Radiologist density vs CTA rate — multivariable NB
+  Figure S1: All-provider density vs CTA rate — multivariable NB
              (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Figure S2: Cardiologist density vs CTA rate — multivariable NB
-             (single panel + inline unadjusted/adjusted IRR, CI, p)
-  Figure S3: Radiologist + cardiologist (any Part B) density vs CTA rate, {e} (same layout as S2)
-  Figure S4: Same as S3 for {b}
+  Figure S2: Combined forest plot — density IRRs before/after adjustment
+  Figure S3: Radiologist density vs CTA rate — multivariable NB (same layout as S1)
+  Figure S4: Cardiologist density vs CTA rate — multivariable NB (same layout as S1)
+  (whole-workforce density models stay as tables only: density_sensitivity_workforce, workforce_density_by_year)
   Figure S5: Partial-regression plot, Δlog CTA ~ Δlog radiologists+cardiologists + Δlog FFS, {b}→{e}
 
 OUTPUT FORMATS
@@ -93,6 +91,20 @@ def step_figure1(ctx):
     ctx['tables']['national_volume_rates'] = decomp_df.set_index(['procedure_category', 'year'])
     ctx['tables']['change_summary'] = rates.change_summary(decomp_df)
     print("Figure 1 complete.\n")
+
+
+def step_rate_trends(ctx):
+    """Figure 8: national CTA, TAVR and CACS rates per 1,000 FFS by year (TAVR/CACS loaded here even when comparators are off)."""
+    print("Building Figure 8: CTA / TAVR / CACS rate trends...")
+    con = ctx['con']
+    extra = {k: config.ALL_COMPARATORS[k] for k in (config.TAVR_LABEL, config.CACS_LABEL)}
+    comp = ctx['df_comp'] if set(extra) <= set(ctx['df_comp']['procedure_category']) else claims.load_comparators(con, extra)
+    comp = comp[comp['procedure_category'].isin(extra)]
+    cta = ctx['trend'][ctx['trend']['procedure_category'] == 'Cardiac CTA']
+    decomp = rates.decompose(pd.concat([cta, claims.comparator_trend(comp)], ignore_index=True))
+    rate_trends.plot_rate_trends(decomp)
+    ctx['tables']['cta_tavr_cacs_rates'] = decomp.set_index(['procedure_category', 'year'])
+    print("Figure 8 complete.\n")
 
 
 def step_figure2(ctx):
@@ -157,7 +169,7 @@ def step_state_table(ctx):
 
 
 def step_density_models(ctx):
-    """Fit the CTA density NB models (all, radiology, cardiology); Figures 8, S1, S2; headline IRRs."""
+    """Fit the CTA density NB models (all, radiology, cardiology); Figures S1, S3, S4; headline IRRs."""
     print(f"Building multivariable NB (age + sex adjustment), {config.END_YEAR}...")
     con, state_ffs = ctx['con'], ctx['state_ffs_end']
     demo = demographics.load_gv_demographics(con, config.GV_YEAR)
@@ -167,14 +179,14 @@ def step_density_models(ctx):
 
     specs = [  # key, density column, x label, title, color, file stem
         ('all', 'npis_per_100k', 'CTA-Billing NPIs per 100,000 FFS Beneficiaries',
-         f'Figure 8. All-Provider Density vs CTA Rate — Multivariable NB (age + %female), {config.END_YEAR}',
-         style.PURPLE, 'figure8_nb_all_density'),
+         f'Supplemental Figure S1. All-Provider Density vs CTA Rate — Multivariable NB (age + %female), {config.END_YEAR}',
+         style.PURPLE, 'figureS1_nb_all_density'),
         ('rad', 'rad_npis_per_100k', 'Radiologist NPIs per 100,000 FFS Beneficiaries',
-         f'Supplemental Figure S1. Radiologist Density vs CTA Rate — Multivariable NB, {config.END_YEAR}',
-         style.BLUE, 'figureS1_nb_rad_density'),
+         f'Supplemental Figure S3. Radiologist Density vs CTA Rate — Multivariable NB, {config.END_YEAR}',
+         style.BLUE, 'figureS3_nb_rad_density'),
         ('card', 'card_npis_per_100k', 'Cardiologist NPIs per 100,000 FFS Beneficiaries',
-         f'Supplemental Figure S2. Cardiologist Density vs CTA Rate — Multivariable NB, {config.END_YEAR}',
-         style.CARD_RED, 'figureS2_nb_card_density'),
+         f'Supplemental Figure S4. Cardiologist Density vs CTA Rate — Multivariable NB, {config.END_YEAR}',
+         style.CARD_RED, 'figureS4_nb_card_density'),
     ]
     ctx['nb_results'] = {}
     for key, col, label, title, color, fname in specs:
@@ -191,7 +203,7 @@ def step_density_models(ctx):
 
 
 def step_workforce_sensitivity(ctx):
-    """Sensitivity (post hoc, reviewer R2): Figure 8/S1/S2 models with all radiologists/cardiologists as exposure."""
+    """Sensitivity (post hoc, reviewer R2): the S1/S3/S4 models with all radiologists/cardiologists as exposure (tables only)."""
     print("Sensitivity: density models with the whole radiology/cardiology workforce as exposure...")
     con, state_ffs = ctx['con'], ctx['state_ffs_end']
     demo = demographics.load_gv_demographics(con, config.GV_YEAR)
@@ -218,7 +230,8 @@ def step_workforce_sensitivity(ctx):
     table = pd.DataFrame(rows).set_index(['model', 'exposure'])
     ctx['tables']['density_sensitivity_workforce'] = table
 
-    # Figures S3 (END_YEAR) and S4 (BASE_YEAR): Figure S2's layout with the whole radiology + cardiology workforce on the x-axis.
+    # Whole radiology + cardiology workforce density vs CTA rate in END_YEAR and BASE_YEAR (table workforce_density_by_year;
+    # the two figures were dropped by the user 2026-11-04).
     col, label = labels['all']
     by_year = {config.END_YEAR: (wf_fits['all'], n_phys['all'])}
     ffs18 = ctx['state_ffs_base'] if 'state_ffs_base' in ctx else enrollment.load_state_ffs(con, config.BASE_YEAR)
@@ -227,11 +240,8 @@ def step_workforce_sensitivity(ctx):
     fit18 = nb_models.fit_density_models(frames18['all'], col, label)
     by_year[config.BASE_YEAR] = (fit18, providers.national_workforce_counts(con, config.BASE_YEAR)['all'])
     rows = []
-    for year, num in [(config.END_YEAR, 'S3'), (config.BASE_YEAR, 'S4')]:
+    for year in (config.END_YEAR, config.BASE_YEAR):
         fit, n = by_year[year]
-        density.plot_density_fit(
-            fit, f'Supplemental Figure {num}. Radiologist + Cardiologist Density vs CTA Rate — Multivariable NB, {year}',
-            style.PURPLE, f'figure{num}_workforce_density_{year}', n)
         sd = float(fit['d'][col].std(ddof=0))
         irr, per_sd = fit['irr_adj'], nb_models.irr_per_sd(fit['irr_adj'], sd)
         rows.append({'year': year, 'states': len(fit['d']), 'physicians': n,
@@ -252,11 +262,11 @@ def step_workforce_sensitivity(ctx):
 
 
 def step_table1_forest(ctx):
-    """Table 1 (specialty shares by modality) and the Figure 9 forest plot."""
+    """Table 1 (specialty shares by modality) and the Figure S2 forest plot."""
     table1 = tables.specialty_distribution(ctx['con'])
     ctx['tables']['table1_specialty_distribution'] = table1
     share_rad, share_card = tables.cta_shares(table1)
-    print("\nBuilding Figure 9: Combined density-IRR forest plot...")
+    print("\nBuilding Figure S2: Combined density-IRR forest plot...")
     r = ctx['nb_results']
     forest.plot_forest([
         ('All CTA-billing providers', 'all interpretations',                 r['all'],  style.PURPLE),
@@ -269,13 +279,14 @@ STEPS = [
     ('connect_database', step_connect),
     ('load_claims', step_load_claims),
     ('figure1_decomposition', step_figure1),
+    ('figure8_rate_trends', step_rate_trends),
     ('figure2_market_share', step_figure2),
     ('figures3_7_state_maps', step_state_maps),
     ('figures10_11_comparator_maps', step_comparator_maps),
     ('state_summary_table', step_state_table),
     ('density_models_fig8_S1_S2', step_density_models),
     ('density_sensitivity_workforce', step_workforce_sensitivity),
-    ('table1_and_figure9_forest', step_table1_forest),
+    ('table1_and_figureS2_forest', step_table1_forest),
 ]
 
 
