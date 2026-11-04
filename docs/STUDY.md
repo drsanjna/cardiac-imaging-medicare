@@ -70,7 +70,10 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
   `density_sensitivity_workforce`. Caveat: measures the whole specialty, not trained CCTA readers.
   Figures S3 (end year) and S4 (2018) plot this exposure (radiologists + cardiologists) against the CTA rate in Figure S2's
   layout; table `workforce_density_by_year`. Two cross-sections, not a test of change within states.
-  Figure S5: change-on-change by state, 2018→end year (Δ density vs Δ CTA rate, OLS with HC3 SEs, with/without DC and MN).
+  Figure S5: change-on-change by state, 2018→end year, shown as the partial-regression (added-variable) plot of the
+  count model Δlog CTA ~ Δlog physicians + Δlog FFS (OLS, HC3 SEs); the Δ rate ~ Δ density slopes (with/without DC and MN)
+  stay in the model table.
+  Figure 13: states ranked by Δ CTA rate per 1,000, 2018→end year, with median, IQR and P90/P10 of state rates per year.
   Both axes share the FFS denominator, which fell ~11% (median state) as MA grew, so Δ density mostly reflects the
   shrinking denominator (median physician count +3.7%). The count model Δlog CTA ~ Δlog physicians + Δlog FFS removes
   that and is the one to interpret. Tables `workforce_cta_change_by_state`, `workforce_cta_change_models`.
@@ -86,10 +89,11 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 | Figure 10 | Invasive coronary angiography state rate maps 2018 / 2024 / change |
 | Figure 11 | TAVR state rate maps 2018 / 2024 / change |
 | Figure 12 | CACS state rate maps 2018 / 2024 / change (states without rows in a year are grey and named in the footnote) |
+| Figure 13 | States ranked by change in CTA rate per 1,000, 2018→2024, with per-year dispersion statistics (post hoc) |
 | Table 1 | Specialty distribution (Cardiology / Radiology / Other) by modality |
 | Figures S1–S2 | Radiologist and cardiologist density models |
 | Figures S3–S4 | Radiologist + cardiologist (any Part B) density vs CTA rate, 2024 and 2018 (post hoc) |
-| Figure S5 | Change in that density vs change in CTA rate by state, 2018→2024 (post hoc) |
+| Figure S5 | Partial-regression plot of Δlog CTA on Δlog physicians, adjusted for Δlog FFS, 2018→2024 (post hoc) |
 | Composite | 2024 state rates, all modalities (candidate Central Illustration) |
 
 ## Known limitations — check every claim against these

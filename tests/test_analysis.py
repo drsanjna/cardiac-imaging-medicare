@@ -229,3 +229,33 @@ def test_comparator_map_greys_every_panel_without_data(monkeypatch):
     assert 'ME' in grey[1].locations and 'AK' in grey[0].locations and 'AL' not in grey[2].locations
     note = fig.layout.annotations[-1].text
     assert f'No {config.BASE_YEAR} rows for' in note and f'No {config.END_YEAR} rows for' in note
+
+
+def test_state_rate_dispersion_hand_calculation():
+    """Median, IQR and P90/P10 per modality and year from the deltas frame; P90/P10 is NaN when P10 is 0."""
+    end = pd.DataFrame(dict(state=list('ABCDE'), procedure_category='Cardiac CTA', rate_per_1000=[1, 2, 3, 4, 10.0]))
+    base = end.assign(rate_per_1000=[0, 0, 1, 2, 2.0])
+    disp = rates.state_rate_dispersion(rates.rate_deltas(end, base, y1=2024, y0=2018), y0=2018, y1=2024)
+    r = disp.loc[('Cardiac CTA', 2024)]
+    assert r['states'] == 5 and r['median'] == 3 and r['IQR'] == pytest.approx(2) and r['Q1'] == 2 and r['Q3'] == 4
+    assert r['P90/P10'] == pytest.approx(np.percentile([1, 2, 3, 4, 10], 90) / np.percentile([1, 2, 3, 4, 10], 10))
+    assert np.isnan(disp.loc[('Cardiac CTA', 2018), 'P90/P10'])          # P10 = 0 → ratio undefined
+
+
+def test_partial_regression_frame_matches_count_model():
+    """Frisch–Waugh: the slope of the y-residuals on the x-residuals (through the origin) equals the model's elasticity."""
+    from cardiac_imaging.analysis import change
+    rng = np.random.default_rng(7)
+    n = 30
+    states = [f'S{i}' for i in range(n)]
+    npi18 = rng.integers(200, 2000, n); g = rng.uniform(0.8, 1.3, n); ffs18 = rng.integers(100_000, 900_000, n)
+    end = _wf(states, (npi18 * g).round(), npi18 * 2.0 * g ** 1.2 * rng.lognormal(0, 0.1, n), ffs18 * rng.uniform(0.8, 1.1, n))
+    base = _wf(states, npi18, npi18 * 2.0, ffs18)
+    base.loc[0, 'total_services'] = 0                                      # one state without CTA in the base year
+    df = change.change_frame(end, base, 2024, 2018)
+    fits = change.fit_change_models(df, 2024, 2018)
+    pr = change.partial_regression_frame(df, fits, 2024, 2018)
+    assert len(pr) == n - 1 == fits['count model']['n'] and 'S0' not in set(pr['state'])
+    slope = float(np.sum(pr['x_resid'] * pr['y_resid']) / np.sum(pr['x_resid'] ** 2))
+    assert slope == pytest.approx(fits['count model']['elasticity'][0], rel=1e-9)
+    assert abs(pr['x_resid'].mean()) < 1e-9 and abs(pr['y_resid'].mean()) < 1e-9   # residuals of a fit with intercept

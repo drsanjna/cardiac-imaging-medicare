@@ -11,7 +11,7 @@ from . import config, errors, style
 from .analysis import change, nb_models, rates, tables
 from .db.connection import get_connection, require_tables
 from .figures import change as change_fig
-from .figures import choropleths, decomposition, density, forest, market_share
+from .figures import choropleths, decomposition, density, forest, market_share, ranked_change
 from .loaders import claims, demographics, enrollment, providers
 from .reporting import run_store
 
@@ -30,6 +30,7 @@ MAIN TEXT
   Figure 10: Invasive coronary angiography — state rates, {b} / {e} / change
   Figure 11: TAVR — state rates, {b} / {e} / change
   Figure 12: Coronary artery calcium score (CACS) — state rates, {b} / {e} / change
+  Figure 13: States ranked by change in CTA rate, {b}→{e}, with median / IQR / P90:P10 of state rates
   (unnumbered composite: all-modality {e} state panel)
 
 SUPPLEMENT
@@ -39,7 +40,7 @@ SUPPLEMENT
              (single panel + inline unadjusted/adjusted IRR, CI, p)
   Figure S3: Radiologist + cardiologist (any Part B) density vs CTA rate, {e} (same layout as S2)
   Figure S4: Same as S3 for {b}
-  Figure S5: Change in radiologist + cardiologist density vs change in CTA rate by state, {b}→{e}
+  Figure S5: Partial-regression plot, Δlog CTA ~ Δlog radiologists+cardiologists + Δlog FFS, {b}→{e}
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -105,7 +106,7 @@ def step_figure2(ctx):
 
 
 def step_state_maps(ctx):
-    """State rates for BASE_YEAR and END_YEAR, Figures 3–7 and the all-modality panel."""
+    """State rates for BASE_YEAR and END_YEAR, Figures 3–7, the all-modality panel and Figure 13 (ranked CTA change)."""
     print("Building Figures 3–7: State Choropleth Heatmaps...")
     con, df = ctx['con'], ctx['df_detail']
     ctx['state_ffs_end'] = enrollment.load_state_ffs(con, config.END_YEAR)
@@ -119,6 +120,9 @@ def step_state_maps(ctx):
                           f'state_rates_{config.END_YEAR}': r_end.set_index('state'),
                           'state_rate_change': deltas.set_index('state')})
     choropleths.plot_all_modalities_panel(r_end)
+    disp = rates.state_rate_dispersion(deltas)
+    ctx['tables']['state_rate_dispersion'] = disp
+    ranked_change.plot_ranked_state_change(deltas, disp, config.END_YEAR, config.BASE_YEAR)
     print("Figures 3–7 complete.\n")
 
 
@@ -234,10 +238,12 @@ def step_workforce_sensitivity(ctx):
     ctx['tables']['workforce_density_by_year'] = pd.DataFrame(rows).set_index('year')
 
     # Figure S5: did states that gained physicians also gain CTA use? (change-on-change, BASE_YEAR → END_YEAR)
+    # Plotted as the partial-regression view of the count model, which holds the change in FFS enrollment fixed.
     chg = change.change_frame(frames['all'], frames18['all'], config.END_YEAR, config.BASE_YEAR)
     fits = change.fit_change_models(chg, config.END_YEAR, config.BASE_YEAR)
-    change_fig.plot_change_on_change(chg, fits, config.END_YEAR, config.BASE_YEAR)
-    ctx['tables']['workforce_cta_change_by_state'] = chg.set_index('state')
+    pr = change.partial_regression_frame(chg, fits, config.END_YEAR, config.BASE_YEAR)
+    change_fig.plot_change_partial_regression(pr, fits, config.END_YEAR, config.BASE_YEAR)
+    ctx['tables']['workforce_cta_change_by_state'] = chg.merge(pr, on='state', how='left').set_index('state')
     ctx['tables']['workforce_cta_change_models'] = change.change_results_table(fits)
 
 

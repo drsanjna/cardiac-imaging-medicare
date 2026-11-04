@@ -77,3 +77,23 @@ def change_results_table(fits):
                  'CI low': lo, 'CI high': hi, 'p': p, 'R2': c['r2'], 'Spearman rho': np.nan, 'Spearman p': np.nan,
                  'meaning': '% change in CTA services per 1% change in physicians, FFS change held fixed'})
     return pd.DataFrame(rows).set_index('model')
+
+
+def partial_regression_frame(df, fits, end_year, base_year):
+    """Added-variable (partial-regression) coordinates for the count model's physician term, one row per state.
+
+    x = residual of Δlog(physicians) after regressing on Δlog(FFS) (with intercept); y = the same for Δlog(CTA).
+    By Frisch–Waugh–Lovell, the slope of y on x equals the count model's elasticity, so the fitted line through the
+    origin and its band (coefficient ± 1.96 × HC3 SE) show the adjusted association the model actually estimates.
+    """
+    e, b = end_year, base_year
+    pos = df[(df[f'total_services_{e}'] > 0) & (df[f'total_services_{b}'] > 0)]
+    dlog_p = np.log(pos[f'wf_unique_npis_{e}'] / pos[f'wf_unique_npis_{b}']).values
+    dlog_e = np.log(pos[f'ffs_enrollment_{e}'] / pos[f'ffs_enrollment_{b}']).values
+    dlog_c = np.log(pos[f'total_services_{e}'] / pos[f'total_services_{b}']).values
+    Xe = sm.add_constant(dlog_e)
+    out = pd.DataFrame({'state': pos['state'].values,
+                        'dlog_physicians': dlog_p, 'dlog_ffs': dlog_e, 'dlog_cta': dlog_c,
+                        'x_resid': sm.OLS(dlog_p, Xe).fit().resid, 'y_resid': sm.OLS(dlog_c, Xe).fit().resid})
+    assert len(out) == fits['count model']['n'], 'partial-regression frame must use the count model states'
+    return out.reset_index(drop=True)
