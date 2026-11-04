@@ -21,7 +21,7 @@ def _trend():
 def test_decompose_rate_per_1000():
     """Rate = services / national FFS enrollment × 1000."""
     d = rates.decompose(_trend())
-    row = d[(d['year'] == 2020) & (d['procedure_category'] == 'Echo')].iloc[0]
+    row = d[(d['year'] == 2020) & (d['procedure_category'] == 'Stress Echo')].iloc[0]
     assert row['enrollment'] == config.MEDICARE_ENROLLMENT[2020]
     assert row['rate_per_1000'] == pytest.approx(row['total_services'] / row['enrollment'] * 1000)
 
@@ -30,11 +30,11 @@ def test_change_summary_matches_hand_calculation():
     """BASE→END % change computed per modality; enrollment change identical for all."""
     cs = rates.change_summary(rates.decompose(_trend()))
     assert list(cs.index) == PROC_ORDER
-    assert cs.loc['Echo', 'volume_pct'] == pytest.approx(10.0 * (config.END_YEAR - config.BASE_YEAR))   # _trend grows 10%/yr
+    assert cs.loc['Stress Echo', 'volume_pct'] == pytest.approx(10.0 * (config.END_YEAR - config.BASE_YEAR))   # _trend grows 10%/yr
     enr = config.MEDICARE_ENROLLMENT
     assert cs['enrollment_pct'].nunique() == 1
     b, e = config.BASE_YEAR, config.END_YEAR
-    assert cs.loc['SPECT', 'enrollment_pct'] == pytest.approx((enr[e] - enr[b]) / enr[b] * 100)
+    assert cs.loc['SPECT MPI', 'enrollment_pct'] == pytest.approx((enr[e] - enr[b]) / enr[b] * 100)
     growth = 1 + 0.1 * (e - b)                                       # _trend grows 10%/yr
     expected_rate = ((growth / enr[e]) / (1 / enr[b]) - 1) * 100
     assert cs.loc['Cardiac PET', 'rate_pct'] == pytest.approx(expected_rate)
@@ -78,24 +78,24 @@ def test_market_shares_sum_to_100(con):
 
 def test_state_rates_and_deltas():
     """State rates drop states without (or with zero) enrollment, log them, and deltas fill missing years with 0."""
-    detail = pd.DataFrame(dict(state=['AL', 'AL', 'AK', 'AA', 'ZZ'], procedure_category=['Echo', 'SPECT', 'Echo', 'Echo', 'Echo'],
+    detail = pd.DataFrame(dict(state=['AL', 'AL', 'AK', 'AA', 'ZZ'], procedure_category=['Stress Echo', 'SPECT MPI', 'Stress Echo', 'Stress Echo', 'Stress Echo'],
                                Tot_Srvcs=[100.0, 50.0, 10.0, 5.0, 1.0]))
     audit.FILTER_LOG.clear()
     r = rates.compute_state_rates(detail, {'AL': 1000, 'AK': 0, 'ZZ': None})
     assert set(r['state']) == {'AL'}
-    assert r.loc[r['procedure_category'] == 'Echo', 'rate_per_1000'].iloc[0] == pytest.approx(100.0)
+    assert r.loc[r['procedure_category'] == 'Stress Echo', 'rate_per_1000'].iloc[0] == pytest.approx(100.0)
     assert set(audit.FILTER_LOG[-1]['dropped_items'].split(', ')) == {'AA', 'AK', 'ZZ'}
     base = r.copy()
     base['rate_per_1000'] = 50.0
-    end = pd.concat([r, pd.DataFrame([dict(state='TX', procedure_category='Echo', rate_per_1000=7.0)])])
+    end = pd.concat([r, pd.DataFrame([dict(state='TX', procedure_category='Stress Echo', rate_per_1000=7.0)])])
     d = rates.rate_deltas(end, base)
     assert d.loc[d['state'] == 'TX', 'rate_delta'].iloc[0] == pytest.approx(7.0)
-    assert d.loc[(d['state'] == 'AL') & (d['procedure_category'] == 'Echo'), 'rate_delta'].iloc[0] == pytest.approx(50.0)
+    assert d.loc[(d['state'] == 'AL') & (d['procedure_category'] == 'Stress Echo'), 'rate_delta'].iloc[0] == pytest.approx(50.0)
 
 
 def test_state_summary_table_sorted():
     """All Cardiac = sum of modality rates, sorted descending."""
-    sr = pd.DataFrame(dict(state=['A', 'A', 'B'], procedure_category=['Echo', 'SPECT', 'Echo'], rate_per_1000=[1.0, 2.0, 5.0]))
+    sr = pd.DataFrame(dict(state=['A', 'A', 'B'], procedure_category=['Stress Echo', 'SPECT MPI', 'Stress Echo'], rate_per_1000=[1.0, 2.0, 5.0]))
     t = rates.state_summary_table(sr)
     assert list(t.index) == ['B', 'A'] and t.loc['A', 'All Cardiac'] == pytest.approx(3.0)
 

@@ -65,15 +65,25 @@ def load_comparator_detail(con, label, codes):
     return df
 
 
-def load_comparators(con):
-    """All comparator procedures in config.COMPARATORS, one frame (procedure_category = comparator label)."""
+COMPARATOR_COLUMNS = ['year', 'Rndrng_NPI', 'HCPCS_Cd', 'procedure_category', 'place_of_service', 'state', 'Tot_Srvcs']
+
+
+def load_comparators(con, comparators=None):
+    """All comparator procedures (default config.COMPARATORS), one frame; an empty frame when they are switched off."""
     import pandas as pd
-    return pd.concat([load_comparator_detail(con, label, codes) for label, codes in config.COMPARATORS.items()],
+    comparators = config.COMPARATORS if comparators is None else comparators
+    if not comparators:
+        print("Comparators (ICA, TAVR, CACS) switched off (config.INCLUDE_COMPARATORS).")
+        return pd.DataFrame(columns=COMPARATOR_COLUMNS)
+    return pd.concat([load_comparator_detail(con, label, codes) for label, codes in comparators.items()],
                      ignore_index=True)
 
 
 def comparator_trend(df_comp):
-    """Total comparator services by year × procedure, in the national_trend format."""
+    """Total comparator services by year × procedure, in the national_trend format (empty in, empty out)."""
+    import pandas as pd
+    if df_comp.empty:
+        return pd.DataFrame(columns=['year', 'procedure_category', 'total_services'])
     return (df_comp.groupby(['year', 'procedure_category'])['Tot_Srvcs'].sum()
             .rename('total_services').reset_index())
 

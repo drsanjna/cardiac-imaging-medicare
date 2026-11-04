@@ -72,12 +72,12 @@ flowchart LR
 | [`catalog.py`](catalog.py) | Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF). |
 | [`change.py`](change.py) | Figure S5: partial-regression plot of the change-on-change count model, base year → end year. |
 | [`choropleths.py`](choropleths.py) | Figures 3–7, 10–12: state choropleths per modality and comparator procedure (base year / end year / change), plus an end-year panel. |
-| [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR). |
+| [`decomposition.py`](decomposition.py) | Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities (+ comparators when switched on). |
 | [`density.py`](density.py) | Figures 8, S1, S2: state CTA rate vs physician density with unadjusted/adjusted NB fits and inline IRRs. |
 | [`export.py`](export.py) | Save figures to OUTPUT_DIR as PNG (300 DPI) + LZW TIFF in tiff/, and display them only inside notebooks. |
 | [`forest.py`](forest.py) | Figure 9: density IRRs before/after adjustment by specialty. |
 | [`market_share.py`](market_share.py) | Figure 2: modality market share by rural/urban × office/facility, with advanced-modality zoom insets. |
-| [`ranked_change.py`](ranked_change.py) | Figure 13: every state ranked by its change in CTA rate per 1,000 FFS beneficiaries, base year → end year. |
+| [`ranked_change.py`](ranked_change.py) | Ranked CTA-change figure (number = style.RANKED_FIG_NUM): every state by its change in CTA rate per 1,000, base → end year. |
 
 ## Functions
 

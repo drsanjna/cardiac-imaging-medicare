@@ -1,4 +1,4 @@
-"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities + comparators (ICA, TAVR)."""
+"""Figure 1: volume vs FFS enrollment vs utilization rate, 3 metrics × 5 imaging modalities (+ comparators when switched on)."""
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -13,7 +13,8 @@ ROW_CONFIG = [
     ('rate_per_1000',  'Rate per 1,000 Beneficiaries',  COLOR_RATE,       'D'),
 ]
 
-TITLES = {config.ICA_LABEL: 'Invasive Coronary\nAngiography (ICA)',
+TITLES = {'Cardiac MRI': 'Cardiac MRI\n(stress CMR included)',
+          config.ICA_LABEL: 'Invasive Coronary\nAngiography (ICA)',
           config.TAVR_LABEL: 'Transcatheter Aortic Valve\nReplacement (TAVR)',
           config.CACS_LABEL: 'Coronary Artery\nCalcium Score (CACS)'}
 

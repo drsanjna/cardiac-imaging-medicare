@@ -1,19 +1,19 @@
-"""Figure 13: every state ranked by its change in CTA rate per 1,000 FFS beneficiaries, base year → end year."""
+"""Ranked CTA-change figure (number = style.RANKED_FIG_NUM): every state by its change in CTA rate per 1,000, base → end year."""
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .. import config
-from ..style import COLOR_CTA
+from ..style import COLOR_CTA, RANKED_FIG_NUM
 from .export import save_pub_fig
 
 
-def plot_ranked_state_change(deltas, dispersion, end_year, base_year, proc='Cardiac CTA',
-                             fname='figure13_cta_state_ranked_change'):
+def plot_ranked_state_change(deltas, dispersion, end_year, base_year, proc='Cardiac CTA', fname=None):
     """Horizontal lollipop chart: states on the y-axis sorted by Δ rate, Δ rate per 1,000 on the x-axis.
 
     Each lollipop is labelled "base → end" rate; the median state change is a dashed line and the dispersion of
     state rates in each year (median, IQR, P90/P10) sits in a box in the empty lower-right corner.
     """
+    fname = fname or f'figure{RANKED_FIG_NUM}_cta_state_ranked_change'
     d = (deltas[deltas['procedure_category'] == proc]
          .sort_values('rate_delta', ascending=True).reset_index(drop=True))      # largest change at the top
     y = np.arange(len(d))
@@ -52,7 +52,7 @@ def plot_ranked_state_change(deltas, dispersion, end_year, base_year, proc='Card
     ax.text(0.98, 0.03, '\n'.join(lines), transform=ax.transAxes, fontsize=8.5, ha='right', va='bottom',
             fontfamily='monospace',
             bbox=dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor='#cccccc', alpha=0.95))
-    ax.set_title(f'Figure 13. States Ranked by Change in {proc} Rate, {base_year}→{end_year}',
+    ax.set_title(f'Figure {RANKED_FIG_NUM}. States Ranked by Change in {proc} Rate, {base_year}→{end_year}',
                  fontsize=12, fontweight='bold', pad=10)
     plt.tight_layout()
     save_pub_fig(fig, fname, config.TIFF_LINEART_DPI)

@@ -33,9 +33,11 @@ def test_modality_sql_maps_every_cardiac_code():
     """Every code in the HCPCS filter is assigned a modality and a modality type."""
     codes = set(re.findall(r"'(\d{5})'", config.CARDIAC_HCPCS_WHERE))
     for code in codes:
-        assert code in config.MODALITY_CASE or '75557' <= code <= '75565'
-        assert code in config.MODALITY_TYPE_CASE or '75557' <= code <= '75565'
+        assert code in config.MODALITY_CASE and code in config.MODALITY_TYPE_CASE
     assert config.CTA_CODE in codes
+    assert set(config.STRESS_ECHO_CODES) == {'93350', '93351'} and set(config.SPECT_CODES) == {'78451', '78452'}
+    assert set(config.CMR_CODES) | set(config.STRESS_CMR_CODES) <= codes and '75565' not in codes and '93306' not in codes
+    assert not set(config.ICA_CODES + config.TAVR_CODES + config.CACS_CODES) & codes
 
 
 def test_pet_codes_are_perfusion_pet_with_and_without_ct():
@@ -66,7 +68,8 @@ def test_relative_env_paths_resolve_inside_repo(monkeypatch):
 def test_catalog_entries_are_complete_and_unique():
     """Every figure has a unique stem, a known section, and code + table references."""
     stems = [f['stem'] for f in catalog.FIGURES]
-    assert len(stems) == len(set(stems)) == 19   # 12 imaging figures + Figures 10–13 (ICA, TAVR, CACS maps, ranked CTA change) + Figures S3–S5
+    # 12 imaging figures + ranked CTA change + Figures S3–S5, plus Figures 10–12 (ICA, TAVR, CACS maps) when comparators are on
+    assert len(stems) == len(set(stems)) == 16 + len(config.COMPARATORS)
     for f in catalog.FIGURES:
         assert f['section'] in catalog.SECTIONS
         assert f['title'] and f['caption'] and f['label']

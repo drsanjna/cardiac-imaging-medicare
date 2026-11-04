@@ -176,6 +176,7 @@ Every function and class in this directory, including internal helpers.
 **`test_loaders.py`**
 - `test_specialty_guard(con)` — Passes when every specialty string exists; fails loudly when one is missing.
 - `test_load_detail_filters_and_classifies(con)` — Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality.
+- `test_load_comparators_off_by_default(con)` — With comparators switched off, the loader and the trend return empty frames with the usual columns.
 - `test_load_comparators_and_trend(con)` — ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.

@@ -22,7 +22,9 @@ def change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR, procs=Non
     enr = config.MEDICARE_ENROLLMENT
     enr_chg = (enr[y1] - enr[y0]) / enr[y0] * 100
     rows = []
-    for proc in procs or [p for p in FIG1_ORDER if p in set(decomp_df['procedure_category'])]:
+    present = set(decomp_df['procedure_category'])
+    # Figure 1 order first, then anything else in the frame (never drop a category silently).
+    for proc in procs or [p for p in FIG1_ORDER if p in present] + sorted(present - set(FIG1_ORDER)):
         sub = decomp_df[decomp_df['procedure_category'] == proc]
         v0 = sub.loc[sub['year'] == y0, 'total_services'].values[0]
         v1 = sub.loc[sub['year'] == y1, 'total_services'].values[0]
@@ -58,7 +60,7 @@ def national_market_share(trend):
                                   values='total_services', aggfunc='sum'
                                   ).reindex(columns=PROC_ORDER).fillna(0)
     nat_pct = nat_pivot.div(nat_pivot.sum(axis=1), axis=0) * 100
-    nat_pct['Traditional'] = nat_pct['Echo'] + nat_pct['SPECT']
+    nat_pct['Traditional'] = nat_pct['Stress Echo'] + nat_pct['SPECT MPI']
     nat_pct['Advanced'] = nat_pct['Cardiac CTA'] + nat_pct['Cardiac MRI'] + nat_pct['Cardiac PET']
     return nat_pct
 

@@ -12,7 +12,7 @@ ABBR2FIPS = {v: k for k, v in config.FIPS2ABBR.items()}
 NO_RAD = {'AK', 'SD'}                  # states with no radiologist CTA reader in the end year (exercises the ≥1-biller filter)
 NO_CARD = {'DE', 'WY'}                 # states with no cardiologist CTA reader in the end year
 EXTRA_AREAS = ['PR', 'AA']             # territory (excluded) and military code (passes the filter, has no enrollment)
-CODES = {'Echo': '93306', 'SPECT': '78452', 'Cardiac CTA': '75574', 'Cardiac MRI': '75561', 'Cardiac PET': '78492',
+CODES = {'Stress Echo': '93351', 'SPECT MPI': '78452', 'Cardiac CTA': '75574', 'Cardiac MRI': '75561', 'Cardiac PET': '78492',
          'ICA': '93458', 'TAVR': '33361', 'CACS': '75571'}   # comparator procedures (config.COMPARATORS)
 NO_CACS_END = {'ME'}             # CACS rows missing in the end year (exercises grey no-data panels)
 NO_TAVR_2018 = {'VT'}            # TAVR rows only from 2019 (exercises blank-state handling on the map)
@@ -37,14 +37,14 @@ def claims_frame(seed=7):
             ruca = ['1', '2.0', '3', '4.1', '10', None][npi % 6]
             for year in YEARS:
                 growth = 1 + 0.25 * (year - 2018)
-                mods = {'rad': ['Cardiac CTA', 'Cardiac MRI', 'SPECT', 'CACS'], 'card': ['Echo', 'SPECT', 'Cardiac CTA', 'Cardiac PET', 'ICA', 'TAVR'],
-                        'other': ['Echo']}[kind]
+                mods = {'rad': ['Cardiac CTA', 'Cardiac MRI', 'SPECT MPI', 'CACS'], 'card': ['Stress Echo', 'SPECT MPI', 'Cardiac CTA', 'Cardiac PET', 'ICA', 'TAVR'],
+                        'other': ['Stress Echo']}[kind]
                 for mod in mods:
                     if mod == 'TAVR' and year == 2018 and st in NO_TAVR_2018:
                         continue
                     if mod == 'CACS' and year == END and st in NO_CACS_END:
                         continue
-                    base = {'Echo': 400, 'SPECT': 120, 'Cardiac CTA': 8 * density * growth, 'Cardiac MRI': 5 * growth, 'Cardiac PET': 15,
+                    base = {'Stress Echo': 400, 'SPECT MPI': 120, 'Cardiac CTA': 8 * density * growth, 'Cardiac MRI': 5 * growth, 'Cardiac PET': 15,
                             'ICA': 60 * (1 - 0.04 * (year - 2018)), 'TAVR': 12 * growth, 'CACS': 9 * growth}[mod]
                     srv = float(max(11, rng.poisson(base)))
                     rows.append({**{c: None for c in cols}, 'year': year, 'Rndrng_NPI': str(npi), 'Rndrng_Prvdr_Type': ptype,

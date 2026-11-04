@@ -6,6 +6,7 @@ import zipfile
 import pandas as pd
 import pytest
 
+from cardiac_imaging.figures.catalog import FIGURES
 from cardiac_imaging import audit, config
 from cardiac_imaging.reporting import gallery, index, insights, publish, run_store
 
@@ -80,7 +81,7 @@ def test_compare_code_changes_between_snapshots(isolated):
 def test_gallery_html(pipeline_run):
     """Gallery lists every chart with zoom + discuss buttons, the run details panel and the viewer controls."""
     html = (pipeline_run['run_dir'] / 'gallery.html').read_text()
-    assert html.count('data-discuss=') == 19 and 'id="lb-in"' in html and 'id="lb-fit"' in html
+    assert html.count('data-discuss=') == len(FIGURES) and 'id="lb-in"' in html and 'id="lb-fit"' in html
     assert 'id="discuss"' in html and 'Restore this code' in html and 'Rows per year' in html
     assert 'Interactive' in html
     assert 'Sensitivity — density models with the whole radiology/cardiology workforce' in html   # shown, not just a CSV link
@@ -123,7 +124,7 @@ def test_release_notes_roundtrip(pipeline_run):
     assert m['summary'] in notes and '**What changed**' in notes and f"git checkout {m['code']['tag']}" in notes
     b64 = notes.split(publish.MARKER)[1].split('-->')[0].strip()
     rec = json.loads(base64.b64decode(b64))
-    assert rec['run_id'] == m['run_id'] and rec['figures'] == 19 and rec['summary'] == m['summary']
+    assert rec['run_id'] == m['run_id'] and rec['figures'] == len(FIGURES) and rec['summary'] == m['summary']
 
 
 def test_zip_splits_tiffs(tmp_path):
