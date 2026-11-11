@@ -262,14 +262,38 @@ def test_partial_regression_frame_matches_count_model():
 
 
 def test_rate_trends_draws_one_line_per_procedure(monkeypatch):
-    """Figure 8: CTA, TAVR and CACS each get a line; a procedure missing from the frame is skipped, not drawn empty."""
+    """Figure 8: each present procedure gets a line in FIG8_PROCS order; a procedure missing from the frame is skipped."""
     from cardiac_imaging.figures import rate_trends
     seen = {}
     monkeypatch.setattr(rate_trends, 'save_pub_fig', lambda fig, *a, **k: seen.update(fig=fig))
     rows = [dict(year=y, procedure_category=p, rate_per_1000=r * (1 + 0.2 * (y - 2018)))
-            for y in range(2018, 2025) for p, r in [('Cardiac CTA', 1.5), (config.TAVR_LABEL, 1.7)]]
+            for y in range(2018, 2025) for p, r in [(config.CARDIAC_CT_LABEL, 0.5), ('Cardiac CTA', 1.5), (config.TAVR_LABEL, 1.7)]]
     present = rate_trends.plot_rate_trends(pd.DataFrame(rows))
-    assert present == ['Cardiac CTA', config.TAVR_LABEL]
+    assert present == ['Cardiac CTA', config.TAVR_LABEL, config.CARDIAC_CT_LABEL]
     ax = seen['fig'].axes[0]
-    assert len(ax.get_lines()) == 2 and [t.get_text() for t in ax.get_legend().get_texts()] == \
-        [rate_trends.TITLES['Cardiac CTA'], rate_trends.TITLES[config.TAVR_LABEL]]
+    assert len(ax.get_lines()) == 3 and [t.get_text() for t in ax.get_legend().get_texts()] == \
+        [rate_trends.TITLES[p] for p in present]
+    assert ax.get_ylabel().startswith('Procedures') and 'services ÷ 2' in rate_trends.TITLES[config.TAVR_LABEL]
+
+
+def test_ffr_figure_draws_both_series(monkeypatch):
+    """Figure S6: invasive FFR and FFR-CT lines, services axis, its own file stem."""
+    from cardiac_imaging.figures import rate_trends
+    seen = {}
+    monkeypatch.setattr(rate_trends, 'save_pub_fig', lambda fig, fname, *a, **k: seen.update(fig=fig, fname=fname))
+    rows = [dict(year=y, procedure_category=p, rate_per_1000=r) for y in range(2018, 2025)
+            for p, r in [(config.FFR_LABEL, 1.2), (config.FFRCT_LABEL, 0.1), ('Cardiac CTA', 5.0)]]
+    present = rate_trends.plot_ffr_trends(pd.DataFrame(rows))
+    assert present == [config.FFR_LABEL, config.FFRCT_LABEL] and seen['fname'] == 'figureS6_ffr_ffrct_rates'
+    ax = seen['fig'].axes[0]
+    assert len(ax.get_lines()) == 2 and ax.get_ylabel().startswith('Services') and 'S6' in ax.get_title()
+
+
+def test_services_to_procedures_halves_tavr_only():
+    """TAVR services ÷ 2 → procedures; every other series is unchanged and labelled services."""
+    trend = pd.DataFrame(dict(year=[2018, 2018, 2018], procedure_category=[config.TAVR_LABEL, config.CACS_LABEL, 'Cardiac CTA'],
+                              total_services=[100.0, 40.0, 10.0]))
+    out = rates.services_to_procedures(trend)
+    assert list(out['total_services']) == [50.0, 40.0, 10.0] and list(out['unit']) == ['procedures', 'services', 'services']
+    assert list(trend['total_services']) == [100.0, 40.0, 10.0]      # input not mutated
+    assert rates.decompose(out).loc[0, 'rate_per_1000'] == pytest.approx(50 / config.MEDICARE_ENROLLMENT[2018] * 1000)

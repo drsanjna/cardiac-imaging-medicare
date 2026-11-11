@@ -17,6 +17,17 @@ def decompose(trend):
     return decomp_df
 
 
+def services_to_procedures(trend, per_procedure=None):
+    """Divide `total_services` by the services billed per procedure (config.SERVICES_PER_PROCEDURE: TAVR ÷ 2, co-surgeon
+    billing) and add a `unit` column ('procedures' where divided, 'services' elsewhere)."""
+    per_procedure = config.SERVICES_PER_PROCEDURE if per_procedure is None else per_procedure
+    out = trend.copy()
+    k = out['procedure_category'].map(per_procedure).fillna(1).astype(float)
+    out['total_services'] = out['total_services'] / k
+    out['unit'] = np.where(k > 1, 'procedures', 'services')
+    return out
+
+
 def change_summary(decomp_df, y0=config.BASE_YEAR, y1=config.END_YEAR, procs=None):
     """% change in volume, national FFS enrollment and rate between y0 and y1, one row per modality (or `procs`)."""
     enr = config.MEDICARE_ENROLLMENT

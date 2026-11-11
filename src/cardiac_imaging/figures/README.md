@@ -83,7 +83,7 @@ flowchart LR
 | [`forest.py`](forest.py) | Figure S2: density IRRs before/after adjustment by specialty. |
 | [`market_share.py`](market_share.py) | Figure 2: relative distribution of the five modalities by rural/urban × office/facility, with CTA/CMR/PET zoom insets. |
 | [`ranked_change.py`](ranked_change.py) | Ranked CTA-change figure (number = style.RANKED_FIG_NUM): every state by its change in CTA rate per 1,000, base → end year. |
-| [`rate_trends.py`](rate_trends.py) | Figure 8: national rate per 1,000 FFS beneficiaries by year for cardiac CTA, TAVR and CACS on one axis. |
+| [`rate_trends.py`](rate_trends.py) | Figure 8 (cardiac CTA, TAVR procedures, CACS, structural CT) and Figure S6 (invasive FFR, FFR-CT): national rate per |
 
 ## Functions
 
@@ -127,7 +127,8 @@ Every function and class in this directory, including internal helpers.
 - `plot_ranked_state_change(deltas, dispersion, end_year, base_year, proc, fname)` — Horizontal lollipop chart: states on the y-axis sorted by Δ rate, Δ rate per 1,000 on the x-axis.
 
 **`rate_trends.py`**
-- `plot_rate_trends(decomp_df, procs, fname, fig_num)` — One line per procedure: rate per 1,000 FFS beneficiaries (y) by year (x), end-of-line labels with the last value.
+- `plot_rate_trends(decomp_df, procs, fname, fig_num, title, ylabel, note)` — One line per procedure: rate per 1,000 FFS beneficiaries (y) by year (x), end-of-line labels with the last value.
+- `plot_ffr_trends(decomp_df)` — Figure S6: invasive FFR (93571) and FFR-CT (0501T/0504T, 75580) national rates per 1,000 FFS by year.
 
 ## Notes
 

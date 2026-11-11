@@ -92,7 +92,9 @@ Every function and class in this directory, including internal helpers.
 - `test_comparator_map_greys_every_panel_without_data(monkeypatch)` — With grey_all_missing, states lacking data in a panel (either year) are named in the note and drawn grey.
 - `test_state_rate_dispersion_hand_calculation()` — Median, IQR and P90/P10 per modality and year from the deltas frame; P90/P10 is NaN when P10 is 0.
 - `test_partial_regression_frame_matches_count_model()` — Frisch–Waugh: the slope of the y-residuals on the x-residuals (through the origin) equals the model's elasticity.
-- `test_rate_trends_draws_one_line_per_procedure(monkeypatch)` — Figure 8: CTA, TAVR and CACS each get a line; a procedure missing from the frame is skipped, not drawn empty.
+- `test_rate_trends_draws_one_line_per_procedure(monkeypatch)` — Figure 8: each present procedure gets a line in FIG8_PROCS order; a procedure missing from the frame is skipped.
+- `test_ffr_figure_draws_both_series(monkeypatch)` — Figure S6: invasive FFR and FFR-CT lines, services axis, its own file stem.
+- `test_services_to_procedures_halves_tavr_only()` — TAVR services ÷ 2 → procedures; every other series is unchanged and labelled services.
 
 **`test_app.py`**
 - `run_copy(pipeline_run, monkeypatch, isolated)` — A private copy of the synthetic run inside this test's RUNS_DIR (so tests can write conversations etc.).
@@ -129,6 +131,7 @@ Every function and class in this directory, including internal helpers.
 - `test_geography_lookups_cover_50_states_plus_dc()` — Name and FIPS lookups agree on the same 51 jurisdictions.
 - `test_study_window_and_enrollment()` — National enrollment exists for every study year.
 - `test_modality_sql_maps_every_cardiac_code()` — Every code in the HCPCS filter is assigned a modality and a modality type.
+- `test_context_series_codes_stay_out_of_the_imaging_totals()` — Figure 8 / S6 context codes (TAVR, CACS, 75572, 93571, FFR-CT incl. 75580) never enter the modality filter.
 - `test_pet_codes_are_perfusion_pet_with_and_without_ct()` — Cardiac PET = 78491, 78492, 78430, 78431 (Advanced); add-on 78434 and metabolic/combined codes are not counted.
 - `test_relative_env_paths_resolve_inside_repo(monkeypatch)` — CARDIAC_* relative paths are resolved against the repo root.
 - `test_catalog_entries_are_complete_and_unique()` — Every figure has a unique stem, a known section, and code + table references.
@@ -179,6 +182,8 @@ Every function and class in this directory, including internal helpers.
 - `test_load_detail_filters_and_classifies(con)` — Only cardiac codes, no territories/invalid states, RUCA cast to Urban/Rural/Unknown, every row has a modality.
 - `test_load_comparators_off_by_default(con)` — With comparators switched off, the loader and the trend return empty frames with the usual columns.
 - `test_load_comparators_and_trend(con)` — ICA, TAVR and CACS rows: only their codes, territories excluded and logged; trend has one row per year × procedure.
+- `test_context_series_load_and_ffrct_code_switch(con)` — Figure 8 / S6 series load by their own codes; FFR-CT picks up 0504T before and 75580 in the end year.
+- `test_tavr_cosurgeon_split(con)` — One row per year; groups sum to the total; procedures = total ÷ 2. Synthetic TAVR is cardiology-only, so no surgery.
 - `test_ruca_threshold_matches_numeric_comparison(con)` — VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural.
 - `test_aggregate_segments_drops_unknown_and_logs(con)` — Segment aggregates exclude Unknown RUCA and log the services dropped.
 - `_raw_ab2()` *(internal)* — A tiny raw AB 2 sheet (2023 layout): preamble, header row, junk rows and a territory; FFS in column 4.
@@ -233,6 +238,7 @@ Every function and class in this directory, including internal helpers.
 - `test_workforce_sensitivity_irrs(real_run)` — Whole-workforce exposure (not selected by CTA billing) still gives adjusted IRRs above 1 for all three models.
 - `test_workforce_density_by_year(real_run)` — Figures S3/S4: whole-workforce density vs CTA rate is positive in 2024 (IRR 1.0032) and in 2018 (1.0041).
 - `test_workforce_change_models(real_run)` — Figure S5: Δ rate ~ Δ density slope 0.026 (shared FFS denominator); count model elasticity 0.27, not significant.
+- `test_tavr_procedures_and_context_series(real_run)` — Figure 8 / S6 context series on the real data (added 2026-11-11): TAVR procedures = services ÷ 2, with cardiology
 
 **`test_reporting.py`**
 - `test_log_filter_records_and_prints(capsys)` — log_filter returns `after`, records an entry and prints dropped items.

@@ -13,7 +13,9 @@ NO_RAD = {'AK', 'SD'}                  # states with no radiologist CTA reader i
 NO_CARD = {'DE', 'WY'}                 # states with no cardiologist CTA reader in the end year
 EXTRA_AREAS = ['PR', 'AA']             # territory (excluded) and military code (passes the filter, has no enrollment)
 CODES = {'Stress Echo': '93351', 'SPECT MPI': '78452', 'Cardiac CTA': '75574', 'Cardiac MRI': '75561', 'Cardiac PET': '78492',
-         'ICA': '93458', 'TAVR': '33361', 'CACS': '75571'}   # comparator procedures (config.COMPARATORS)
+         'ICA': '93458', 'TAVR': '33361', 'CACS': '75571',    # comparator procedures (config.COMPARATORS)
+         'Cardiac structural CT': '75572', 'Invasive FFR': '93571', 'FFR-CT': '0504T'}   # Figure 8 / S6 context series
+FFRCT_END_CODE = '75580'         # FFR-CT moves to its Category I code in the end year (exercises the code switch)
 NO_CACS_END = {'ME'}             # CACS rows missing in the end year (exercises grey no-data panels)
 NO_TAVR_2018 = {'VT'}            # TAVR rows only from 2019 (exercises blank-state handling on the map)
 BASE, END = config.BASE_YEAR, config.END_YEAR
@@ -37,7 +39,8 @@ def claims_frame(seed=7):
             ruca = ['1', '2.0', '3', '4.1', '10', None][npi % 6]
             for year in YEARS:
                 growth = 1 + 0.25 * (year - 2018)
-                mods = {'rad': ['Cardiac CTA', 'Cardiac MRI', 'SPECT MPI', 'CACS'], 'card': ['Stress Echo', 'SPECT MPI', 'Cardiac CTA', 'Cardiac PET', 'ICA', 'TAVR'],
+                mods = {'rad': ['Cardiac CTA', 'Cardiac MRI', 'SPECT MPI', 'CACS', 'Cardiac structural CT', 'FFR-CT'],
+                        'card': ['Stress Echo', 'SPECT MPI', 'Cardiac CTA', 'Cardiac PET', 'ICA', 'TAVR', 'Invasive FFR'],
                         'other': ['Stress Echo']}[kind]
                 for mod in mods:
                     if mod == 'TAVR' and year == 2018 and st in NO_TAVR_2018:
@@ -45,12 +48,15 @@ def claims_frame(seed=7):
                     if mod == 'CACS' and year == END and st in NO_CACS_END:
                         continue
                     base = {'Stress Echo': 400, 'SPECT MPI': 120, 'Cardiac CTA': 8 * density * growth, 'Cardiac MRI': 5 * growth, 'Cardiac PET': 15,
-                            'ICA': 60 * (1 - 0.04 * (year - 2018)), 'TAVR': 12 * growth, 'CACS': 9 * growth}[mod]
+                            'ICA': 60 * (1 - 0.04 * (year - 2018)), 'TAVR': 12 * growth, 'CACS': 9 * growth,
+                            'Cardiac structural CT': 6 * growth, 'Invasive FFR': 30 * (1 - 0.03 * (year - 2018)),
+                            'FFR-CT': 4 * growth}[mod]
+                    code = FFRCT_END_CODE if mod == 'FFR-CT' and year == END else CODES[mod]
                     srv = float(max(11, rng.poisson(base)))
                     rows.append({**{c: None for c in cols}, 'year': year, 'Rndrng_NPI': str(npi), 'Rndrng_Prvdr_Type': ptype,
                                  'Rndrng_Prvdr_State_Abrvtn': st, 'Rndrng_Prvdr_Cntry': 'US', 'Rndrng_Prvdr_RUCA': ruca,
                                  'Rndrng_Prvdr_State_FIPS': ABBR2FIPS.get(st, '72'), 'Rndrng_Prvdr_Zip5': f'0{npi % 10000:04d}',
-                                 'HCPCS_Cd': CODES[mod], 'Place_Of_Srvc': 'F' if npi % 3 else 'O', 'Tot_Srvcs': srv,
+                                 'HCPCS_Cd': code, 'Place_Of_Srvc': 'F' if npi % 3 else 'O', 'Tot_Srvcs': srv,
                                  'Tot_Bene_Day_Srvcs': int(srv * 0.9), 'Tot_Benes': int(srv * 0.8), 'Rndrng_Prvdr_Ent_Cd': 'I'})
             rows.append({**{c: None for c in cols}, 'year': END, 'Rndrng_NPI': str(npi), 'Rndrng_Prvdr_Type': ptype,
                          'Rndrng_Prvdr_State_Abrvtn': st, 'Rndrng_Prvdr_Cntry': 'US', 'HCPCS_Cd': '99213', 'Place_Of_Srvc': 'O',

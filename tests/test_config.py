@@ -40,6 +40,16 @@ def test_modality_sql_maps_every_cardiac_code():
     assert not set(config.ICA_CODES + config.TAVR_CODES + config.CACS_CODES) & codes
 
 
+def test_context_series_codes_stay_out_of_the_imaging_totals():
+    """Figure 8 / S6 context codes (TAVR, CACS, 75572, 93571, FFR-CT incl. 75580) never enter the modality filter."""
+    codes = set(re.findall(r"'(\d{5})'", config.CARDIAC_HCPCS_WHERE))
+    ctx = {c for codes_ in {**config.RATE_TREND_PROCS, **config.FFR_PROCS}.values() for c in codes_}
+    assert not ctx & codes and '75574' not in ctx
+    assert config.CARDIAC_CT_CODES == ('75572',) and config.FFR_CODES == ('93571',)
+    assert set(config.FFRCT_CODES) == {'0501T', '0504T', '75580'} and '0502T' not in ctx and '93572' not in ctx
+    assert config.SERVICES_PER_PROCEDURE == {config.TAVR_LABEL: 2}
+
+
 def test_pet_codes_are_perfusion_pet_with_and_without_ct():
     """Cardiac PET = 78491, 78492, 78430, 78431 (Advanced); add-on 78434 and metabolic/combined codes are not counted."""
     import duckdb
@@ -68,8 +78,8 @@ def test_relative_env_paths_resolve_inside_repo(monkeypatch):
 def test_catalog_entries_are_complete_and_unique():
     """Every figure has a unique stem, a known section, and code + table references."""
     stems = [f['stem'] for f in catalog.FIGURES]
-    # Figures 1–9 + composite + S1–S5 = 15, plus Figures 10–12 (ICA, TAVR, CACS maps) when comparators are on
-    assert len(stems) == len(set(stems)) == 15 + len(config.COMPARATORS)
+    # Figures 1–9 + composite + S1–S6 = 16, plus Figures 10–12 (ICA, TAVR, CACS maps) when comparators are on
+    assert len(stems) == len(set(stems)) == 16 + len(config.COMPARATORS)
     for f in catalog.FIGURES:
         assert f['section'] in catalog.SECTIONS
         assert f['title'] and f['caption'] and f['label']

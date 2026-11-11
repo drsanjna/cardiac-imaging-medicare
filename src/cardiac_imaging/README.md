@@ -96,7 +96,7 @@ Every function and class in this directory, including internal helpers.
 - `step_connect(ctx)` — Open the read-only database, check required tables, and record claim rows per year.
 - `step_load_claims(ctx)` — Verify specialty strings, load cardiac claim detail, and build segment aggregates + national trend.
 - `step_figure1(ctx)` — Figure 1 and the BASE_YEAR → END_YEAR change summary.
-- `step_rate_trends(ctx)` — Figure 8: national CTA, TAVR and CACS rates per 1,000 FFS by year (TAVR/CACS loaded here even when comparators are off).
+- `step_rate_trends(ctx)` — Figure 8 (CTA, TAVR procedures, CACS, structural CT) and Figure S6 (invasive FFR, FFR-CT): national rates per
 - `step_figure2(ctx)` — Figure 2 and the national market share table.
 - `step_state_maps(ctx)` — State rates for BASE_YEAR and END_YEAR, Figures 3–7, the all-modality panel and Figure 13 (ranked CTA change).
 - `step_comparator_maps(ctx)` — Figures 10–12: state rates for BASE_YEAR and END_YEAR and the change, for each comparator procedure (ICA, TAVR, CACS).

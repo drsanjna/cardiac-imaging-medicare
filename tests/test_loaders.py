@@ -58,6 +58,31 @@ def test_load_comparators_and_trend(con):
     assert trend['total_services'].sum() == df['Tot_Srvcs'].sum()
 
 
+def test_context_series_load_and_ffrct_code_switch(con):
+    """Figure 8 / S6 series load by their own codes; FFR-CT picks up 0504T before and 75580 in the end year."""
+    df = claims.load_comparators(con, {**config.RATE_TREND_PROCS, **config.FFR_PROCS})
+    assert set(df['procedure_category']) == set(config.RATE_TREND_PROCS) | set(config.FFR_PROCS)
+    ffrct = df[df['procedure_category'] == config.FFRCT_LABEL]
+    assert set(ffrct.loc[ffrct['year'] == synthetic.END, 'HCPCS_Cd']) == {synthetic.FFRCT_END_CODE}
+    assert set(ffrct.loc[ffrct['year'] < synthetic.END, 'HCPCS_Cd']) == {'0504T'}
+    assert set(df.loc[df['procedure_category'] == config.CARDIAC_CT_LABEL, 'HCPCS_Cd']) == {'75572'}
+    assert set(df.loc[df['procedure_category'] == config.FFR_LABEL, 'HCPCS_Cd']) == {'93571'}
+    trend = claims.comparator_trend(df)
+    assert len(trend) == len(synthetic.YEARS) * 5
+
+
+def test_tavr_cosurgeon_split(con):
+    """One row per year; groups sum to the total; procedures = total ÷ 2. Synthetic TAVR is cardiology-only, so no surgery."""
+    split = claims.tavr_cosurgeon_split(con)
+    assert list(split.columns) == ['year', 'cardiology', 'surgery', 'other', 'total_services', 'cardiology_to_surgery_ratio', 'procedures_est']
+    assert list(split['year']) == synthetic.YEARS
+    assert (split[['cardiology', 'surgery', 'other']].sum(axis=1) == split['total_services']).all()
+    assert (split['surgery'] == 0).all() and split['cardiology_to_surgery_ratio'].isna().all()
+    assert (split['procedures_est'] * config.TAVR_SERVICES_PER_PROCEDURE == split['total_services']).all()
+    tavr = claims.load_comparators(con, {config.TAVR_LABEL: config.TAVR_CODES})
+    assert split['total_services'].sum() == tavr['Tot_Srvcs'].sum()
+
+
 def test_ruca_threshold_matches_numeric_comparison(con):
     """VARCHAR RUCA is compared numerically: ≤3 Urban, >3 Rural."""
     df = claims.load_detail(con)
