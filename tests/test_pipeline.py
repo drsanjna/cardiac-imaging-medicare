@@ -30,9 +30,19 @@ def test_run_saves_tables_and_records(pipeline_run):
     m = json.loads((d / 'manifest.json').read_text())
     for t in ('change_summary', 'national_market_share', 'nb_density_models', 'table1_specialty_distribution',
               f'state_summary_{config.END_YEAR}', 'filter_log', 'density_sensitivity_workforce', 'workforce_density_by_year',
-              'workforce_cta_change_by_state', 'workforce_cta_change_models', 'state_rate_dispersion', 'cta_tavr_cacs_rates'):
+              'workforce_cta_change_by_state', 'workforce_cta_change_models', 'state_rate_dispersion', 'cta_tavr_cacs_rates',
+              'ffr_rates', 'tavr_cosurgeon_check'):
         assert (d / 'tables' / f'{t}.csv').exists(), t
     import pandas as pd
+    fig8 = pd.read_csv(d / 'tables' / 'cta_tavr_cacs_rates.csv')
+    assert set(fig8['procedure_category']) == {'Cardiac CTA', config.TAVR_LABEL, config.CACS_LABEL, config.CARDIAC_CT_LABEL}
+    assert set(fig8.loc[fig8['procedure_category'] == config.TAVR_LABEL, 'unit']) == {'procedures'}
+    assert set(fig8.loc[fig8['procedure_category'] != config.TAVR_LABEL, 'unit']) == {'services'}
+    check = pd.read_csv(d / 'tables' / 'tavr_cosurgeon_check.csv').set_index('year')
+    tavr = fig8[fig8['procedure_category'] == config.TAVR_LABEL].set_index('year')
+    assert (tavr['total_services'] == check.loc[tavr.index, 'procedures_est']).all()     # Figure 8 TAVR = services ÷ 2
+    ffr = pd.read_csv(d / 'tables' / 'ffr_rates.csv')
+    assert set(ffr['procedure_category']) == {config.FFR_LABEL, config.FFRCT_LABEL} and (ffr['rate_per_1000'] > 0).all()
     comp_rows = {'Invasive Coronary Angiography', 'TAVR', 'CACS'} & set(pd.read_csv(d / 'tables' / 'change_summary.csv')['modality'])
     if config.COMPARATORS:
         cacs = pd.read_csv(d / 'tables' / 'cacs_state_rates.csv', index_col='state')
@@ -99,4 +109,5 @@ def test_tiffs_when_enabled(synthetic_db, stub_plotly, monkeypatch):
     monkeypatch.setattr(config, 'TIFF_PANEL_DPI', 100)
     pipeline.run_all(database=str(synthetic_db), record=False)
     tiffs = {p.stem for p in (config.OUTPUT_DIR / 'tiff').glob('*.tiff')}
-    assert {'figure1_decomposition', 'figureS2_density_irr_forest', 'figure3_stress_echo_state_maps', 'figure8_cta_tavr_cacs_rates'} <= tiffs
+    assert {'figure1_decomposition', 'figureS2_density_irr_forest', 'figure3_stress_echo_state_maps', 'figure8_cta_tavr_cacs_rates',
+            'figureS6_ffr_ffrct_rates'} <= tiffs

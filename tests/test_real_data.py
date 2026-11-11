@@ -108,3 +108,26 @@ def test_workforce_change_models(real_run):
     assert round(t.loc['Δ rate ~ Δ density (all states)', 'estimate'], 4) == 0.0265
     c = t.loc['Δlog CTA ~ Δlog physicians + Δlog FFS']
     assert round(c['estimate'], 2) == 0.27 and c['CI low'] < 0 < c['CI high']
+
+
+def test_tavr_procedures_and_context_series(real_run):
+    """Figure 8 / S6 context series on the real data (added 2026-11-11): TAVR procedures = services ÷ 2, with cardiology
+    and surgery each billing ~49% of services; 75572, 93571 and FFR-CT (0501T+0504T, then 75580) volumes."""
+    import pandas as pd
+    d = real_run['run_dir'] / 'tables'
+    check = pd.read_csv(d / 'tavr_cosurgeon_check.csv').set_index('year')
+    assert check.loc[2018, 'total_services'] == 64_891 and check.loc[2024, 'total_services'] == 97_814
+    assert check.loc[2024, 'cardiology'] == 48_306 and check.loc[2024, 'surgery'] == 47_862
+    assert ((check['cardiology_to_surgery_ratio'] - 1).abs() < 0.03).all()
+    fig8 = pd.read_csv(d / 'cta_tavr_cacs_rates.csv').set_index(['procedure_category', 'year'])
+    assert fig8.loc[(config.TAVR_LABEL, 2024), 'total_services'] == 48_907 and fig8.loc[(config.TAVR_LABEL, 2024), 'unit'] == 'procedures'
+    assert fig8.loc[(config.TAVR_LABEL, 2024), 'rate_per_1000'] == pytest.approx(1.472, abs=0.001)
+    assert fig8.loc[(config.CARDIAC_CT_LABEL, 2018), 'total_services'] == 18_430
+    assert fig8.loc[(config.CARDIAC_CT_LABEL, 2024), 'total_services'] == 57_691
+    assert fig8.loc[('Cardiac CTA', 2024), 'total_services'] == 195_944   # Figure 1 trend: unknown-RUCA rows excluded (raw 196,120)
+    assert fig8.loc[(config.CACS_LABEL, 2024), 'total_services'] == 102_866
+    ffr = pd.read_csv(d / 'ffr_rates.csv').set_index(['procedure_category', 'year'])
+    assert ffr.loc[(config.FFR_LABEL, 2018), 'total_services'] == 45_894 and ffr.loc[(config.FFR_LABEL, 2024), 'total_services'] == 36_989
+    assert ffr.loc[(config.FFRCT_LABEL, 2018), 'total_services'] == 290       # 0504T only
+    assert ffr.loc[(config.FFRCT_LABEL, 2023), 'total_services'] == 10_954    # 0501T 2,927 + 0504T 8,027
+    assert ffr.loc[(config.FFRCT_LABEL, 2024), 'total_services'] == 22_974    # 75580 only
