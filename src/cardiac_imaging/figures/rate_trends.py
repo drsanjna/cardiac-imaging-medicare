@@ -16,7 +16,7 @@ LINE_STYLE = {   # label → (colour, marker, line style)
 }
 TITLES = {'Cardiac CTA': 'Cardiac CTA (CPT 75574)',
           config.TAVR_LABEL: 'TAVR procedures (CPT 33361–33366, services ÷ 2)',
-          config.CACS_LABEL: 'Coronary artery calcium score (CPT 75571)',
+          config.CACS_LABEL: 'Paid calcium-score claims (CPT 75571)',
           config.CARDIAC_CT_LABEL: 'Cardiac structural CT, non-coronary (CPT 75572)',
           config.FFR_LABEL: 'Invasive FFR, first vessel (CPT 93571)',
           config.FFRCT_LABEL: 'FFR-CT (CPT 0501T + 0504T; 75580 from 2024)'}
@@ -24,9 +24,10 @@ FIG8_PROCS = ('Cardiac CTA', config.TAVR_LABEL, config.CACS_LABEL, config.CARDIA
 FFR_FIG_PROCS = (config.FFR_LABEL, config.FFRCT_LABEL)
 FFR_FIG_STEM = 'figureS6_ffr_ffrct_rates'
 FIG8_NOTE = ('TAVR is billed by both heart-team physicians (modifier 62), so procedures = services ÷ 2 (cardiology and '
-             'surgery each bill ~49% of services every year). CACS = standalone calcium score; a calcium score acquired '
-             'within a CTA is bundled into the CTA code. 75572 is the non-coronary cardiac CT code under which a '
-             'TAVR-planning CT may be billed instead of 75574.')
+             'surgery each bill ~49% of services every year). 75571 = paid claims for a standalone calcium score: Medicare has '
+             'no national coverage policy for calcium scoring, so the series reflects claims paid under local contractor '
+             'policy and excludes self-pay scans; a calcium score acquired within a CTA is bundled into the CTA code. '
+             '75572 is the non-coronary cardiac CT code under which a TAVR-planning CT may be billed instead of 75574.')
 FFR_NOTE = ('93571 is an add-on to invasive coronary angiography (first vessel; additional vessels, 93572, not counted). '
             'FFR-CT: Category III codes 0501T (complete) and 0504T (interpretation) to 2023, Category I 75580 from 2024. '
             'CMS suppresses every provider–code row with fewer than 11 beneficiaries; FFR-CT is the lowest-volume series '
@@ -34,7 +35,7 @@ FFR_NOTE = ('93571 is an add-on to invasive coronary angiography (first vessel; 
 
 
 def plot_rate_trends(decomp_df, procs=FIG8_PROCS, fname='figure8_cta_tavr_cacs_rates', fig_num=8,
-                     title='Cardiac CTA, TAVR, Coronary Calcium Scoring and Structural Cardiac CT',
+                     title='Cardiac CTA, TAVR, Paid Calcium-Score Claims and Structural Cardiac CT',
                      ylabel='Procedures per 1,000 FFS beneficiaries', note=FIG8_NOTE, legend_loc='upper left'):
     """One line per procedure: rate per 1,000 FFS beneficiaries (y) by year (x), end-of-line labels with the last value.
 

@@ -85,11 +85,12 @@ FIGURES = [
                    '(red = decrease, blue = increase). Territories excluded.', **_src('maps'))
       for proc, n in _MAP_NUMBERS.items()],
     dict(stem='figure8_cta_tavr_cacs_rates', label='Figure 8', section='Main text',
-         title='Cardiac CTA, TAVR, CACS and structural cardiac CT: national rates by year',
+         title='Cardiac CTA, TAVR, paid calcium-score claims and structural cardiac CT: national rates by year',
          caption=f'National rate per 1,000 FFS beneficiaries by year, {B}–{E}, for cardiac CTA (CPT 75574), TAVR '
                  'procedures (CPT 33361–33366; both heart-team physicians bill the code, so procedures = services ÷ 2, '
-                 'checked against the ~49%/49% cardiology/surgery split in tavr_cosurgeon_check), standalone coronary '
-                 'artery calcium score (CPT 75571) and non-coronary cardiac CT (CPT 75572, the code a TAVR-planning CT '
+                 'checked against the ~49%/49% cardiology/surgery split in tavr_cosurgeon_check), paid claims for a standalone '
+                 'coronary artery calcium score (CPT 75571; Medicare has no national coverage policy for calcium scoring, so '
+                 'the series reflects claims paid under local contractor policy and excludes self-pay scans) and non-coronary cardiac CT (CPT 75572, the code a TAVR-planning CT '
                  'may be billed under instead of 75574). A calcium score acquired within a CTA is bundled into the CTA '
                  'code, so the CTA and CACS series do not overlap.', **_src('rate_trends')),
     *[f for f in [
