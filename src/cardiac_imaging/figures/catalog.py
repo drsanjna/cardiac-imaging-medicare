@@ -144,7 +144,9 @@ FIGURES = [
          caption=f'National services per 1,000 FFS beneficiaries by year, {B}–{E}, for invasive fractional flow reserve '
                  '(CPT 93571, first vessel; the additional-vessel add-on 93572 is not counted) and FFR-CT (CPT 0501T and '
                  f'0504T through 2023, Category I code 75580 from 2024; the technical-component codes 0502T/0503T are not '
-                 'counted). Context for the CTA trend; neither series is part of the five-modality totals.',
+                 'counted). Context for the CTA trend; neither series is part of the five-modality totals. CMS suppresses '
+                 'provider–code rows with fewer than 11 beneficiaries, and FFR-CT, the lowest-volume series in the study, '
+                 'is the most affected: its rates are a lower bound and should not be read as a headline number.',
          **_src('ffr_trends')),
 ]
 
