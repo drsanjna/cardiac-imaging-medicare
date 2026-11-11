@@ -28,8 +28,9 @@ FIG8_NOTE = ('TAVR is billed by both heart-team physicians (modifier 62), so pro
              'within a CTA is bundled into the CTA code. 75572 is the non-coronary cardiac CT code under which a '
              'TAVR-planning CT may be billed instead of 75574.')
 FFR_NOTE = ('93571 is an add-on to invasive coronary angiography (first vessel; additional vessels, 93572, not counted). '
-            'FFR-CT: Category III codes 0501T (complete) and 0504T (interpretation) to 2023, Category I 75580 from 2024; '
-            'provider–code rows with <11 beneficiaries are suppressed by CMS, which affects low-volume codes most.')
+            'FFR-CT: Category III codes 0501T (complete) and 0504T (interpretation) to 2023, Category I 75580 from 2024. '
+            'CMS suppresses every provider–code row with fewer than 11 beneficiaries; FFR-CT is the lowest-volume series '
+            'in this study and the most affected, so its rates are a lower bound and are shown as context only.')
 
 
 def plot_rate_trends(decomp_df, procs=FIG8_PROCS, fname='figure8_cta_tavr_cacs_rates', fig_num=8,
