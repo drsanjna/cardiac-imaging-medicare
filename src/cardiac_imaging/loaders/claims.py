@@ -88,6 +88,33 @@ def comparator_trend(df_comp):
             .rename('total_services').reset_index())
 
 
+SURGERY_TYPES = ('Thoracic Surgery', 'Cardiac Surgery', 'Vascular Surgery', 'General Surgery')   # General Surgery: ~1,200 TAVR services/yr (2024), surgeons enrolled under the generic code
+
+
+def tavr_cosurgeon_split(con):
+    """TAVR services by year billed by cardiology, by cardiac/thoracic/vascular surgery and by everyone else, with the
+    cardiology:surgery ratio (≈1 when every procedure is co-billed) and the implied procedure count (services ÷ 2)."""
+    import pandas as pd
+    df = con.execute(f"""
+    SELECT year,
+        CASE WHEN Rndrng_Prvdr_Type IN {config.CARD_TYPES} THEN 'cardiology'
+             WHEN Rndrng_Prvdr_Type IN {SURGERY_TYPES}     THEN 'surgery'
+             ELSE 'other' END AS billing_group,
+        SUM(Tot_Srvcs) AS services
+    FROM {config.CLAIMS_TABLE}
+    WHERE HCPCS_Cd IN {config.TAVR_CODES}
+      {config.EXCL_SQL}
+    GROUP BY 1, 2
+    """).fetchdf()
+    wide = (df.pivot(index='year', columns='billing_group', values='services')
+            .reindex(columns=['cardiology', 'surgery', 'other']).fillna(0.0).sort_index())
+    wide['total_services'] = wide.sum(axis=1)
+    wide['cardiology_to_surgery_ratio'] = wide['cardiology'] / wide['surgery'].replace(0, pd.NA)
+    wide['procedures_est'] = wide['total_services'] / config.TAVR_SERVICES_PER_PROCEDURE
+    wide.columns.name = None
+    return wide.reset_index()
+
+
 def aggregate_segments(df_detail):
     """Services and unique NPIs by year × modality × rural/urban × place of service (Unknown RUCA dropped)."""
     df_agg = (df_detail.groupby(['year', 'procedure_category', 'rural_urban', 'place_of_service'])

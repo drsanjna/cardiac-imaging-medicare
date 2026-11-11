@@ -41,6 +41,15 @@ a commit whose hash is recorded in the plan before any H1 outcome is queried.
 
 ## Resolved
 
+### 11. TAVR as procedures, structural CT in Figure 8, FFR / FFR-CT figure — resolved 2026-11-11
+*Decision (user):* (1) Figure 8 plots TAVR procedures = services ÷ 2 (both heart-team physicians bill the code;
+cardiology 48,306 vs surgery 47,862 of 97,814 services in 2024, ratio within 3% of 1 every year — table
+`tavr_cosurgeon_check`). (2) Figure 8 adds cardiac structural CT 75572 so a reviewer can see which code a
+TAVR-planning CT falls under (18,430 → 57,691 services, 2018→2024, vs CTA 75574 59,400 → 196,120). (3) New Figure S6:
+invasive FFR 93571 (45,894 → 36,989; 1.21 → 1.11 per 1,000) and FFR-CT 0501T + 0504T, then 75580 from 2024
+(290 → 22,974; 0.01 → 0.69 per 1,000), following Cohen et al.'s code definitions. None of these enter the imaging
+totals, Table 1, market share or the models; every pinned number in `pytest -m real_data` is unchanged.
+
 ### 10. Ischaemic-testing scope: stress echo, SPECT MPI, CMR code set, comparators off — resolved 2026-11-04
 *Decision (user, after the 2026-11-04 biostatistics meeting and R1's scope comment):* (1) Echo becomes **stress echo**
 93350 + 93351; resting TTE 93306–93308 is no longer counted. (2) SPECT confirmed as 78451 + 78452, relabelled

@@ -31,8 +31,12 @@ _SRC = {
                  ['cacs_state_rates']),
     'rate_trends': (['figures.rate_trends:plot_rate_trends', 'pipeline:step_rate_trends', 'analysis.rates:decompose',
                      'loaders.claims:load_comparators', 'loaders.claims:load_comparator_detail', 'loaders.claims:comparator_trend',
-                     'loaders.claims:national_trend'],
-                    ['cta_tavr_cacs_rates', 'national_volume_rates']),
+                     'loaders.claims:national_trend', 'loaders.claims:tavr_cosurgeon_split', 'analysis.rates:services_to_procedures'],
+                    ['cta_tavr_cacs_rates', 'tavr_cosurgeon_check', 'national_volume_rates']),
+    'ffr_trends': (['figures.rate_trends:plot_ffr_trends', 'figures.rate_trends:plot_rate_trends', 'pipeline:step_rate_trends',
+                    'analysis.rates:decompose', 'analysis.rates:services_to_procedures', 'loaders.claims:load_comparators',
+                    'loaders.claims:load_comparator_detail', 'loaders.claims:comparator_trend'],
+                   ['ffr_rates']),
     'ranked': (['figures.ranked_change:plot_ranked_state_change', 'analysis.rates:state_rate_dispersion',
                 'analysis.rates:rate_deltas', 'analysis.rates:compute_state_rates', 'loaders.enrollment:load_state_ffs',
                 'loaders.claims:load_detail', 'pipeline:step_state_maps'],
@@ -81,11 +85,13 @@ FIGURES = [
                    '(red = decrease, blue = increase). Territories excluded.', **_src('maps'))
       for proc, n in _MAP_NUMBERS.items()],
     dict(stem='figure8_cta_tavr_cacs_rates', label='Figure 8', section='Main text',
-         title='Cardiac CTA, TAVR and CACS: national rates by year',
-         caption=f'National services per 1,000 FFS beneficiaries by year, {B}–{E}, for cardiac CTA (CPT 75574), TAVR '
-                 '(CPT 33361–33366; services ≈ 2 × procedures, co-surgeon billing) and standalone coronary artery calcium '
-                 'score (CPT 75571). A calcium score acquired within a CTA is bundled into the CTA code, so the two '
-                 'series do not overlap.', **_src('rate_trends')),
+         title='Cardiac CTA, TAVR, CACS and structural cardiac CT: national rates by year',
+         caption=f'National rate per 1,000 FFS beneficiaries by year, {B}–{E}, for cardiac CTA (CPT 75574), TAVR '
+                 'procedures (CPT 33361–33366; both heart-team physicians bill the code, so procedures = services ÷ 2, '
+                 'checked against the ~49%/49% cardiology/surgery split in tavr_cosurgeon_check), standalone coronary '
+                 'artery calcium score (CPT 75571) and non-coronary cardiac CT (CPT 75572, the code a TAVR-planning CT '
+                 'may be billed under instead of 75574). A calcium score acquired within a CTA is bundled into the CTA '
+                 'code, so the CTA and CACS series do not overlap.', **_src('rate_trends')),
     *[f for f in [
     dict(stem='figure10_invasive_coronary_angiography_state_maps', label='Figure 10', section='Main text',
          title=f'Invasive coronary angiography: state rates {B} / {E} / change',
@@ -133,6 +139,13 @@ FIGURES = [
                  'enrollment, so the slope is the adjusted elasticity β (line through the origin, 95% band from '
                  'HC3 SEs). Radiologists + cardiologists billing any Part B service. The unadjusted Δ rate ~ Δ '
                  'density slopes remain in the model table. Post hoc.', **_src('change')),
+    dict(stem='figureS6_ffr_ffrct_rates', label='Figure S6', section='Supplement',
+         title='Invasive FFR and FFR-CT: national rates by year',
+         caption=f'National services per 1,000 FFS beneficiaries by year, {B}–{E}, for invasive fractional flow reserve '
+                 '(CPT 93571, first vessel; the additional-vessel add-on 93572 is not counted) and FFR-CT (CPT 0501T and '
+                 f'0504T through 2023, Category I code 75580 from 2024; the technical-component codes 0502T/0503T are not '
+                 'counted). Context for the CTA trend; neither series is part of the five-modality totals.',
+         **_src('ffr_trends')),
 ]
 
 SECTIONS = ['Main text', 'Composite', 'Supplement']

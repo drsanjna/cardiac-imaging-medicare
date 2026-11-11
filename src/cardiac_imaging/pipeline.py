@@ -24,7 +24,7 @@ MAIN TEXT
   Figure 5:  Cardiac CTA — state rates, {b} / {e} / change
   Figure 6:  Cardiac MRI (stress CMR included) — state rates, {b} / {e} / change
   Figure 7:  Cardiac PET — state rates, {b} / {e} / change
-  Figure 8:  Cardiac CTA, TAVR and CACS — national rate per 1,000 FFS by year, one axis
+  Figure 8:  Cardiac CTA, TAVR procedures (services ÷ 2), CACS and structural cardiac CT (75572) — national rate per 1,000 FFS by year
   Figures 10–12 (ICA, TAVR, CACS state maps): {compmaps}
   Figure {rk}: States ranked by change in CTA rate, {b}→{e}, with median / IQR / P90:P10 of state rates
   (unnumbered composite: all-modality {e} state panel)
@@ -37,6 +37,7 @@ SUPPLEMENT
   Figure S4: Cardiologist density vs CTA rate — multivariable NB (same layout as S1)
   (whole-workforce density models stay as tables only: density_sensitivity_workforce, workforce_density_by_year)
   Figure S5: Partial-regression plot, Δlog CTA ~ Δlog radiologists+cardiologists + Δlog FFS, {b}→{e}
+  Figure S6: Invasive FFR (93571) and FFR-CT (0501T/0504T, 75580) — national rate per 1,000 FFS by year
 
 OUTPUT FORMATS
   Every matplotlib figure: .png (300 DPI working copy) + .tiff (LZW-compressed;
@@ -94,17 +95,23 @@ def step_figure1(ctx):
 
 
 def step_rate_trends(ctx):
-    """Figure 8: national CTA, TAVR and CACS rates per 1,000 FFS by year (TAVR/CACS loaded here even when comparators are off)."""
-    print("Building Figure 8: CTA / TAVR / CACS rate trends...")
+    """Figure 8 (CTA, TAVR procedures, CACS, structural CT) and Figure S6 (invasive FFR, FFR-CT): national rates per
+    1,000 FFS by year. The context series are loaded here even when the comparators are off; TAVR services ÷ 2."""
+    print("Building Figure 8 (CTA / TAVR / CACS / structural CT) and Figure S6 (FFR / FFR-CT) rate trends...")
     con = ctx['con']
-    extra = {k: config.ALL_COMPARATORS[k] for k in (config.TAVR_LABEL, config.CACS_LABEL)}
-    comp = ctx['df_comp'] if set(extra) <= set(ctx['df_comp']['procedure_category']) else claims.load_comparators(con, extra)
-    comp = comp[comp['procedure_category'].isin(extra)]
-    cta = ctx['trend'][ctx['trend']['procedure_category'] == 'Cardiac CTA']
-    decomp = rates.decompose(pd.concat([cta, claims.comparator_trend(comp)], ignore_index=True))
-    rate_trends.plot_rate_trends(decomp)
-    ctx['tables']['cta_tavr_cacs_rates'] = decomp.set_index(['procedure_category', 'year'])
-    print("Figure 8 complete.\n")
+    extra = {**config.RATE_TREND_PROCS, **config.FFR_PROCS}
+    comp = claims.load_comparators(con, extra)
+    trend = rates.services_to_procedures(claims.comparator_trend(comp))
+    cta = ctx['trend'][ctx['trend']['procedure_category'] == 'Cardiac CTA'].assign(unit='services')
+    decomp = rates.decompose(pd.concat([cta, trend], ignore_index=True))
+    fig8 = decomp[decomp['procedure_category'].isin(rate_trends.FIG8_PROCS)]
+    ffr = decomp[decomp['procedure_category'].isin(rate_trends.FFR_FIG_PROCS)]
+    rate_trends.plot_rate_trends(fig8)
+    rate_trends.plot_ffr_trends(ffr)
+    ctx['tables']['cta_tavr_cacs_rates'] = fig8.set_index(['procedure_category', 'year'])
+    ctx['tables']['ffr_rates'] = ffr.set_index(['procedure_category', 'year'])
+    ctx['tables']['tavr_cosurgeon_check'] = claims.tavr_cosurgeon_split(con).set_index('year')
+    print("Figures 8 and S6 complete.\n")
 
 
 def step_figure2(ctx):

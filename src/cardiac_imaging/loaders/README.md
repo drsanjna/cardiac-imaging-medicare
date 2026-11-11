@@ -53,6 +53,7 @@ Every function and class in this directory, including internal helpers.
 - `load_comparator_detail(con, label, codes)` — Rows for one comparator procedure (e.g. ICA, TAVR), labelled `label` (territories excluded, logged).
 - `load_comparators(con, comparators)` — All comparator procedures (default config.COMPARATORS), one frame; an empty frame when they are switched off.
 - `comparator_trend(df_comp)` — Total comparator services by year × procedure, in the national_trend format (empty in, empty out).
+- `tavr_cosurgeon_split(con)` — TAVR services by year billed by cardiology, by cardiac/thoracic/vascular surgery and by everyone else, with the
 - `aggregate_segments(df_detail)` — Services and unique NPIs by year × modality × rural/urban × place of service (Unknown RUCA dropped).
 - `national_trend(df_agg)` — Total services by year × modality.
 

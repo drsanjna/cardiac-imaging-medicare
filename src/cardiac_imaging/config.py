@@ -159,6 +159,28 @@ ALL_COMPARATORS = {ICA_LABEL: ICA_CODES, TAVR_LABEL: TAVR_CODES, CACS_LABEL: CAC
 INCLUDE_COMPARATORS = os.environ.get('CARDIAC_COMPARATORS', '0') == '1'
 COMPARATORS = ALL_COMPARATORS if INCLUDE_COMPARATORS else {}
 
+# NATIONAL-RATE CONTEXT SERIES (Figure 8 and Figure S6) — national rates only, never in the imaging totals, Table 1,
+# the market-share figure or the comparator maps. Added by the user 2026-11-11.
+#   TAVR procedures: CMS requires a heart team, and both the interventional cardiologist and the cardiac surgeon bill
+#   the same TAVR code (modifier 62). Cardiology and cardiac/thoracic surgery each bill ~49% of TAVR services in every
+#   year 2018–2024 (2024: 48,306 vs 47,862 of 97,814), so Figure 8 plots services ÷ 2 as procedures. The split is
+#   written to the `tavr_cosurgeon_check` table of every run.
+#   Cardiac structural CT 75572 (cardiac CT with contrast, no coronary CTA): the code a TAVR-planning CT may be billed
+#   under instead of 75574, so it is plotted next to CTA and TAVR. 75573 (congenital) is ≤500 services/yr and not plotted.
+#   Invasive FFR 93571 (first vessel; the additional-vessel add-on 93572 is not counted). FFR-CT 0501T (complete) and
+#   0504T (interpretation) 2018–2023, replaced by the Category I code 75580 from 2024; the technical-component codes
+#   0502T/0503T are not counted. Both FFR series follow Cohen et al. (Temporal Trends in Cardiac Testing 2010–2022).
+TAVR_SERVICES_PER_PROCEDURE = 2
+CARDIAC_CT_LABEL = 'Cardiac structural CT'
+CARDIAC_CT_CODES = ('75572',)
+FFR_LABEL = 'Invasive FFR'
+FFR_CODES = ('93571',)
+FFRCT_LABEL = 'FFR-CT'
+FFRCT_CODES = ('0501T', '0504T', '75580')
+RATE_TREND_PROCS = {TAVR_LABEL: TAVR_CODES, CACS_LABEL: CACS_CODES, CARDIAC_CT_LABEL: CARDIAC_CT_CODES}   # Figure 8, with CTA
+FFR_PROCS = {FFR_LABEL: FFR_CODES, FFRCT_LABEL: FFRCT_CODES}                                             # Figure S6
+SERVICES_PER_PROCEDURE = {TAVR_LABEL: TAVR_SERVICES_PER_PROCEDURE}   # everything else: 1 service = 1 procedure
+
 # ==========================================================================
 # ENROLLMENT: CMS Program Statistics — Original Medicare Enrollment
 # National Part A and/or Part B Original Medicare enrollees (person-years, 50 states + DC), 'United States' row of
