@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from cardiac_imaging import config, pipeline
+from cardiac_imaging import config, pipeline, style
 from cardiac_imaging.figures.catalog import FIGURES
 
 
@@ -110,4 +110,4 @@ def test_tiffs_when_enabled(synthetic_db, stub_plotly, monkeypatch):
     pipeline.run_all(database=str(synthetic_db), record=False)
     tiffs = {p.stem for p in (config.OUTPUT_DIR / 'tiff').glob('*.tiff')}
     assert {'figure1_decomposition', 'figureS2_density_irr_forest', 'figure3_stress_echo_state_maps', 'figure8_cta_tavr_cacs_rates',
-            'figureS6_ffr_ffrct_rates'} <= tiffs
+            f'figure{style.FFR_FIG_NUM}_ffr_ffrct_rates'} <= tiffs

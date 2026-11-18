@@ -6,6 +6,7 @@ import pytest
 from cardiac_imaging import audit, config
 from cardiac_imaging.analysis import nb_models, rates, tables
 from cardiac_imaging.loaders import claims
+from cardiac_imaging import style
 from cardiac_imaging.style import PROC_ORDER
 
 
@@ -277,16 +278,16 @@ def test_rate_trends_draws_one_line_per_procedure(monkeypatch):
 
 
 def test_ffr_figure_draws_both_series(monkeypatch):
-    """Figure S6: invasive FFR and FFR-CT lines, services axis, its own file stem."""
+    """Figure 10: invasive FFR and FFR-CT lines, services axis, its own file stem."""
     from cardiac_imaging.figures import rate_trends
     seen = {}
     monkeypatch.setattr(rate_trends, 'save_pub_fig', lambda fig, fname, *a, **k: seen.update(fig=fig, fname=fname))
     rows = [dict(year=y, procedure_category=p, rate_per_1000=r) for y in range(2018, 2025)
             for p, r in [(config.FFR_LABEL, 1.2), (config.FFRCT_LABEL, 0.1), ('Cardiac CTA', 5.0)]]
     present = rate_trends.plot_ffr_trends(pd.DataFrame(rows))
-    assert present == [config.FFR_LABEL, config.FFRCT_LABEL] and seen['fname'] == 'figureS6_ffr_ffrct_rates'
+    assert present == [config.FFR_LABEL, config.FFRCT_LABEL] and seen['fname'] == f'figure{style.FFR_FIG_NUM}_ffr_ffrct_rates'
     ax = seen['fig'].axes[0]
-    assert len(ax.get_lines()) == 2 and ax.get_ylabel().startswith('Services') and 'S6' in ax.get_title()
+    assert len(ax.get_lines()) == 2 and ax.get_ylabel().startswith('Services') and f'Figure {style.FFR_FIG_NUM}.' in ax.get_title()
 
 
 def test_services_to_procedures_halves_tavr_only():

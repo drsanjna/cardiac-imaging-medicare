@@ -36,8 +36,8 @@ Open decisions live in [PENDING.md](PENDING.md).
 | TAVR (comparator, switched off) | 33361–33366 (all access routes; bypass add-ons 33367–33369 excluded) | — |
 | Coronary artery calcium score, CACS (comparator, switched off) | 75571 | — |
 | Cardiac structural CT (Figure 8 context only) | 75572 (cardiac CT with contrast, no coronary CTA — the code a TAVR-planning CT may be billed under instead of 75574; 75573 congenital not plotted, ≤500/yr). Added 2026-11-11 | — |
-| Invasive FFR (Figure S6 context only) | 93571 (first vessel; add-on 93572 not counted). Added 2026-11-11 | — |
-| FFR-CT (Figure S6 context only) | 0501T + 0504T through 2023, Category I 75580 from 2024 (0502T/0503T technical components not counted). Added 2026-11-11 | — |
+| Invasive FFR (Figure 10 context only) | 93571 (first vessel; add-on 93572 not counted). Added 2026-11-11 | — |
+| FFR-CT (Figure 10 context only) | 0501T + 0504T through 2023, Category I 75580 from 2024 (0502T/0503T technical components not counted). Added 2026-11-11 | — |
 
 The comparators (ICA and TAVR added 2026-10-24, CACS 2026-11-02) were switched off by the user 2026-11-04
 (`config.INCLUDE_COMPARATORS`, env `CARDIAC_COMPARATORS=1` restores them). When on they appear only in Figure 1 and in
@@ -54,7 +54,7 @@ map (Figure 11, switched off) still shows services. Wyoming has no TAVR rows in 
 Codes deliberately or possibly out of scope (must be stated in Methods): resting TTE 93306–93308 (dropped 2026-11-04), TEE 93312,
 CMR flow-mapping add-on 75565,
 calcium score 75571 (comparator / Figure 8 only), structural cardiac CT 75572 (Figure 8 only) and 75573, FFR-CT 0501T–0504T and 75580
-and invasive FFR 93571 (Figure S6 only); PET perfusion + metabolic 78432/78433,
+and invasive FFR 93571 (Figure 10 only); PET perfusion + metabolic 78432/78433,
 metabolic/viability PET 78429/78459, and the absolute blood-flow add-on 78434 (an add-on to a perfusion study, so
 never counted as a separate study). PET codes set by the user on 2026-10-24 (PENDING.md, Resolved).
 
@@ -97,12 +97,13 @@ never counted as a separate study). PET codes set by the user on 2026-10-24 (PEN
 | Figures 3–7 | State rate maps 2018 / 2024 / change, one per modality |
 | Figure 8 | Cardiac CTA, TAVR procedures (services ÷ 2), standalone CACS and structural cardiac CT 75572: national rate per 1,000 FFS by year on one axis (loaded for this figure even with the comparators switched off). Table `tavr_cosurgeon_check` holds the cardiology/surgery split behind the ÷ 2 |
 | Figure 9 | States ranked by change in CTA rate per 1,000, 2018→2024, with per-year dispersion statistics (post hoc). Numbered 13 when the comparator maps (10–12: ICA, TAVR, CACS) are switched on |
+| Figure 10 | Invasive FFR (93571) and FFR-CT (0501T/0504T, 75580 from 2024): national rate per 1,000 FFS by year (context for the CTA trend; table `ffr_rates`; moved from S6 to the main text by the user 2026-11-18; numbered 14 when the comparator maps are on) |
 | Table 1 | Specialty distribution (Cardiology / Radiology / Other) by modality |
 | Figure S1 | All-provider density vs CTA rate, NB fits (main-text Figure 8 until 2026-11-04) |
 | Figure S2 | Forest plot of density IRRs, unadjusted vs adjusted (main-text Figure 9 until 2026-11-04) |
 | Figures S3–S4 | Radiologist and cardiologist density models |
 | Figure S5 | Partial-regression plot of Δlog CTA on Δlog physicians, adjusted for Δlog FFS, 2018→2024 (post hoc) |
-| Figure S6 | Invasive FFR (93571) and FFR-CT (0501T/0504T, 75580 from 2024): national rate per 1,000 FFS by year (context for the CTA trend; table `ffr_rates`) |
+
 | Composite | 2024 state rates, all modalities (candidate Central Illustration) |
 
 ## Known limitations — check every claim against these

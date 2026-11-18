@@ -1,6 +1,6 @@
 """Catalog of every output figure: file stem → label, section, title and caption (feeds the run gallery and PDF)."""
 from .. import config
-from ..style import PROC_ORDER, RANKED_FIG_NUM, display_label
+from ..style import FFR_FIG_NUM, PROC_ORDER, RANKED_FIG_NUM, display_label
 
 B, E = config.BASE_YEAR, config.END_YEAR
 
@@ -115,6 +115,15 @@ FIGURES = [
          caption=f'Each state\'s change in CTA services per 1,000 FFS beneficiaries, {B}→{E}, largest at the top, '
                  f'labelled with the {B} → {E} rates; dashed line = median state change. Box: median, IQR and '
                  'P90/P10 ratio of the state rates in each year.', **_src('ranked')),
+    dict(stem=f'figure{FFR_FIG_NUM}_ffr_ffrct_rates', label=f'Figure {FFR_FIG_NUM}', section='Main text',
+         title='Invasive FFR and FFR-CT: national rates by year',
+         caption=f'National services per 1,000 FFS beneficiaries by year, {B}–{E}, for invasive fractional flow reserve '
+                 '(CPT 93571, first vessel; the additional-vessel add-on 93572 is not counted) and FFR-CT (CPT 0501T and '
+                 f'0504T through 2023, Category I code 75580 from 2024; the technical-component codes 0502T/0503T are not '
+                 'counted). Context for the CTA trend; neither series is part of the five-modality totals. CMS suppresses '
+                 'provider–code rows with fewer than 11 beneficiaries, and FFR-CT, the lowest-volume series in the study, '
+                 'is the most affected: its rates are a lower bound and should not be read as a headline number.',
+         **_src('ffr_trends')),
     dict(stem=f'figure_panel_all_modalities_{E}', label='Composite', section='Composite',
          title=f'All modalities, {E} state rates',
          caption=f'Unnumbered composite of {E} state rates for all five modalities (optional Central Illustration).',
@@ -140,15 +149,6 @@ FIGURES = [
                  'enrollment, so the slope is the adjusted elasticity β (line through the origin, 95% band from '
                  'HC3 SEs). Radiologists + cardiologists billing any Part B service. The unadjusted Δ rate ~ Δ '
                  'density slopes remain in the model table. Post hoc.', **_src('change')),
-    dict(stem='figureS6_ffr_ffrct_rates', label='Figure S6', section='Supplement',
-         title='Invasive FFR and FFR-CT: national rates by year',
-         caption=f'National services per 1,000 FFS beneficiaries by year, {B}–{E}, for invasive fractional flow reserve '
-                 '(CPT 93571, first vessel; the additional-vessel add-on 93572 is not counted) and FFR-CT (CPT 0501T and '
-                 f'0504T through 2023, Category I code 75580 from 2024; the technical-component codes 0502T/0503T are not '
-                 'counted). Context for the CTA trend; neither series is part of the five-modality totals. CMS suppresses '
-                 'provider–code rows with fewer than 11 beneficiaries, and FFR-CT, the lowest-volume series in the study, '
-                 'is the most affected: its rates are a lower bound and should not be read as a headline number.',
-         **_src('ffr_trends')),
 ]
 
 SECTIONS = ['Main text', 'Composite', 'Supplement']

@@ -30,6 +30,7 @@ DISPLAY_LABELS = {'Cardiac MRI': 'Cardiac MRI (stress CMR included)'}
 FIG1_ORDER  = PROC_ORDER + list(config.COMPARATORS)
 # Figure 8 = CTA/TAVR/CACS rate trends; the ranked CTA-change figure is Figure 9, or 13 after the comparator maps (10–12).
 RANKED_FIG_NUM = 13 if config.COMPARATORS else 9
+FFR_FIG_NUM = RANKED_FIG_NUM + 1      # invasive FFR / FFR-CT rates: Figure 10 (14 when the comparator maps are on)
 
 
 def display_label(proc):

@@ -93,7 +93,7 @@ Every function and class in this directory, including internal helpers.
 - `test_state_rate_dispersion_hand_calculation()` — Median, IQR and P90/P10 per modality and year from the deltas frame; P90/P10 is NaN when P10 is 0.
 - `test_partial_regression_frame_matches_count_model()` — Frisch–Waugh: the slope of the y-residuals on the x-residuals (through the origin) equals the model's elasticity.
 - `test_rate_trends_draws_one_line_per_procedure(monkeypatch)` — Figure 8: each present procedure gets a line in FIG8_PROCS order; a procedure missing from the frame is skipped.
-- `test_ffr_figure_draws_both_series(monkeypatch)` — Figure S6: invasive FFR and FFR-CT lines, services axis, its own file stem.
+- `test_ffr_figure_draws_both_series(monkeypatch)` — Figure 10: invasive FFR and FFR-CT lines, services axis, its own file stem.
 - `test_services_to_procedures_halves_tavr_only()` — TAVR services ÷ 2 → procedures; every other series is unchanged and labelled services.
 
 **`test_app.py`**
