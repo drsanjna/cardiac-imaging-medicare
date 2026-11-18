@@ -2,6 +2,67 @@
 
 One entry per push to `main`, newest first — written automatically by `scripts/work_log.py` from commit messages, the diff and the test run.
 
+## 2026-11-18 21:16 UTC — 8 commits (`ad488ef..3c20dc7`)
+
+### What was done
+
+- **Add Figure 13 (states ranked by CTA change) and redraw S5 as a partial-regression plot** (`b2b51ab`)
+  - New Figure 13: every state ranked by its 2018→2024 change in CTA services per 1,000 FFS beneficiaries (lollipop, labelled with both years' rates), with a box giving the median, IQR and P90/P10 ratio of state rates in each year. Both requested by the biostatistician (Yudan) to show geographic variation directly rather than through maps alone.
+  - New table state_rate_dispersion: median, Q1, Q3, IQR, P10, P90, P90/P10, min, max per modality and year (CTA 2018 P90/P10 9.8 → 2024 4.1; median 0.87 → 4.20 per 1,000).
+  - Figure S5 is now the added-variable plot of the count model Δlog CTA ~ Δlog physicians + Δlog FFS: residual vs residual per state, the elasticity as a line through the origin with its HC3 band. The model and its numbers are unchanged (β 0.27, −4.17 to 4.72, p 0.90); the unadjusted Δ rate ~ Δ density slopes stay in workforce_cta_change_models. The partial residuals are added to workforce_cta_change_by_state.
+  - Tests: dispersion hand calculation; Frisch–Waugh check that the residual slope equals the model elasticity; catalogue and gallery counts move from 18 to 19 figures. Real-data pins unchanged (9 passed).
+- **Ischaemic-testing scope: stress echo, SPECT MPI, CMR code set, comparators switched off** (`7365d79`)
+  - Echo is now stress echo (CPT 93350 + 93351); resting TTE 93306–93308 is no longer counted. Decided by the user 2026-11-04 after R1's scope comment and the biostatistics meeting.
+  - SPECT confirmed as 78451 + 78452 and relabelled "SPECT MPI".
+  - Cardiac MRI = 75557/75561 (morphology + function) plus stress CMR 75559/75563, with the retired 2010 codes 75558/75560/75562/75564 listed as the user specified (no rows). The flow-mapping add-on 75565 is dropped: it was a second line on the same study and 25–31% of the old count. Legends read "Cardiac MRI (stress CMR included)".
+  - ICA, TAVR and CACS comparators are switched off (config.INCLUDE_COMPARATORS; CARDIAC_COMPARATORS=1 restores them). Their loaders, maps, catalog entries and tests stay and are skipped cleanly; the ranked CTA-change figure becomes Figure 10 (13 when the comparators are on).
+  - Impact, 2018→2024 rate change: stress echo −28.8% (resting TTE was +6.8%), SPECT MPI −25.6%, CTA +277.9%, CMR +150.9% (was +173.6%), PET +81.8%. Advanced share of the five modalities is 27.0% in 2024 (was 6.0% with resting TTE in the denominator). All density IRRs, Table 1 CTA shares and the change-on-change models are unchanged.
+  - change_summary no longer drops categories outside the Figure 1 order; the empty comparator frame is kept out of the Figure 1 trend so dtypes stay numeric.
+  - Tests: new code-set invariants, comparator-off loader test, label updates in the synthetic data; real-data change-summary pin re-set to the approved numbers. PENDING item 10 records the decision and closes item 2; STUDY.md definitions and figure list updated.
+- **Figure 8: CTA, TAVR and CACS national rates on one axis; density figures move to the supplement** (`9c7a5d6`)
+  - New Figure 8 plots national services per 1,000 FFS beneficiaries by year for cardiac CTA, TAVR and standalone coronary calcium score on a single axis (table cta_tavr_cacs_rates). TAVR and CACS are loaded for this figure even though the comparator maps stay switched off. CTA 1.56→5.90, TAVR 1.71→2.94, CACS 0.47→3.10 per 1,000, 2018→2024.
+  - The density figures move to the supplement, as the user asked: all-provider NB fit becomes S1, the IRR forest plot S2, the radiologist and cardiologist fits S3 and S4. The former S3/S4 whole-workforce figures are dropped; their numbers stay in workforce_density_by_year.
+  - The ranked CTA-change figure is now Figure 9 (13 when the comparator maps are on).
+  - Catalog, pipeline manifest, gallery and schema text, STUDY.md figure list, app tests and the figure-count pins follow the new numbering; a unit test covers the new figure. Real-data pins unchanged (9 passed); 15 figures per run.
+- **Tone down the Figure 2 "market share" wording** (`c2ae9d3`)
+  - Figure 2 is now titled "Relative Distribution of the Five Studied Modalities by Practice Setting", with the y-axis and footnote saying share of the five modalities' combined volume. R2 #3 read "market share" and "advanced modalities are 1–4% of total volume" as claims about all cardiac imaging, which the five-code denominator cannot support.
+  - Catalog title/caption and the pipeline manifest line follow; the table name national_market_share is unchanged so existing runs stay comparable.
+- **Figure 8 plots TAVR procedures and adds structural cardiac CT; new Figure S6 for invasive FFR and FFR-CT** (`9710aae`)
+  - TAVR is now plotted as procedures (services ÷ 2) because both heart-team physicians bill the same code: cardiology and cardiac/thoracic/vascular/general surgery each bill ~49% of services every year (2024: 48,306 vs 47,862 of 97,814). The split behind the ÷ 2 is written to every run as tables/tavr_cosurgeon_check.csv so a reviewer can check it.
+  - Figure 8 gains cardiac structural CT (CPT 75572, the non-coronary code a TAVR-planning CT may be billed under instead of 75574): 18,430 → 57,691 services 2018→2024, i.e. 0.49 → 1.74 per 1,000 FFS, against CTA 1.56 → 5.90.
+  - New supplementary Figure S6: invasive FFR (93571, 1.21 → 1.11 per 1,000) and FFR-CT (0501T + 0504T, then the Category I code 75580 from 2024; 0.01 → 0.69 per 1,000), following the code definitions of Cohen et al.'s 2010–2022 trends paper. Table ffr_rates.csv.
+  - None of the new series enter the imaging totals, Table 1, market share or the models; all pinned real-data numbers are unchanged. Config documents the codes and the 2026-11-11 decision; STUDY.md and PENDING.md updated.
+  - Tests: config disjointness, services-to-procedures, both figures, the co-surgeon split, FFR-CT code switch in the synthetic data, pipeline tables, and real-data pins for every new series.
+- **Figure S6: say explicitly that FFR-CT is the series most affected by CMS small-cell suppression** (`55444bf`)
+  - The footnote on Figure S6 and its catalog caption now state that CMS suppresses every provider–code row with fewer than 11 beneficiaries, that FFR-CT is the lowest-volume series in the study and the most affected, and that its rates are therefore a lower bound shown as context only.
+  - No data or model change; the figure's numbers are identical.
+- **Figure 8: call the 75571 series "paid calcium-score claims", not "calcium scoring"** (`eac5168`)
+  - Medicare has no national coverage determination for coronary artery calcium scoring, so a paid 75571 line is a scan billed to Part B and paid under local contractor policy, usually with a diagnostic indication. Denied, ABN-billed and self-pay scans never appear, so the series is a lower bound on use and is now labelled as paid claims on the figure line, in the figure footnote and in the gallery caption.
+  - No data change.
+- **Merge remote-tracking branch 'origin/main'** (`3c20dc7`)
+
+### Where the changes landed
+
+| Area | Files | + lines | − lines |
+|---|---|---|---|
+| code: analysis | 3 | 59 | 2 |
+| code: core | 4 | 151 | 68 |
+| code: db | 2 | 8 | 8 |
+| code: figures | 10 | 279 | 96 |
+| code: loaders | 2 | 44 | 6 |
+| code: reporting | 1 | 1 | 1 |
+| docs | 2 | 65 | 34 |
+| tests | 9 | 219 | 42 |
+
+### Impact on the code
+
+- New functions (20): `src/cardiac_imaging/analysis/change.py: partial_regression_frame`, `src/cardiac_imaging/analysis/rates.py: services_to_procedures`, `src/cardiac_imaging/analysis/rates.py: state_rate_dispersion`, `src/cardiac_imaging/figures/change.py: plot_change_partial_regression`, `src/cardiac_imaging/figures/ranked_change.py: plot_ranked_state_change`, `src/cardiac_imaging/figures/rate_trends.py: plot_ffr_trends`, `src/cardiac_imaging/figures/rate_trends.py: plot_rate_trends`, `src/cardiac_imaging/loaders/claims.py: tavr_cosurgeon_split`, `src/cardiac_imaging/pipeline.py: step_rate_trends`, `src/cardiac_imaging/style.py: display_label`, `tests/test_analysis.py: test_ffr_figure_draws_both_series`, `tests/test_analysis.py: test_partial_regression_frame_matches_count_model`, `tests/test_analysis.py: test_rate_trends_draws_one_line_per_procedure`, `tests/test_analysis.py: test_services_to_procedures_halves_tavr_only`, `tests/test_analysis.py: test_state_rate_dispersion_hand_calculation`, `tests/test_config.py: test_context_series_codes_stay_out_of_the_imaging_totals`, `tests/test_loaders.py: test_context_series_load_and_ffrct_code_switch`, `tests/test_loaders.py: test_load_comparators_off_by_default`, `tests/test_loaders.py: test_tavr_cosurgeon_split`, `tests/test_real_data.py: test_tavr_procedures_and_context_series`
+- Removed functions (1): `src/cardiac_imaging/figures/change.py: plot_change_on_change`
+
+### Tests
+
+✅ 171 passed, 0 failed, 0 skipped.
+
 ## 2026-11-03 02:22 UTC — 4 commits (`2db5206..ca928ef`)
 
 ### What was done
